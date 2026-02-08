@@ -175,7 +175,9 @@ public final class NameplateAPI {
      * means it <b>cannot</b> be called from inside an {@code EntityTickingSystem}
      * (the store is locked for writes during system processing). For tick-system
      * initialization, build a {@link NameplateData} manually and use
-     * {@code commandBuffer.addComponent()} instead. See
+     * {@code commandBuffer.putComponent()} instead ({@code putComponent} is an
+     * upsert — safe even if another system adds the component between the read
+     * and the command buffer executing). See
      * {@code ArchaeopteryxNameplateSystem} in the example mod.</p>
      *
      * <p>However, if the entity <b>already has</b> the component, this method only

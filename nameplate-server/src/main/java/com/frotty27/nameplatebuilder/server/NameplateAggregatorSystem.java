@@ -14,7 +14,6 @@ import com.hypixel.hytale.protocol.ComponentUpdate;
 import com.hypixel.hytale.protocol.ComponentUpdateType;
 import com.hypixel.hytale.server.core.entity.Entity;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
-import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 import com.hypixel.hytale.server.core.modules.entity.EntityModule;
 import com.hypixel.hytale.server.core.modules.entity.component.HeadRotation;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
@@ -35,7 +34,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     private static final String EMPTY_HINT = "Type /npb to customize";
 
     private final ComponentType<EntityStore, EntityTrackerSystems.Visible> visibleComponentType;
-    private final ComponentType<EntityStore, Nameplate> nameplateType;
     private final ComponentType<EntityStore, UUIDComponent> uuidComponentType;
     private final ComponentType<EntityStore, TransformComponent> transformComponentType;
     private final ComponentType<EntityStore, HeadRotation> headRotationType;
@@ -47,7 +45,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                               NameplatePreferenceStore preferences,
                               ComponentType<EntityStore, NameplateData> nameplateDataType) {
         this.visibleComponentType = EntityTrackerSystems.Visible.getComponentType();
-        this.nameplateType = Nameplate.getComponentType();
         this.uuidComponentType = UUIDComponent.getComponentType();
         this.transformComponentType = TransformComponent.getComponentType();
         this.headRotationType = HeadRotation.getComponentType();
@@ -58,7 +55,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
     @Override
     public Archetype<EntityStore> getQuery() {
-        return Archetype.of(visibleComponentType, nameplateType);
+        return Archetype.of(visibleComponentType, nameplateDataType);
     }
 
     @Override

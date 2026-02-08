@@ -2,6 +2,14 @@
 
 A server-side nameplate aggregator for Hytale that lets multiple mods contribute text segments to entity nameplates, with a built-in player UI for customization.
 
+### Downloads
+
+[![CurseForge Server Plugin](https://img.shields.io/badge/Server_Plugin-F16436?style=for-the-badge&logo=curseforge&logoColor=white)](https://www.curseforge.com/hytale/mods/PLACEHOLDER_SERVER_SLUG)
+[![CurseForge API](https://img.shields.io/badge/API_(for_mod_devs)-F16436?style=for-the-badge&logo=curseforge&logoColor=white)](https://www.curseforge.com/hytale/mods/PLACEHOLDER_API_SLUG)
+[![GitHub Example Mod](https://img.shields.io/badge/Example_Mod-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/PLACEHOLDER_USER/NameplateBuilder/releases/latest)
+
+<!-- TODO: Replace PLACEHOLDER_SERVER_SLUG, PLACEHOLDER_API_SLUG, and PLACEHOLDER_USER with actual values -->
+
 ![Editor UI overview](docs/screenshots/editor-overview.png)
 <!-- SCREENSHOT: Full editor window with several blocks in the chain, some in available, and preview visible -->
 
@@ -140,10 +148,12 @@ final class MyNpcNameplateSystem extends EntityTickingSystem<EntityStore> {
         NameplateData data = new NameplateData();
         data.setText("health", "67/67");
         data.setText("title", "The Brave");
-        commandBuffer.addComponent(entityRef, nameplateDataType, data);
+        commandBuffer.putComponent(entityRef, nameplateDataType, data);
     }
 }
 ```
+
+> **Why `putComponent`?** Multiple mods or systems may race to initialize the same entity. `addComponent()` throws `IllegalArgumentException` if the component already exists, while `putComponent()` is an upsert (add-or-replace), making it safe against race conditions between systems sharing the same `CommandBuffer` tick.
 
 Register the system in your plugin's `setup()`:
 
@@ -158,7 +168,7 @@ protected void setup() {
 }
 ```
 
-**How it works:** The system queries all entities with an `NPCEntity` component. On each tick, it checks the role name and whether the entity already has `NameplateData`. If not, it builds a `NameplateData` component with the default segment values and adds it via the `CommandBuffer`, which defers the write until after the system finishes. On subsequent ticks the entity already has data, so the check returns early — making this a one-shot initializer.
+**How it works:** The system queries all entities with an `NPCEntity` component. On each tick, it checks the role name and whether the entity already has `NameplateData`. If not, it builds a `NameplateData` component with the default segment values and adds it via `commandBuffer.putComponent()`, which defers the write until after the system finishes. On subsequent ticks the entity already has data, so the check returns early — making this a one-shot initializer.
 
 > **Why CommandBuffer?** Inside an `EntityTickingSystem`, the `Store` is locked for writes. Calling `store.addComponent()` (or `NameplateAPI.register()` on an entity without data) throws `IllegalStateException`. All structural changes must go through the `CommandBuffer`. Reading via `store.getComponent()` is safe. Mutating an existing component in place (e.g. `data.setText()`) is also safe.
 
@@ -295,7 +305,7 @@ Preferences are saved per player and persist across sessions.
 
 1. **Registration** — Mods call `NameplateAPI.describe()` during `setup()` to register UI metadata, and `NameplateAPI.register()` at runtime to set per-entity text via the `NameplateData` ECS component.
 
-2. **NPC initialization** — An `EntityTickingSystem` checks for newly spawned NPCs that don't yet have `NameplateData`. On their first tick, the system seeds default segments and adds a `Nameplate` component (required by the aggregator). Subsequent ticks skip already-initialized entities.
+2. **NPC initialization** — An `EntityTickingSystem` checks for newly spawned NPCs that don't yet have `NameplateData`. On their first tick, the system seeds default segments by adding a `NameplateData` component via the `CommandBuffer`. The aggregator picks up any visible entity that has `NameplateData` — no native `Nameplate` component is needed. Subsequent ticks skip already-initialized entities.
 
 3. **Aggregation** — The `NameplateAggregatorSystem` ticks every frame. For each visible entity with a `NameplateData` component, it reads the segment entries (skipping hidden `_`-prefixed keys), applies the viewer's preferences (ordering, enabled/disabled, separator), composites the text, and queues a nameplate update to each viewer. If all segments are disabled, it shows a hint message instead of the raw entity ID.
 

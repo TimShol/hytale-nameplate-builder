@@ -8,7 +8,6 @@ import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
-import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 import com.hypixel.hytale.server.core.modules.entity.tracker.EntityTrackerSystems;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
@@ -33,8 +32,8 @@ import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
  * <h3>How it works</h3>
  * <p>The system queries all entities with an {@link NPCEntity} component. Each tick:</p>
  * <ul>
- *   <li><b>New entities</b> (no {@link NameplateData}): seeds all default segments and
- *       ensures a {@link Nameplate} component is present via the {@link CommandBuffer}.</li>
+ *   <li><b>New entities</b> (no {@link NameplateData}): seeds all default segments
+ *       via the {@link CommandBuffer}.</li>
  *   <li><b>Existing entities</b> (has {@link NameplateData}): updates the "health"
  *       segment from the entity's actual {@link EntityStatMap} values, so the
  *       nameplate reflects real-time health unique to each entity.</li>
@@ -56,13 +55,11 @@ final class ArchaeopteryxNameplateSystem extends EntityTickingSystem<EntityStore
     private static final String ROLE_NAME = "Archaeopteryx";
 
     private final ComponentType<EntityStore, NPCEntity> npcType;
-    private final ComponentType<EntityStore, Nameplate> nameplateType;
     private final ComponentType<EntityStore, NameplateData> nameplateDataType;
     private final ComponentType<EntityStore, EntityStatMap> statMapType;
 
     ArchaeopteryxNameplateSystem(ComponentType<EntityStore, NameplateData> nameplateDataType) {
         this.npcType = NPCEntity.getComponentType();
-        this.nameplateType = Nameplate.getComponentType();
         this.nameplateDataType = nameplateDataType;
         this.statMapType = EntityStatMap.getComponentType();
     }
@@ -104,16 +101,12 @@ final class ArchaeopteryxNameplateSystem extends EntityTickingSystem<EntityStore
                                   Store<EntityStore> store,
                                   CommandBuffer<EntityStore> commandBuffer) {
 
-        // Ensure the entity has a Nameplate component (required by the aggregator)
-        Nameplate nameplate = store.getComponent(entityRef, nameplateType);
-        if (nameplate == null) {
-            commandBuffer.addComponent(entityRef, nameplateType, new Nameplate());
-        }
-
         // Read actual health for the initial value
         String healthText = readHealthText(store, entityRef);
 
-        // Seed all NPC-applicable segments
+        // Seed all NPC-applicable segments.
+        // putComponent is an upsert — safe even if another system adds the
+        // component between our read and the command buffer executing.
         NameplateData data = new NameplateData();
         data.setText("health", healthText);
         data.setText("tier", "[Elite]");
@@ -124,7 +117,7 @@ final class ArchaeopteryxNameplateSystem extends EntityTickingSystem<EntityStore
         data.setText("mood", "Calm");
         data.setText("bounty", "50g");
         data.setText("lifetime", "0s");
-        commandBuffer.addComponent(entityRef, nameplateDataType, data);
+        commandBuffer.putComponent(entityRef, nameplateDataType, data);
     }
 
     /**
