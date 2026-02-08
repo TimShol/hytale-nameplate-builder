@@ -15,6 +15,7 @@ import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
 /**
  * Spawn initializer and per-tick updater for Archaeopteryx NPC nameplates.
@@ -78,7 +79,7 @@ final class ArchaeopteryxNameplateSystem extends EntityTickingSystem<EntityStore
 
     @Override
     public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk,
-                     Store<EntityStore> store, CommandBuffer<EntityStore> commandBuffer) {
+                     @NonNullDecl Store<EntityStore> store, @NonNullDecl CommandBuffer<EntityStore> commandBuffer) {
 
         NPCEntity npc = chunk.getComponent(index, npcType);
         if (npc == null || !ROLE_NAME.equals(npc.getRoleName())) {

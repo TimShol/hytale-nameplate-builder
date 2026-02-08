@@ -85,11 +85,6 @@ public final class NameplateData implements Component<EntityStore> {
         entries.remove(segmentKey);
     }
 
-    /** Remove all entries from this component. */
-    public void clear() {
-        entries.clear();
-    }
-
     /** Returns {@code true} if this component has no entries. */
     public boolean isEmpty() {
         return entries.isEmpty();

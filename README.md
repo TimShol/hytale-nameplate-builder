@@ -234,7 +234,6 @@ The ECS component attached to entities. Most mods should use `NameplateAPI.regis
 | `removeText(key)` | Remove a segment |
 | `getEntries()` | Unmodifiable view of all entries |
 | `isEmpty()` | Check if the component has no entries |
-| `clear()` | Remove all entries |
 
 > **Convention:** Keys starting with `_` are hidden metadata — they are stored in the component but skipped by the aggregator and never displayed.
 

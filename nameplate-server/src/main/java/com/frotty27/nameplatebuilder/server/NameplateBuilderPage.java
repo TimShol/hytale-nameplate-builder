@@ -102,24 +102,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         // Look-at toggle
         bindAction(events, "#LookToggle", "ToggleLook");
 
-        List<SegmentView> available = getAvailableViews();
-        List<SegmentView> chain = getChainViews();
-
-        int totalAvailPages = Math.max(1, (int) Math.ceil(available.size() / (double) AVAIL_PAGE_SIZE));
-        int totalChainPages = Math.max(1, (int) Math.ceil(chain.size() / (double) CHAIN_PAGE_SIZE));
-        if (availPage >= totalAvailPages) availPage = totalAvailPages - 1;
-        if (chainPage >= totalChainPages) chainPage = totalChainPages - 1;
-
-        fillChain(commands, chain, totalChainPages);
-        fillAvailable(commands, available, totalAvailPages);
-
-        String preview = buildPreview(chain);
-        commands.set("#PreviewText.Text", preview);
-
-        boolean lookOnly = preferences.isOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE);
-        commands.set("#LookToggle.Text", lookOnly
-                ? "[x] Only show when looking at entity"
-                : "[ ] Only show when looking at entity");
+        populateCommands(commands);
     }
 
     private void bindAction(UIEventBuilder events, String selector, String action) {
@@ -228,7 +211,12 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
      */
     private UICommandBuilder buildUpdate() {
         UICommandBuilder commands = new UICommandBuilder();
+        populateCommands(commands);
+        return commands;
+    }
 
+    /** Shared logic for populating all dynamic UI properties (used by both build and update). */
+    private void populateCommands(UICommandBuilder commands) {
         commands.set("#FilterField.Value", filter);
         commands.set("#SeparatorField.Value", preferences.getSeparator(viewerUuid, ENTITY_TYPE));
 
@@ -243,15 +231,12 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         fillChain(commands, chain, totalChainPages);
         fillAvailable(commands, available, totalAvailPages);
 
-        String preview = buildPreview(chain);
-        commands.set("#PreviewText.Text", preview);
+        commands.set("#PreviewText.Text", buildPreview(chain));
 
         boolean lookOnly = preferences.isOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE);
         commands.set("#LookToggle.Text", lookOnly
                 ? "[x] Only show when looking at entity"
                 : "[ ] Only show when looking at entity");
-
-        return commands;
     }
 
     private void persistUiState() {
@@ -441,8 +426,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
     private static SegmentView toView(SegmentKey key, NameplateRegistry.Segment segment) {
         return new SegmentView(
                 key,
-                segment.getDisplayName(),
-                segment.getPluginName(),
+                segment.displayName(),
+                segment.pluginName(),
                 formatAuthorWithTarget(segment));
     }
 
@@ -450,19 +435,19 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         return view.displayName().toLowerCase().contains(lowerFilter)
                 || view.modName().toLowerCase().contains(lowerFilter)
                 || view.author().toLowerCase().contains(lowerFilter)
-                || segment.getTarget().getLabel().toLowerCase().contains(lowerFilter)
-                || segment.getPluginId().toLowerCase().contains(lowerFilter);
+                || segment.target().getLabel().toLowerCase().contains(lowerFilter)
+                || segment.pluginId().toLowerCase().contains(lowerFilter);
     }
 
     private static String formatAuthorWithTarget(NameplateRegistry.Segment segment) {
-        return segment.getPluginAuthor() + " [" + segment.getTarget().getLabel() + "]";
+        return segment.pluginAuthor() + " [" + segment.target().getLabel() + "]";
     }
 
     private Comparator<SegmentKey> getDefaultComparator() {
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         return Comparator
-                .comparing((SegmentKey k) -> segments.get(k).getPluginName())
-                .thenComparing(k -> segments.get(k).getDisplayName());
+                .comparing((SegmentKey k) -> segments.get(k).pluginName())
+                .thenComparing(k -> segments.get(k).displayName());
     }
 
     private String buildPreview(List<SegmentView> views) {
@@ -477,7 +462,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             String name = view.displayName();
             String candidate = builder.isEmpty()
                     ? name
-                    : builder.toString() + separator + name;
+                    : builder + separator + name;
 
             if (candidate.length() > PREVIEW_MAX_LENGTH) {
                 // This segment won't fit — truncate with ellipsis after the last one that did

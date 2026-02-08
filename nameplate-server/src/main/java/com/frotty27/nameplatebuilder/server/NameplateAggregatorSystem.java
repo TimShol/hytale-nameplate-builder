@@ -20,6 +20,7 @@ import com.hypixel.hytale.server.core.modules.entity.component.HeadRotation;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.tracker.EntityTrackerSystems;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -66,7 +67,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     }
 
     @Override
-    public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk, Store<EntityStore> store, CommandBuffer<EntityStore> commandBuffer) {
+    public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk, @NonNull Store<EntityStore> store, @NonNull CommandBuffer<EntityStore> commandBuffer) {
         EntityTrackerSystems.Visible visible = chunk.getComponent(index, visibleComponentType);
         if (visible == null || visible.visibleTo == null) {
             return;
@@ -91,11 +92,11 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         Comparator<SegmentKey> defaultComparator = Comparator
                 .comparing((SegmentKey k) -> {
                     NameplateRegistry.Segment s = segments.get(k);
-                    return s != null ? s.getPluginName() : k.pluginId();
+                    return s != null ? s.pluginName() : k.pluginId();
                 })
                 .thenComparing(k -> {
                     NameplateRegistry.Segment s = segments.get(k);
-                    return s != null ? s.getDisplayName() : k.segmentId();
+                    return s != null ? s.displayName() : k.segmentId();
                 });
 
         for (Map.Entry<Ref<EntityStore>, EntityTrackerSystems.EntityViewer> viewerEntry : visible.visibleTo.entrySet()) {

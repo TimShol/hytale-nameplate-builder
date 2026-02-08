@@ -9,6 +9,7 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import org.jspecify.annotations.NonNull;
 
 import java.util.UUID;
 
@@ -25,8 +26,8 @@ final class NameplateBuilderCommand extends AbstractPlayerCommand {
     }
 
     @Override
-    protected void execute(CommandContext context, Store<EntityStore> store, Ref<EntityStore> ref, PlayerRef playerRef, World world) {
-        if (playerRef == null || !playerRef.isValid()) {
+    protected void execute(@NonNull CommandContext context, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
+        if (!playerRef.isValid()) {
             context.sendMessage(com.hypixel.hytale.server.core.Message.raw("Player reference is not available.")
                     .color("RED"));
             return;

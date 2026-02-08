@@ -9,6 +9,7 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.server.core.modules.entity.tracker.EntityTrackerSystems;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
 /**
  * Example {@link EntityTickingSystem} that updates a per-entity "lifetime" segment.
@@ -50,7 +51,7 @@ final class LifetimeNameplateSystem extends EntityTickingSystem<EntityStore> {
 
     @Override
     public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk,
-                     Store<EntityStore> store, CommandBuffer<EntityStore> commandBuffer) {
+                     @NonNullDecl Store<EntityStore> store, @NonNullDecl CommandBuffer<EntityStore> commandBuffer) {
         globalTick++;
 
         NameplateData data = chunk.getComponent(index, nameplateDataType);

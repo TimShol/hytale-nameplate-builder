@@ -38,7 +38,7 @@ final class NameplateRegistry implements INameplateRegistry {
             pluginAuthor = pluginAuthor.substring(0, pluginAuthor.indexOf(':'));
         }
         SegmentKey key = new SegmentKey(pluginId, segmentId);
-        segments.put(key, new Segment(pluginId, pluginName, pluginAuthor, segmentId, displayName, target));
+        segments.put(key, new Segment(pluginId, pluginName, pluginAuthor, displayName, target));
     }
 
     @Override
@@ -70,34 +70,7 @@ final class NameplateRegistry implements INameplateRegistry {
 
     // ── Segment (UI metadata only) ──
 
-    static final class Segment {
-        private final String pluginId;
-        private final String pluginName;
-        private final String pluginAuthor;
-        private final String segmentId;
-        private final String displayName;
-        private final SegmentTarget target;
-
-        Segment(String pluginId, String pluginName, String pluginAuthor,
-                String segmentId, String displayName, SegmentTarget target) {
-            this.pluginId = pluginId;
-            this.pluginName = pluginName;
-            this.pluginAuthor = pluginAuthor;
-            this.segmentId = segmentId;
-            this.displayName = displayName;
-            this.target = target;
-        }
-
-        String getPluginId()     { return pluginId; }
-        String getPluginName()   { return pluginName; }
-        String getPluginAuthor() { return pluginAuthor; }
-        String getSegmentId()    { return segmentId; }
-        String getDisplayName()  { return displayName; }
-        SegmentTarget getTarget() { return target; }
-
-        @Override
-        public String toString() {
-            return "Segment[" + pluginId + ":" + segmentId + "]";
-        }
+    record Segment(String pluginId, String pluginName, String pluginAuthor,
+                   String displayName, SegmentTarget target) {
     }
 }

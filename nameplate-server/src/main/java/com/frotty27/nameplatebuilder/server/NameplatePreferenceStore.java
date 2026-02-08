@@ -36,72 +36,34 @@ final class NameplatePreferenceStore {
                 if (parts.length < 2) {
                     continue;
                 }
-                if (parts[0].equals("U")) {
-                    if (parts.length < 4) {
-                        continue;
+                switch (parts[0]) {
+                    case "U" -> {
+                        if (parts.length < 4) continue;
+                        PreferenceSet set = getSet(UUID.fromString(parts[1]), parts[2], true);
+                        set.useGlobal = Boolean.parseBoolean(parts[3]);
+                        set.onlyShowWhenLooking = parts.length >= 5 && Boolean.parseBoolean(parts[4]);
                     }
-                    UUID viewer = UUID.fromString(parts[1]);
-                    String entityType = parts[2];
-                    boolean useGlobal = Boolean.parseBoolean(parts[3]);
-                    boolean onlyLooking = parts.length >= 5 && Boolean.parseBoolean(parts[4]);
-                    PreferenceSet set = data
-                            .computeIfAbsent(viewer, ignored -> new HashMap<>())
-                            .computeIfAbsent(entityType, ignored -> new PreferenceSet());
-                    set.useGlobal = useGlobal;
-                    set.onlyShowWhenLooking = onlyLooking;
-                    continue;
-                }
-                if (parts[0].equals("S")) {
-                    if (parts.length < 7) {
-                        continue;
+                    case "S" -> {
+                        if (parts.length < 7) continue;
+                        PreferenceSet set = getSet(UUID.fromString(parts[1]), parts[2], true);
+                        SegmentKey key = new SegmentKey(parts[3], parts[4]);
+                        set.enabled.put(key, Boolean.parseBoolean(parts[5]));
+                        set.order.put(key, Integer.parseInt(parts[6]));
                     }
-                    UUID viewer = UUID.fromString(parts[1]);
-                    String entityType = parts[2];
-                    String pluginId = parts[3];
-                    String segmentId = parts[4];
-                    boolean enabled = Boolean.parseBoolean(parts[5]);
-                    int order = Integer.parseInt(parts[6]);
-
-                    SegmentKey key = new SegmentKey(pluginId, segmentId);
-                    PreferenceSet set = data
-                            .computeIfAbsent(viewer, ignored -> new HashMap<>())
-                            .computeIfAbsent(entityType, ignored -> new PreferenceSet());
-
-                    set.enabled.put(key, enabled);
-                    set.order.put(key, order);
-                    continue;
-                }
-                if (parts[0].equals("D")) {
-                    if (parts.length < 4) {
-                        continue;
+                    case "D" -> {
+                        if (parts.length < 4) continue;
+                        PreferenceSet set = getSet(UUID.fromString(parts[1]), parts[2], true);
+                        set.separator = parts[3].replace("\\p", "|").replace("\\\\", "\\");
                     }
-                    UUID viewer = UUID.fromString(parts[1]);
-                    String entityType = parts[2];
-                    String separator = parts[3];
-                    // Unescape: \p → |, \\ → \
-                    separator = separator.replace("\\p", "|").replace("\\\\", "\\");
-                    PreferenceSet set = data
-                            .computeIfAbsent(viewer, ignored -> new HashMap<>())
-                            .computeIfAbsent(entityType, ignored -> new PreferenceSet());
-                    set.separator = separator;
-                    continue;
-                }
-                // Legacy format: viewer|entityType|pluginId|segmentId|enabled|order
-                if (parts.length >= 6) {
-                    UUID viewer = UUID.fromString(parts[0]);
-                    String entityType = parts[1];
-                    String pluginId = parts[2];
-                    String segmentId = parts[3];
-                    boolean enabled = Boolean.parseBoolean(parts[4]);
-                    int order = Integer.parseInt(parts[5]);
-
-                    SegmentKey key = new SegmentKey(pluginId, segmentId);
-                    PreferenceSet set = data
-                            .computeIfAbsent(viewer, ignored -> new HashMap<>())
-                            .computeIfAbsent(entityType, ignored -> new PreferenceSet());
-
-                    set.enabled.put(key, enabled);
-                    set.order.put(key, order);
+                    default -> {
+                        // Legacy format: viewer|entityType|pluginId|segmentId|enabled|order
+                        if (parts.length >= 6) {
+                            PreferenceSet set = getSet(UUID.fromString(parts[0]), parts[1], true);
+                            SegmentKey key = new SegmentKey(parts[2], parts[3]);
+                            set.enabled.put(key, Boolean.parseBoolean(parts[4]));
+                            set.order.put(key, Integer.parseInt(parts[5]));
+                        }
+                    }
                 }
             }
         } catch (IOException | RuntimeException _) {
@@ -166,14 +128,6 @@ final class NameplatePreferenceStore {
             return false;
         }
         return getSet(viewer, entityType, false) != null;
-    }
-
-    void toggleUseGlobal(UUID viewer, String entityType) {
-        if ("*".equals(entityType)) {
-            return;
-        }
-        PreferenceSet set = getSet(viewer, entityType, true);
-        set.useGlobal = !set.useGlobal;
     }
 
     boolean isOnlyShowWhenLooking(UUID viewer, String entityType) {
