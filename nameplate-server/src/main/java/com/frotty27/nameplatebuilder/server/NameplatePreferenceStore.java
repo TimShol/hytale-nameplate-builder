@@ -43,10 +43,12 @@ final class NameplatePreferenceStore {
                     UUID viewer = UUID.fromString(parts[1]);
                     String entityType = parts[2];
                     boolean useGlobal = Boolean.parseBoolean(parts[3]);
+                    boolean onlyLooking = parts.length >= 5 && Boolean.parseBoolean(parts[4]);
                     PreferenceSet set = data
                             .computeIfAbsent(viewer, ignored -> new HashMap<>())
                             .computeIfAbsent(entityType, ignored -> new PreferenceSet());
                     set.useGlobal = useGlobal;
+                    set.onlyShowWhenLooking = onlyLooking;
                     continue;
                 }
                 if (parts[0].equals("S")) {
@@ -102,14 +104,14 @@ final class NameplatePreferenceStore {
         try (BufferedWriter writer = Files.newBufferedWriter(filePath)) {
             writer.write("# S|viewerUuid|entityType|pluginId|segmentId|enabled|order");
             writer.newLine();
-            writer.write("# U|viewerUuid|entityType|useGlobal");
+            writer.write("# U|viewerUuid|entityType|useGlobal|onlyShowWhenLooking");
             writer.newLine();
             for (Map.Entry<UUID, Map<String, PreferenceSet>> viewerEntry : data.entrySet()) {
                 UUID viewer = viewerEntry.getKey();
                 for (Map.Entry<String, PreferenceSet> entityEntry : viewerEntry.getValue().entrySet()) {
                     String entityType = entityEntry.getKey();
                     PreferenceSet set = entityEntry.getValue();
-                    writer.write("U|" + viewer + "|" + entityType + "|" + set.useGlobal);
+                    writer.write("U|" + viewer + "|" + entityType + "|" + set.useGlobal + "|" + set.onlyShowWhenLooking);
                     writer.newLine();
                     for (Map.Entry<SegmentKey, Boolean> enabledEntry : set.enabled.entrySet()) {
                         SegmentKey key = enabledEntry.getKey();
@@ -139,6 +141,16 @@ final class NameplatePreferenceStore {
         }
         PreferenceSet set = getSet(viewer, entityType, true);
         set.useGlobal = !set.useGlobal;
+    }
+
+    boolean isOnlyShowWhenLooking(UUID viewer, String entityType) {
+        PreferenceSet set = getSet(viewer, entityType, false);
+        return set != null && set.onlyShowWhenLooking;
+    }
+
+    void setOnlyShowWhenLooking(UUID viewer, String entityType, boolean value) {
+        PreferenceSet set = getSet(viewer, entityType, true);
+        set.onlyShowWhenLooking = value;
     }
 
     boolean isEnabled(UUID viewer, String entityType, SegmentKey key) {
@@ -248,5 +260,6 @@ final class NameplatePreferenceStore {
         private final Map<SegmentKey, Boolean> enabled = new HashMap<>();
         private final Map<SegmentKey, Integer> order = new HashMap<>();
         private boolean useGlobal = false;
+        private boolean onlyShowWhenLooking = false;
     }
 }

@@ -25,7 +25,8 @@ $C.@PageOverlay {
       }
 
       $C.@TextField #FilterField {
-        Anchor: (Width: 400, Height: 34, Bottom: 16);
+        Anchor: (Width: 400, Height: 34, Bottom: 14);
+        PlaceholderText: "Filter by keyword...";
       }
 
       // ── Chain: Your Nameplate ──
@@ -49,141 +50,81 @@ $C.@PageOverlay {
       Label #ChainEmpty {
         Text: "No blocks added yet";
         Style: (TextColor: #5a6d82, FontSize: 13);
-        Anchor: (Height: 80, Bottom: 4);
+        Anchor: (Height: 104, Bottom: 4);
         Visible: true;
       }
 
-      // Chain blocks row (horizontal, left-to-right)
+      // Chain blocks row — 4 wider blocks
       Group #ChainStrip {
         LayoutMode: Left;
-        Anchor: (Height: 86, Bottom: 4);
+        Anchor: (Height: 108, Bottom: 4);
         Padding: (Top: 2, Bottom: 2);
 
         // Block 0
         Group #ChainBlock0 {
-          Anchor: (Width: 104, Height: 82, Right: 6);
+          Anchor: (Width: 204, Height: 104, Right: 8);
           Background: (Color: #1a2840);
-          Padding: (Left: 8, Right: 8, Top: 6, Bottom: 4);
+          Padding: (Left: 10, Right: 10, Top: 8, Bottom: 4);
           LayoutMode: Top;
           Visible: false;
-          Label #ChainBlock0Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #ChainBlock0Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 22, Top: 2);
-            $C.@SmallSecondaryTextButton #ChainBlock0Left { Text: "<"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock0Right { Text: ">"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock0Remove { Text: "x"; Anchor: (Width: 24, Height: 20); }
+          Label #ChainBlock0Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+          Label #ChainBlock0Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+          Label #ChainBlock0Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+          Group { LayoutMode: Left; Anchor: (Height: 24, Top: 4); Padding: (Left: 40, Right: 40);
+            $C.@SmallSecondaryTextButton #ChainBlock0Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+            $C.@SmallSecondaryTextButton #ChainBlock0Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+            $C.@SmallSecondaryTextButton #ChainBlock0Remove { @Text = "X"; Anchor: (Width: 30, Height: 22); }
           }
         }
 
         // Block 1
         Group #ChainBlock1 {
-          Anchor: (Width: 104, Height: 82, Right: 6);
+          Anchor: (Width: 204, Height: 104, Right: 8);
           Background: (Color: #1a2840);
-          Padding: (Left: 8, Right: 8, Top: 6, Bottom: 4);
+          Padding: (Left: 10, Right: 10, Top: 8, Bottom: 4);
           LayoutMode: Top;
           Visible: false;
-          Label #ChainBlock1Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #ChainBlock1Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 22, Top: 2);
-            $C.@SmallSecondaryTextButton #ChainBlock1Left { Text: "<"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock1Right { Text: ">"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock1Remove { Text: "x"; Anchor: (Width: 24, Height: 20); }
+          Label #ChainBlock1Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+          Label #ChainBlock1Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+          Label #ChainBlock1Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+          Group { LayoutMode: Left; Anchor: (Height: 24, Top: 4); Padding: (Left: 40, Right: 40);
+            $C.@SmallSecondaryTextButton #ChainBlock1Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+            $C.@SmallSecondaryTextButton #ChainBlock1Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+            $C.@SmallSecondaryTextButton #ChainBlock1Remove { @Text = "X"; Anchor: (Width: 30, Height: 22); }
           }
         }
 
         // Block 2
         Group #ChainBlock2 {
-          Anchor: (Width: 104, Height: 82, Right: 6);
+          Anchor: (Width: 204, Height: 104, Right: 8);
           Background: (Color: #1a2840);
-          Padding: (Left: 8, Right: 8, Top: 6, Bottom: 4);
+          Padding: (Left: 10, Right: 10, Top: 8, Bottom: 4);
           LayoutMode: Top;
           Visible: false;
-          Label #ChainBlock2Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #ChainBlock2Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 22, Top: 2);
-            $C.@SmallSecondaryTextButton #ChainBlock2Left { Text: "<"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock2Right { Text: ">"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock2Remove { Text: "x"; Anchor: (Width: 24, Height: 20); }
+          Label #ChainBlock2Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+          Label #ChainBlock2Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+          Label #ChainBlock2Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+          Group { LayoutMode: Left; Anchor: (Height: 24, Top: 4); Padding: (Left: 40, Right: 40);
+            $C.@SmallSecondaryTextButton #ChainBlock2Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+            $C.@SmallSecondaryTextButton #ChainBlock2Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+            $C.@SmallSecondaryTextButton #ChainBlock2Remove { @Text = "X"; Anchor: (Width: 30, Height: 22); }
           }
         }
 
         // Block 3
         Group #ChainBlock3 {
-          Anchor: (Width: 104, Height: 82, Right: 6);
+          Anchor: (Width: 204, Height: 104);
           Background: (Color: #1a2840);
-          Padding: (Left: 8, Right: 8, Top: 6, Bottom: 4);
+          Padding: (Left: 10, Right: 10, Top: 8, Bottom: 4);
           LayoutMode: Top;
           Visible: false;
-          Label #ChainBlock3Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #ChainBlock3Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 22, Top: 2);
-            $C.@SmallSecondaryTextButton #ChainBlock3Left { Text: "<"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock3Right { Text: ">"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock3Remove { Text: "x"; Anchor: (Width: 24, Height: 20); }
-          }
-        }
-
-        // Block 4
-        Group #ChainBlock4 {
-          Anchor: (Width: 104, Height: 82, Right: 6);
-          Background: (Color: #1a2840);
-          Padding: (Left: 8, Right: 8, Top: 6, Bottom: 4);
-          LayoutMode: Top;
-          Visible: false;
-          Label #ChainBlock4Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #ChainBlock4Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 22, Top: 2);
-            $C.@SmallSecondaryTextButton #ChainBlock4Left { Text: "<"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock4Right { Text: ">"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock4Remove { Text: "x"; Anchor: (Width: 24, Height: 20); }
-          }
-        }
-
-        // Block 5
-        Group #ChainBlock5 {
-          Anchor: (Width: 104, Height: 82, Right: 6);
-          Background: (Color: #1a2840);
-          Padding: (Left: 8, Right: 8, Top: 6, Bottom: 4);
-          LayoutMode: Top;
-          Visible: false;
-          Label #ChainBlock5Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #ChainBlock5Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 22, Top: 2);
-            $C.@SmallSecondaryTextButton #ChainBlock5Left { Text: "<"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock5Right { Text: ">"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock5Remove { Text: "x"; Anchor: (Width: 24, Height: 20); }
-          }
-        }
-
-        // Block 6
-        Group #ChainBlock6 {
-          Anchor: (Width: 104, Height: 82, Right: 6);
-          Background: (Color: #1a2840);
-          Padding: (Left: 8, Right: 8, Top: 6, Bottom: 4);
-          LayoutMode: Top;
-          Visible: false;
-          Label #ChainBlock6Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #ChainBlock6Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 22, Top: 2);
-            $C.@SmallSecondaryTextButton #ChainBlock6Left { Text: "<"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock6Right { Text: ">"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock6Remove { Text: "x"; Anchor: (Width: 24, Height: 20); }
-          }
-        }
-
-        // Block 7
-        Group #ChainBlock7 {
-          Anchor: (Width: 104, Height: 82, Right: 6);
-          Background: (Color: #1a2840);
-          Padding: (Left: 8, Right: 8, Top: 6, Bottom: 4);
-          LayoutMode: Top;
-          Visible: false;
-          Label #ChainBlock7Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #ChainBlock7Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 22, Top: 2);
-            $C.@SmallSecondaryTextButton #ChainBlock7Left { Text: "<"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock7Right { Text: ">"; Anchor: (Width: 24, Height: 20, Right: 3); }
-            $C.@SmallSecondaryTextButton #ChainBlock7Remove { Text: "x"; Anchor: (Width: 24, Height: 20); }
+          Label #ChainBlock3Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+          Label #ChainBlock3Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+          Label #ChainBlock3Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+          Group { LayoutMode: Left; Anchor: (Height: 24, Top: 4); Padding: (Left: 40, Right: 40);
+            $C.@SmallSecondaryTextButton #ChainBlock3Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+            $C.@SmallSecondaryTextButton #ChainBlock3Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+            $C.@SmallSecondaryTextButton #ChainBlock3Remove { @Text = "X"; Anchor: (Width: 30, Height: 22); }
           }
         }
       }
@@ -193,9 +134,10 @@ $C.@PageOverlay {
         LayoutMode: Left;
         Anchor: (Height: 28, Bottom: 6);
         Visible: false;
+        Padding: (Left: 340, Right: 340);
 
         $C.@SmallSecondaryTextButton #PrevChain {
-          Text: "<";
+          @Text = "<";
           Anchor: (Width: 28, Height: 24, Right: 8);
         }
 
@@ -205,14 +147,14 @@ $C.@PageOverlay {
         }
 
         $C.@SmallSecondaryTextButton #NextChain {
-          Text: ">";
+          @Text = ">";
           Anchor: (Width: 28, Height: 24, Left: 8);
         }
       }
 
       // Preview
       Group #PreviewContainer {
-        Anchor: (Height: 36, Bottom: 16);
+        Anchor: (Height: 36, Bottom: 12);
         Background: (Color: #0a0f17);
         Padding: (Horizontal: 14, Vertical: 8);
         LayoutMode: Left;
@@ -226,6 +168,16 @@ $C.@PageOverlay {
         Label #PreviewText {
           Style: (FontSize: 14, TextColor: #ffffff);
           Anchor: (Height: 20);
+        }
+      }
+
+      // ── Settings Toggle ──
+      Group {
+        LayoutMode: Left;
+        Anchor: (Height: 28, Bottom: 8);
+
+        $C.@SmallSecondaryTextButton #LookToggle {
+          Anchor: (Width: 300, Height: 24);
         }
       }
 
@@ -256,57 +208,61 @@ $C.@PageOverlay {
       // Available blocks — Row 1 (blocks 0-3)
       Group #AvailRow1 {
         LayoutMode: Left;
-        Anchor: (Height: 86, Bottom: 6);
+        Anchor: (Height: 104, Bottom: 6);
 
         Group #AvailBlock0 {
-          Anchor: (Width: 206, Height: 82, Right: 6);
-          Background: (Color: #101826);
-          Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4);
+          Anchor: (Width: 204, Height: 100, Right: 8);
+          Background: (Color: #162236);
+          Padding: (Left: 10, Right: 10, Top: 8, Bottom: 4);
           LayoutMode: Top;
           Visible: false;
-          Label #AvailBlock0Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #AvailBlock0Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 24, Top: 2);
-            $C.@TextButton #AvailBlock0Add { Text: "+ Add"; Anchor: (Width: 60, Height: 22); }
+          Label #AvailBlock0Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+          Label #AvailBlock0Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+          Label #AvailBlock0Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+          Group { LayoutMode: Left; Anchor: (Height: 26, Top: 4); Padding: (Left: 64, Right: 64);
+            $C.@SmallSecondaryTextButton #AvailBlock0Add { @Text = "Add"; Anchor: (Width: 56, Height: 22); }
           }
         }
 
         Group #AvailBlock1 {
-          Anchor: (Width: 206, Height: 82, Right: 6);
-          Background: (Color: #101826);
-          Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4);
+          Anchor: (Width: 204, Height: 100, Right: 8);
+          Background: (Color: #162236);
+          Padding: (Left: 10, Right: 10, Top: 8, Bottom: 4);
           LayoutMode: Top;
           Visible: false;
-          Label #AvailBlock1Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #AvailBlock1Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 24, Top: 2);
-            $C.@TextButton #AvailBlock1Add { Text: "+ Add"; Anchor: (Width: 60, Height: 22); }
+          Label #AvailBlock1Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+          Label #AvailBlock1Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+          Label #AvailBlock1Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+          Group { LayoutMode: Left; Anchor: (Height: 26, Top: 4); Padding: (Left: 64, Right: 64);
+            $C.@SmallSecondaryTextButton #AvailBlock1Add { @Text = "Add"; Anchor: (Width: 56, Height: 22); }
           }
         }
 
         Group #AvailBlock2 {
-          Anchor: (Width: 206, Height: 82, Right: 6);
-          Background: (Color: #101826);
-          Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4);
+          Anchor: (Width: 204, Height: 100, Right: 8);
+          Background: (Color: #162236);
+          Padding: (Left: 10, Right: 10, Top: 8, Bottom: 4);
           LayoutMode: Top;
           Visible: false;
-          Label #AvailBlock2Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #AvailBlock2Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 24, Top: 2);
-            $C.@TextButton #AvailBlock2Add { Text: "+ Add"; Anchor: (Width: 60, Height: 22); }
+          Label #AvailBlock2Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+          Label #AvailBlock2Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+          Label #AvailBlock2Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+          Group { LayoutMode: Left; Anchor: (Height: 26, Top: 4); Padding: (Left: 64, Right: 64);
+            $C.@SmallSecondaryTextButton #AvailBlock2Add { @Text = "Add"; Anchor: (Width: 56, Height: 22); }
           }
         }
 
         Group #AvailBlock3 {
-          Anchor: (Width: 206, Height: 82, Right: 6);
-          Background: (Color: #101826);
-          Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4);
+          Anchor: (Width: 204, Height: 100);
+          Background: (Color: #162236);
+          Padding: (Left: 10, Right: 10, Top: 8, Bottom: 4);
           LayoutMode: Top;
           Visible: false;
-          Label #AvailBlock3Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #AvailBlock3Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 24, Top: 2);
-            $C.@TextButton #AvailBlock3Add { Text: "+ Add"; Anchor: (Width: 60, Height: 22); }
+          Label #AvailBlock3Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+          Label #AvailBlock3Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+          Label #AvailBlock3Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+          Group { LayoutMode: Left; Anchor: (Height: 26, Top: 4); Padding: (Left: 64, Right: 64);
+            $C.@SmallSecondaryTextButton #AvailBlock3Add { @Text = "Add"; Anchor: (Width: 56, Height: 22); }
           }
         }
       }
@@ -314,57 +270,61 @@ $C.@PageOverlay {
       // Available blocks — Row 2 (blocks 4-7)
       Group #AvailRow2 {
         LayoutMode: Left;
-        Anchor: (Height: 86, Bottom: 6);
+        Anchor: (Height: 104, Bottom: 6);
 
         Group #AvailBlock4 {
-          Anchor: (Width: 206, Height: 82, Right: 6);
-          Background: (Color: #101826);
-          Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4);
+          Anchor: (Width: 204, Height: 100, Right: 8);
+          Background: (Color: #162236);
+          Padding: (Left: 10, Right: 10, Top: 8, Bottom: 4);
           LayoutMode: Top;
           Visible: false;
-          Label #AvailBlock4Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #AvailBlock4Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 24, Top: 2);
-            $C.@TextButton #AvailBlock4Add { Text: "+ Add"; Anchor: (Width: 60, Height: 22); }
+          Label #AvailBlock4Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+          Label #AvailBlock4Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+          Label #AvailBlock4Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+          Group { LayoutMode: Left; Anchor: (Height: 26, Top: 4); Padding: (Left: 64, Right: 64);
+            $C.@SmallSecondaryTextButton #AvailBlock4Add { @Text = "Add"; Anchor: (Width: 56, Height: 22); }
           }
         }
 
         Group #AvailBlock5 {
-          Anchor: (Width: 206, Height: 82, Right: 6);
-          Background: (Color: #101826);
-          Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4);
+          Anchor: (Width: 204, Height: 100, Right: 8);
+          Background: (Color: #162236);
+          Padding: (Left: 10, Right: 10, Top: 8, Bottom: 4);
           LayoutMode: Top;
           Visible: false;
-          Label #AvailBlock5Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #AvailBlock5Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 24, Top: 2);
-            $C.@TextButton #AvailBlock5Add { Text: "+ Add"; Anchor: (Width: 60, Height: 22); }
+          Label #AvailBlock5Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+          Label #AvailBlock5Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+          Label #AvailBlock5Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+          Group { LayoutMode: Left; Anchor: (Height: 26, Top: 4); Padding: (Left: 64, Right: 64);
+            $C.@SmallSecondaryTextButton #AvailBlock5Add { @Text = "Add"; Anchor: (Width: 56, Height: 22); }
           }
         }
 
         Group #AvailBlock6 {
-          Anchor: (Width: 206, Height: 82, Right: 6);
-          Background: (Color: #101826);
-          Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4);
+          Anchor: (Width: 204, Height: 100, Right: 8);
+          Background: (Color: #162236);
+          Padding: (Left: 10, Right: 10, Top: 8, Bottom: 4);
           LayoutMode: Top;
           Visible: false;
-          Label #AvailBlock6Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #AvailBlock6Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 24, Top: 2);
-            $C.@TextButton #AvailBlock6Add { Text: "+ Add"; Anchor: (Width: 60, Height: 22); }
+          Label #AvailBlock6Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+          Label #AvailBlock6Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+          Label #AvailBlock6Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+          Group { LayoutMode: Left; Anchor: (Height: 26, Top: 4); Padding: (Left: 64, Right: 64);
+            $C.@SmallSecondaryTextButton #AvailBlock6Add { @Text = "Add"; Anchor: (Width: 56, Height: 22); }
           }
         }
 
         Group #AvailBlock7 {
-          Anchor: (Width: 206, Height: 82, Right: 6);
-          Background: (Color: #101826);
-          Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4);
+          Anchor: (Width: 204, Height: 100);
+          Background: (Color: #162236);
+          Padding: (Left: 10, Right: 10, Top: 8, Bottom: 4);
           LayoutMode: Top;
           Visible: false;
-          Label #AvailBlock7Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-          Label #AvailBlock7Sub { Style: (FontSize: 10, TextColor: #6b7d93); Anchor: (Height: 14); }
-          Group { LayoutMode: Left; Anchor: (Height: 24, Top: 2);
-            $C.@TextButton #AvailBlock7Add { Text: "+ Add"; Anchor: (Width: 60, Height: 22); }
+          Label #AvailBlock7Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+          Label #AvailBlock7Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+          Label #AvailBlock7Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+          Group { LayoutMode: Left; Anchor: (Height: 26, Top: 4); Padding: (Left: 64, Right: 64);
+            $C.@SmallSecondaryTextButton #AvailBlock7Add { @Text = "Add"; Anchor: (Width: 56, Height: 22); }
           }
         }
       }
@@ -374,9 +334,10 @@ $C.@PageOverlay {
         LayoutMode: Left;
         Anchor: (Height: 28, Bottom: 8);
         Visible: false;
+        Padding: (Left: 340, Right: 340);
 
         $C.@SmallSecondaryTextButton #PrevAvail {
-          Text: "<";
+          @Text = "<";
           Anchor: (Width: 28, Height: 24, Right: 8);
         }
 
@@ -386,7 +347,7 @@ $C.@PageOverlay {
         }
 
         $C.@SmallSecondaryTextButton #NextAvail {
-          Text: ">";
+          @Text = ">";
           Anchor: (Width: 28, Height: 24, Left: 8);
         }
       }
@@ -394,15 +355,16 @@ $C.@PageOverlay {
       // ── Footer ──
       Group {
         LayoutMode: Left;
-        Anchor: (Height: 42, Top: 6);
+        Anchor: (Height: 42, Top: 4);
+        Padding: (Left: 300, Right: 300);
 
         $C.@TextButton #SaveButton {
-          Text: "Save";
+          @Text = "Save";
           Anchor: (Width: 120, Height: 36, Right: 10);
         }
 
         $C.@CancelTextButton #CloseButton {
-          Text: "Close";
+          @Text = "Close";
           Anchor: (Width: 120, Height: 36);
         }
       }

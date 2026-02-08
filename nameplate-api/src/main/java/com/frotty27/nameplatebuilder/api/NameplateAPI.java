@@ -1,181 +1,247 @@
 package com.frotty27.nameplatebuilder.api;
 
+import com.hypixel.hytale.component.ComponentType;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
-
-import java.util.UUID;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 /**
  * Static entry point for the Nameplate Builder API.
  *
- * <p>Mods use this class to register nameplate segments, update their text,
- * and remove them when no longer needed. The API is backed by a registry
- * that is set by the NameplateBuilder server plugin during startup.</p>
+ * <p>Mods use this class to describe their nameplate segments (for the player UI)
+ * and to register/remove nameplate text on individual entities.</p>
+ *
+ * <h3>Quick start</h3>
+ * <pre>{@code
+ * // In setup() — describe your segment for the UI (optional but recommended)
+ * NameplateAPI.describe(this, "health", "Health Bar");
+ *
+ * // At runtime — register nameplate text to an entity
+ * NameplateAPI.register(store, entityRef, "health", "67/67");
+ *
+ * // Update when value changes
+ * NameplateAPI.register(store, entityRef, "health", "23/67");
+ *
+ * // Remove a single segment from an entity
+ * NameplateAPI.remove(store, entityRef, "health");
+ *
+ * // Remove all nameplate data from an entity
+ * store.tryRemoveComponent(entityRef, NameplateAPI.getComponentType());
+ * }</pre>
  *
  * <p><b>Dependency:</b> your mod's {@code manifest.json} must declare
  * {@code "Frotty27:NameplateBuilder": "*"} in its Dependencies to ensure
- * the registry is available before your plugin loads.</p>
+ * the API is available before your plugin loads.</p>
+ *
+ * @see NameplateNotInitializedException
+ * @see NameplateArgumentException
  */
 public final class NameplateAPI {
 
     private static volatile INameplateRegistry registry;
+    private static volatile ComponentType<EntityStore, NameplateData> componentType;
 
     private NameplateAPI() {
     }
+
+    // ── Internal setters (called by NameplateBuilder server plugin) ──
 
     /** Called internally by the NameplateBuilder server plugin during startup. */
     public static void setRegistry(INameplateRegistry registry) {
         NameplateAPI.registry = registry;
     }
 
-    /** Returns the backing registry, or throws if NameplateBuilder is not loaded. */
-    public static INameplateRegistry getRegistry() {
-        INameplateRegistry current = registry;
+    /** Called internally after registering the {@link NameplateData} component. */
+    public static void setComponentType(ComponentType<EntityStore, NameplateData> type) {
+        NameplateAPI.componentType = type;
+    }
+
+    // ── Describe (UI metadata) ──
+
+    /**
+     * Describe a nameplate segment for the player UI.
+     *
+     * <p>This registers UI metadata (display name, author) so the Nameplate Builder
+     * UI can show a human-readable block for this segment. Calling this is
+     * <b>optional</b> — if skipped, the UI will show the raw segment ID instead.</p>
+     *
+     * <p>Call once during your plugin's {@code setup()} method:</p>
+     * <pre>{@code
+     * NameplateAPI.describe(this, "health", "Health Bar");
+     * }</pre>
+     *
+     * @param plugin      the plugin owning this segment
+     * @param segmentId   a unique identifier for this segment within your plugin
+     * @param displayName human-readable name shown in the Nameplate Builder UI
+     * @throws NameplateArgumentException       if any parameter is null or blank
+     * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
+     */
+    public static void describe(JavaPlugin plugin, String segmentId, String displayName) {
+        requireNonNull(plugin, "plugin");
+        requireNonBlank(segmentId, "segmentId");
+        requireNonBlank(displayName, "displayName");
+        getRegistry().describe(plugin, segmentId, displayName);
+    }
+
+    /**
+     * Remove a segment description from the UI.
+     *
+     * <p>After this call the segment will no longer appear in the Nameplate Builder UI.
+     * Existing {@link NameplateData} components on entities are <b>not</b> affected.</p>
+     *
+     * @param plugin    the plugin that described the segment
+     * @param segmentId the segment identifier
+     * @throws NameplateArgumentException       if any parameter is null or blank
+     * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
+     */
+    public static void undescribe(JavaPlugin plugin, String segmentId) {
+        requireNonNull(plugin, "plugin");
+        requireNonBlank(segmentId, "segmentId");
+        getRegistry().undescribe(plugin, segmentId);
+    }
+
+    /**
+     * Remove all segment descriptions registered by a plugin.
+     * Called automatically on server shutdown.
+     *
+     * @param plugin the plugin whose descriptions should be removed
+     * @throws NameplateArgumentException       if plugin is null
+     * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
+     */
+    public static void undescribeAll(JavaPlugin plugin) {
+        requireNonNull(plugin, "plugin");
+        getRegistry().undescribeAll(plugin);
+    }
+
+    // ── Register / Remove (per-entity text) ──
+
+    /**
+     * Register (or update) nameplate text for a segment on an entity.
+     *
+     * <p>If the entity does not yet have a {@link NameplateData} component,
+     * one is created and attached automatically. If the segment already has
+     * text on this entity, it is overwritten.</p>
+     *
+     * <pre>{@code
+     * NameplateAPI.register(store, entityRef, "health", "67/67");
+     * }</pre>
+     *
+     * @param store     the entity store
+     * @param entityRef reference to the entity
+     * @param segmentId the segment identifier (should match what was passed to {@link #describe})
+     * @param text      the text to display
+     * @throws NameplateArgumentException       if any parameter is null or blank
+     * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
+     */
+    public static void register(Store<EntityStore> store,
+                                Ref<EntityStore> entityRef,
+                                String segmentId,
+                                String text) {
+        requireNonNull(store, "store");
+        requireNonNull(entityRef, "entityRef");
+        requireNonBlank(segmentId, "segmentId");
+        requireNonBlank(text, "text", "must not be blank — use remove() to clear");
+
+        ComponentType<EntityStore, NameplateData> type = getComponentType();
+        NameplateData data = store.getComponent(entityRef, type);
+        if (data == null) {
+            data = new NameplateData();
+            data.setText(segmentId, text);
+            store.addComponent(entityRef, type, data);
+        } else {
+            data.setText(segmentId, text);
+        }
+    }
+
+    /**
+     * Remove a single segment's text from an entity.
+     *
+     * <p>If the entity's {@link NameplateData} component becomes empty after
+     * removal, the component is automatically removed from the entity.</p>
+     *
+     * <pre>{@code
+     * NameplateAPI.remove(store, entityRef, "health");
+     * }</pre>
+     *
+     * @param store     the entity store
+     * @param entityRef reference to the entity
+     * @param segmentId the segment identifier to remove
+     * @throws NameplateArgumentException       if any parameter is null or blank
+     * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
+     */
+    public static void remove(Store<EntityStore> store,
+                              Ref<EntityStore> entityRef,
+                              String segmentId) {
+        requireNonNull(store, "store");
+        requireNonNull(entityRef, "entityRef");
+        requireNonBlank(segmentId, "segmentId");
+
+        ComponentType<EntityStore, NameplateData> type = getComponentType();
+        NameplateData data = store.getComponent(entityRef, type);
+        if (data != null) {
+            data.removeText(segmentId);
+            if (data.isEmpty()) {
+                store.tryRemoveComponent(entityRef, type);
+            }
+        }
+    }
+
+    // ── Component type access ──
+
+    /**
+     * Returns the {@link ComponentType} for {@link NameplateData}.
+     *
+     * <p>Most mods should use {@link #register} and {@link #remove} instead.
+     * This is exposed for advanced use cases like bulk removal via
+     * {@code store.tryRemoveComponent(ref, NameplateAPI.getComponentType())}.</p>
+     *
+     * @return the registered component type for NameplateData
+     * @throws NameplateNotInitializedException if NameplateBuilder has not finished loading
+     */
+    public static ComponentType<EntityStore, NameplateData> getComponentType() {
+        ComponentType<EntityStore, NameplateData> current = componentType;
         if (current == null) {
-            throw new IllegalStateException(
-                    "Nameplate API not initialized. Ensure NameplateBuilder is installed on the server.");
+            throw new NameplateNotInitializedException(
+                    "NameplateData component not registered. "
+                            + "Ensure NameplateBuilder is installed and your manifest.json declares "
+                            + "\"Frotty27:NameplateBuilder\": \"*\" in Dependencies.");
         }
         return current;
     }
 
-    /**
-     * Register a nameplate segment with a dynamic text provider.
-     * Use this when the text depends on which entity or viewer is involved.
-     *
-     * @param plugin   the plugin registering the segment
-     * @param segmentId a unique identifier for this segment within your plugin
-     * @param displayName human-readable name shown in the Nameplate Builder UI
-     * @param provider called each tick to produce the segment text
-     * @return a handle that can be used to unregister the segment
-     */
-    public static INameplateSegmentHandle register(JavaPlugin plugin,
-                                                   String segmentId,
-                                                   String displayName,
-                                                   INameplateTextProvider provider) {
-        if (plugin == null) {
-            throw new IllegalArgumentException("'plugin' must not be null");
+    /** Returns the backing registry, or throws if NameplateBuilder is not loaded. */
+    static INameplateRegistry getRegistry() {
+        INameplateRegistry current = registry;
+        if (current == null) {
+            throw new NameplateNotInitializedException(
+                    "Nameplate API not initialized. "
+                            + "Ensure NameplateBuilder is installed and your manifest.json declares "
+                            + "\"Frotty27:NameplateBuilder\": \"*\" in Dependencies.");
         }
-        if (segmentId == null || segmentId.isBlank()) {
-            throw new IllegalArgumentException("'segmentId' must not be blank");
-        }
-        if (displayName == null || displayName.isBlank()) {
-            throw new IllegalArgumentException("'displayName' must not be blank");
-        }
-        if (provider == null) {
-            throw new IllegalArgumentException("'provider' must not be null");
-        }
-        return getRegistry().register(plugin, segmentId, displayName, provider);
+        return current;
     }
 
-    /**
-     * Register a nameplate segment with static text that applies to all entities.
-     * This is the simplest way to add a nameplate block.
-     *
-     * <pre>{@code
-     * NameplateAPI.register(this, "title", "Guild Title", "[MyGuild]");
-     * }</pre>
-     *
-     * @param plugin   the plugin registering the segment
-     * @param segmentId a unique identifier for this segment within your plugin
-     * @param displayName human-readable name shown in the Nameplate Builder UI
-     * @param text the static text to display (can be changed later via {@link #setNameplateText})
-     * @return a handle that can be used to unregister the segment
-     */
-    public static INameplateSegmentHandle register(JavaPlugin plugin,
-                                                   String segmentId,
-                                                   String displayName,
-                                                   String text) {
-        if (plugin == null) {
-            throw new IllegalArgumentException("'plugin' must not be null");
+    // ── Validation helpers ──
+
+    private static void requireNonNull(Object value, String parameterName) {
+        if (value == null) {
+            throw new NameplateArgumentException(parameterName,
+                    "'" + parameterName + "' must not be null");
         }
-        if (segmentId == null || segmentId.isBlank()) {
-            throw new IllegalArgumentException("'segmentId' must not be blank");
-        }
-        if (displayName == null || displayName.isBlank()) {
-            throw new IllegalArgumentException("'displayName' must not be blank");
-        }
-        if (text == null) {
-            throw new IllegalArgumentException("'text' must not be null");
-        }
-        return getRegistry().register(plugin, segmentId, displayName, text);
     }
 
-    /**
-     * Remove a previously registered segment.
-     *
-     * @param plugin   the plugin that registered the segment
-     * @param segmentId the segment identifier used during registration
-     */
-    public static void unregister(JavaPlugin plugin, String segmentId) {
-        if (plugin == null) {
-            throw new IllegalArgumentException("'plugin' must not be null");
+    private static void requireNonBlank(String value, String parameterName) {
+        if (value == null || value.isBlank()) {
+            throw new NameplateArgumentException(parameterName,
+                    "'" + parameterName + "' must not be null or blank");
         }
-        if (segmentId == null || segmentId.isBlank()) {
-            throw new IllegalArgumentException("'segmentId' must not be blank");
-        }
-        getRegistry().unregister(plugin, segmentId);
     }
 
-    /**
-     * Remove all segments registered by a plugin.
-     * This is called automatically by NameplateBuilder when the server shuts down,
-     * so most mods do not need to call this.
-     *
-     * @param plugin the plugin whose segments should be removed
-     */
-    public static void unregisterAll(JavaPlugin plugin) {
-        if (plugin == null) {
-            throw new IllegalArgumentException("'plugin' must not be null");
+    private static void requireNonBlank(String value, String parameterName, String detail) {
+        if (value == null || value.isBlank()) {
+            throw new NameplateArgumentException(parameterName,
+                    "'" + parameterName + "' " + detail);
         }
-        getRegistry().unregisterAll(plugin);
-    }
-
-    /**
-     * Set the nameplate text for a specific entity.
-     * This overrides both the dynamic provider and the global text for that entity only.
-     * Pass {@code null} or blank to clear the per-entity override.
-     *
-     * @param plugin     the plugin that registered the segment
-     * @param segmentId  the segment identifier
-     * @param entityUuid the UUID of the entity to override text for
-     * @param text       the text to show, or {@code null}/blank to clear
-     */
-    public static void setNameplateText(JavaPlugin plugin,
-                                        String segmentId,
-                                        UUID entityUuid,
-                                        String text) {
-        if (plugin == null) {
-            throw new IllegalArgumentException("'plugin' must not be null");
-        }
-        if (segmentId == null || segmentId.isBlank()) {
-            throw new IllegalArgumentException("'segmentId' must not be blank");
-        }
-        if (entityUuid == null) {
-            throw new IllegalArgumentException("'entityUuid' must not be null");
-        }
-        getRegistry().setNameplateText(plugin, segmentId, entityUuid, text);
-    }
-
-    /**
-     * Set the global nameplate text for a segment (applies to all entities).
-     * This can be updated at any time after registration.
-     *
-     * <pre>{@code
-     * NameplateAPI.setNameplateText(this, "title", "[NewGuild]");
-     * }</pre>
-     *
-     * @param plugin    the plugin that registered the segment
-     * @param segmentId the segment identifier (internal for your mod)
-     * @param text      the nameplate text that will be displayed
-     */
-    public static void setNameplateText(JavaPlugin plugin,
-                                        String segmentId,
-                                        String text) {
-        if (plugin == null) {
-            throw new IllegalArgumentException("'plugin' must not be null");
-        }
-        if (segmentId == null || segmentId.isBlank()) {
-            throw new IllegalArgumentException("'segmentId' must not be blank");
-        }
-        getRegistry().setNameplateText(plugin, segmentId, text);
     }
 }

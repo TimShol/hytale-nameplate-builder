@@ -5,7 +5,7 @@ plugins {
 
 group = rootProject.property('group')
 version = rootProject.property('version')
-base.archivesName.set(rootProject.property('name') + '-Example')
+base.archivesName.set(rootProject.property('name') + '-Example-Mod')
 
 dependencies {
     compileOnly project(':nameplate-api')
@@ -14,7 +14,7 @@ dependencies {
 
 tasks.processResources {
     def expandProps = [
-            'name'          : rootProject.property('name') + ' Example',
+            'name'          : rootProject.property('name') + ' Example Mod',
             'version'       : rootProject.property('version'),
             'group'         : rootProject.property('group'),
             'description'   : 'Example mod that registers sample nameplate segments.',

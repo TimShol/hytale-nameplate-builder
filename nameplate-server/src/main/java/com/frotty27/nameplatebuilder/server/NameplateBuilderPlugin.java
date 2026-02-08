@@ -1,9 +1,12 @@
 package com.frotty27.nameplatebuilder.server;
 
 import com.frotty27.nameplatebuilder.api.NameplateAPI;
+import com.frotty27.nameplatebuilder.api.NameplateData;
+import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 public final class NameplateBuilderPlugin extends JavaPlugin {
 
@@ -24,7 +27,12 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
 
         NameplateAPI.setRegistry(registry);
 
-        getEntityStoreRegistry().registerSystem(new NameplateAggregatorSystem(registry, preferences));
+        // Register the NameplateData ECS component so mods can attach it to entities
+        ComponentType<EntityStore, NameplateData> nameplateDataType =
+                getEntityStoreRegistry().registerComponent(NameplateData.class, "nameplate_data", NameplateData.CODEC);
+        NameplateAPI.setComponentType(nameplateDataType);
+
+        getEntityStoreRegistry().registerSystem(new NameplateAggregatorSystem(registry, preferences, nameplateDataType));
         getCommandRegistry().registerCommand(new NameplateBuilderCommand(registry, preferences));
 
         LOGGER.atInfo().log("NameplateBuilder loaded. Registry ready for mod integrations.");

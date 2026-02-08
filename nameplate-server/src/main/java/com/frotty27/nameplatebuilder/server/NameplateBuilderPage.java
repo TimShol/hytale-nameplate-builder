@@ -1,7 +1,5 @@
 package com.frotty27.nameplatebuilder.server;
 
-import com.frotty27.nameplatebuilder.api.NameplateContext;
-import com.frotty27.nameplatebuilder.api.INameplateTextProvider;
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
@@ -22,7 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilderPage.SettingsData> {
 
-    private static final int PAGE_SIZE = 8;
+    private static final int CHAIN_PAGE_SIZE = 4;
+    private static final int AVAIL_PAGE_SIZE = 8;
     private static final String ENTITY_TYPE = "*";
 
     private final PlayerRef playerRef;
@@ -76,23 +75,26 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         bindAction(events, "#PrevChain", "PrevChain");
         bindAction(events, "#NextChain", "NextChain");
 
-        // Chain block buttons
-        for (int i = 0; i < PAGE_SIZE; i++) {
+        // Chain block buttons (4 blocks)
+        for (int i = 0; i < CHAIN_PAGE_SIZE; i++) {
             bindAction(events, "#ChainBlock" + i + "Left", "Left_" + i);
             bindAction(events, "#ChainBlock" + i + "Right", "Right_" + i);
             bindAction(events, "#ChainBlock" + i + "Remove", "Remove_" + i);
         }
 
-        // Available block buttons
-        for (int i = 0; i < PAGE_SIZE; i++) {
+        // Available block buttons (8 blocks)
+        for (int i = 0; i < AVAIL_PAGE_SIZE; i++) {
             bindAction(events, "#AvailBlock" + i + "Add", "Add_" + i);
         }
+
+        // Look-at toggle
+        bindAction(events, "#LookToggle", "ToggleLook");
 
         List<SegmentView> available = getAvailableViews();
         List<SegmentView> chain = getChainViews();
 
-        int totalAvailPages = Math.max(1, (int) Math.ceil(available.size() / (double) PAGE_SIZE));
-        int totalChainPages = Math.max(1, (int) Math.ceil(chain.size() / (double) PAGE_SIZE));
+        int totalAvailPages = Math.max(1, (int) Math.ceil(available.size() / (double) AVAIL_PAGE_SIZE));
+        int totalChainPages = Math.max(1, (int) Math.ceil(chain.size() / (double) CHAIN_PAGE_SIZE));
         if (availPage >= totalAvailPages) availPage = totalAvailPages - 1;
         if (chainPage >= totalChainPages) chainPage = totalChainPages - 1;
 
@@ -101,6 +103,11 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
 
         String preview = buildPreview(chain);
         commands.set("#PreviewText.Text", preview);
+
+        boolean lookOnly = preferences.isOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE);
+        commands.set("#LookToggle.Text", lookOnly
+                ? "\u2611 Only show when looking at entity"
+                : "\u2610 Only show when looking at entity");
     }
 
     private void bindAction(UIEventBuilder events, String selector, String action) {
@@ -162,6 +169,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             return;
         }
 
+        if (data.action.equals("ToggleLook")) {
+            boolean current = preferences.isOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE);
+            preferences.setOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE, !current);
+            sendUpdate(buildUpdate());
+            return;
+        }
+
         if (data.action.startsWith("Add_")) {
             int row = parseRowIndex(data.action, "Add_");
             addRow(row);
@@ -191,9 +205,34 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         }
     }
 
+    /**
+     * Build an incremental update — only set property values on existing elements.
+     * Never re-append the .ui page or re-bind events; those are set once in {@link #build}.
+     */
     private UICommandBuilder buildUpdate() {
         UICommandBuilder commands = new UICommandBuilder();
-        build(null, commands, new UIEventBuilder(), null);
+
+        commands.set("#FilterField.Value", filter);
+
+        List<SegmentView> available = getAvailableViews();
+        List<SegmentView> chain = getChainViews();
+
+        int totalAvailPages = Math.max(1, (int) Math.ceil(available.size() / (double) AVAIL_PAGE_SIZE));
+        int totalChainPages = Math.max(1, (int) Math.ceil(chain.size() / (double) CHAIN_PAGE_SIZE));
+        if (availPage >= totalAvailPages) availPage = totalAvailPages - 1;
+        if (chainPage >= totalChainPages) chainPage = totalChainPages - 1;
+
+        fillChain(commands, chain, totalChainPages);
+        fillAvailable(commands, available, totalAvailPages);
+
+        String preview = buildPreview(chain);
+        commands.set("#PreviewText.Text", preview);
+
+        boolean lookOnly = preferences.isOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE);
+        commands.set("#LookToggle.Text", lookOnly
+                ? "\u2611 Only show when looking at entity"
+                : "\u2610 Only show when looking at entity");
+
         return commands;
     }
 
@@ -208,10 +247,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         commands.set("#ChainEmpty.Visible", !hasChain);
         commands.set("#ChainStrip.Visible", hasChain);
 
-        int start = chainPage * PAGE_SIZE;
-        int end = Math.min(chain.size(), start + PAGE_SIZE);
+        int start = chainPage * CHAIN_PAGE_SIZE;
+        int end = Math.min(chain.size(), start + CHAIN_PAGE_SIZE);
 
-        for (int i = 0; i < PAGE_SIZE; i++) {
+        for (int i = 0; i < CHAIN_PAGE_SIZE; i++) {
             int index = start + i;
             boolean visible = index < end;
             String prefix = "#ChainBlock" + i;
@@ -219,7 +258,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             if (visible) {
                 SegmentView view = chain.get(index);
                 commands.set(prefix + "Label.Text", view.displayName());
-                commands.set(prefix + "Sub.Text", view.previewText() + " — " + view.modName());
+                commands.set(prefix + "Sub.Text", view.previewText().isBlank() ? view.modName() : view.previewText());
+                commands.set(prefix + "Author.Text", "by " + view.author());
             }
         }
 
@@ -238,14 +278,14 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         commands.set("#AvailEmpty.Visible", !hasAvailable);
         commands.set("#AvailRow1.Visible", hasAvailable);
 
-        int start = availPage * PAGE_SIZE;
-        int end = Math.min(available.size(), start + PAGE_SIZE);
+        int start = availPage * AVAIL_PAGE_SIZE;
+        int end = Math.min(available.size(), start + AVAIL_PAGE_SIZE);
 
         // Show second row only if we have more than 4 items on this page
         boolean showRow2 = (end - start) > 4;
         commands.set("#AvailRow2.Visible", showRow2);
 
-        for (int i = 0; i < PAGE_SIZE; i++) {
+        for (int i = 0; i < AVAIL_PAGE_SIZE; i++) {
             int index = start + i;
             boolean visible = index < end;
             String prefix = "#AvailBlock" + i;
@@ -253,7 +293,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             if (visible) {
                 SegmentView view = available.get(index);
                 commands.set(prefix + "Label.Text", view.displayName());
-                commands.set(prefix + "Sub.Text", view.previewText() + " — " + view.modName());
+                commands.set(prefix + "Sub.Text", view.previewText().isBlank() ? "" : view.previewText());
+                commands.set(prefix + "Author.Text", "by " + view.author());
             }
         }
 
@@ -305,7 +346,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
 
     private SegmentView getAvailableRow(int row) {
         List<SegmentView> list = getAvailableViews();
-        int start = availPage * PAGE_SIZE;
+        int start = availPage * AVAIL_PAGE_SIZE;
         int index = start + row;
         if (index < 0 || index >= list.size()) {
             return null;
@@ -315,7 +356,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
 
     private SegmentView getChainRow(int row) {
         List<SegmentView> list = getChainViews();
-        int start = chainPage * PAGE_SIZE;
+        int start = chainPage * CHAIN_PAGE_SIZE;
         int index = start + row;
         if (index < 0 || index >= list.size()) {
             return null;
@@ -340,19 +381,21 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             }
             String displayName = segment.getDisplayName();
             String modName = segment.getPluginName();
+            String author = segment.getPluginAuthor();
             String previewText = resolvePreviewText(segment);
 
             if (!filter.isBlank()) {
                 String lowerFilter = filter.toLowerCase();
                 boolean matches = displayName.toLowerCase().contains(lowerFilter)
                         || modName.toLowerCase().contains(lowerFilter)
+                        || author.toLowerCase().contains(lowerFilter)
                         || segment.getPluginId().toLowerCase().contains(lowerFilter)
                         || (previewText != null && previewText.toLowerCase().contains(lowerFilter));
                 if (!matches) {
                     continue;
                 }
             }
-            views.add(new SegmentView(key, displayName, modName, previewText != null ? previewText : ""));
+            views.add(new SegmentView(key, displayName, modName, author, previewText != null ? previewText : ""));
         }
         return views;
     }
@@ -372,28 +415,15 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             }
             String displayName = segment.getDisplayName();
             String modName = segment.getPluginName();
+            String author = segment.getPluginAuthor();
             String previewText = resolvePreviewText(segment);
-            views.add(new SegmentView(key, displayName, modName, previewText != null ? previewText : ""));
+            views.add(new SegmentView(key, displayName, modName, author, previewText != null ? previewText : ""));
         }
         return views;
     }
 
     private String resolvePreviewText(NameplateRegistry.Segment segment) {
-        INameplateTextProvider provider = segment.getProvider();
-        if (provider != null) {
-            try {
-                String text = provider.getText(new NameplateContext(viewerUuid, ENTITY_TYPE, viewerUuid));
-                if (text != null && !text.isBlank()) {
-                    return text;
-                }
-            } catch (Exception ignored) {
-                // Provider may fail for preview context
-            }
-        }
-        String globalText = segment.getGlobalText();
-        if (globalText != null && !globalText.isBlank()) {
-            return globalText;
-        }
+        // UI metadata only — no preview text available from describe()
         return null;
     }
 
@@ -411,12 +441,12 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             if (text == null || text.isBlank()) {
                 text = view.displayName();
             }
-            if (builder.length() > 0) {
+            if (!builder.isEmpty()) {
                 builder.append(' ');
             }
             builder.append(text);
         }
-        if (builder.length() == 0) {
+        if (builder.isEmpty()) {
             return "(no blocks enabled)";
         }
         return builder.toString();
@@ -432,7 +462,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
 
     // ── Records ──
 
-    private record SegmentView(SegmentKey key, String displayName, String modName, String previewText) {
+    private record SegmentView(SegmentKey key, String displayName, String modName, String author, String previewText) {
     }
 
     private record UiState(String filter, int availPage, int chainPage) {
@@ -441,12 +471,14 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
     static final class SettingsData {
         public static final BuilderCodec<SettingsData> CODEC = BuilderCodec
                 .builder(SettingsData.class, SettingsData::new)
-                .addField(new KeyedCodec<String>("@Filter", Codec.STRING),
+                .append(new KeyedCodec<String>("@Filter", Codec.STRING),
                         (SettingsData data, String value) -> data.filter = value,
                         (SettingsData data) -> data.filter)
-                .addField(new KeyedCodec<String>("Action", Codec.STRING),
+                .add()
+                .append(new KeyedCodec<String>("Action", Codec.STRING),
                         (SettingsData data, String value) -> data.action = value,
                         (SettingsData data) -> data.action)
+                .add()
                 .build();
 
         String filter;

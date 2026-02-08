@@ -1,6 +1,6 @@
 package com.frotty27.nameplatebuilder.server;
 
-import com.frotty27.nameplatebuilder.api.NameplateContext;
+import com.frotty27.nameplatebuilder.api.NameplateData;
 import com.hypixel.hytale.component.Archetype;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
@@ -8,12 +8,15 @@ import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
+import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.protocol.ComponentUpdate;
 import com.hypixel.hytale.protocol.ComponentUpdateType;
 import com.hypixel.hytale.server.core.entity.Entity;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 import com.hypixel.hytale.server.core.modules.entity.EntityModule;
+import com.hypixel.hytale.server.core.modules.entity.component.HeadRotation;
+import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.tracker.EntityTrackerSystems;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
@@ -25,16 +28,27 @@ import java.util.UUID;
 
 final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
+    private static final double VIEW_RANGE = 30.0;
+    private static final double VIEW_CONE_THRESHOLD = 0.9; // ~25° half-angle
+
     private final ComponentType<EntityStore, EntityTrackerSystems.Visible> visibleComponentType;
     private final ComponentType<EntityStore, Nameplate> nameplateComponentType;
     private final ComponentType<EntityStore, UUIDComponent> uuidComponentType;
+    private final ComponentType<EntityStore, TransformComponent> transformComponentType;
+    private final ComponentType<EntityStore, HeadRotation> headRotationType;
+    private final ComponentType<EntityStore, NameplateData> nameplateDataType;
     private final NameplateRegistry registry;
     private final NameplatePreferenceStore preferences;
 
-    NameplateAggregatorSystem(NameplateRegistry registry, NameplatePreferenceStore preferences) {
+    NameplateAggregatorSystem(NameplateRegistry registry,
+                              NameplatePreferenceStore preferences,
+                              ComponentType<EntityStore, NameplateData> nameplateDataType) {
         this.visibleComponentType = EntityTrackerSystems.Visible.getComponentType();
         this.nameplateComponentType = Nameplate.getComponentType();
         this.uuidComponentType = UUIDComponent.getComponentType();
+        this.transformComponentType = TransformComponent.getComponentType();
+        this.headRotationType = HeadRotation.getComponentType();
+        this.nameplateDataType = nameplateDataType;
         this.registry = registry;
         this.preferences = preferences;
     }
@@ -58,18 +72,32 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         }
 
         Ref<EntityStore> entityRef = chunk.getReferenceTo(index);
-        UUID entityUuid = getUuid(store, entityRef);
         String entityTypeId = resolveEntityTypeId(chunk);
 
-        Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
-        if (segments.isEmpty()) {
+        // Read the NameplateData component — this is the sole source of text
+        NameplateData entityData = store.getComponent(entityRef, nameplateDataType);
+        if (entityData == null || entityData.isEmpty()) {
             return;
         }
 
-        List<SegmentKey> available = new ArrayList<>(segments.keySet());
+        Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
+
+        // Build the ordered list of segment keys from the component entries,
+        // respecting viewer preferences (order, enabled/disabled).
+        List<SegmentKey> available = resolveAvailableKeys(entityData, segments);
+        if (available.isEmpty()) {
+            return;
+        }
+
         Comparator<SegmentKey> defaultComparator = Comparator
-                .comparing((SegmentKey k) -> segments.get(k).getPluginName())
-                .thenComparing(k -> segments.get(k).getDisplayName());
+                .comparing((SegmentKey k) -> {
+                    NameplateRegistry.Segment s = segments.get(k);
+                    return s != null ? s.getPluginName() : k.pluginId();
+                })
+                .thenComparing(k -> {
+                    NameplateRegistry.Segment s = segments.get(k);
+                    return s != null ? s.getDisplayName() : k.segmentId();
+                });
 
         for (Map.Entry<Ref<EntityStore>, EntityTrackerSystems.EntityViewer> viewerEntry : visible.visibleTo.entrySet()) {
             Ref<EntityStore> viewerRef = viewerEntry.getKey();
@@ -80,11 +108,17 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             if (preferences.isUsingGlobal(viewerUuid, entityTypeId)) {
                 preferenceEntityType = "*";
             }
-            List<SegmentKey> chain = preferences.getChain(viewerUuid, preferenceEntityType, available, defaultComparator);
-            String text = buildText(chain, segments, entityUuid, preferenceEntityType, viewerUuid);
 
-            // No segments produced text for this entity — leave its nameplate untouched.
-            // This prevents overwriting nameplates managed by other mods (holograms, signs, etc.).
+            // View-cone filter: skip entities the viewer isn't looking at
+            if (preferences.isOnlyShowWhenLooking(viewerUuid, preferenceEntityType)) {
+                if (!isLookingAt(store, viewerRef, entityRef)) {
+                    continue;
+                }
+            }
+
+            List<SegmentKey> chain = preferences.getChain(viewerUuid, preferenceEntityType, available, defaultComparator);
+            String text = buildText(chain, entityData, viewerUuid, preferenceEntityType);
+
             if (text.isEmpty()) {
                 continue;
             }
@@ -96,30 +130,62 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         }
     }
 
+    /**
+     * Resolve the available segment keys from the entity's NameplateData entries.
+     *
+     * <p>For each entry in the component, we try to match it to a described segment
+     * in the registry. If the entry key matches a segmentId of a described segment,
+     * we use that SegmentKey. Otherwise, we create a synthetic SegmentKey so the
+     * segment still shows up (with the raw ID as fallback in the UI).</p>
+     */
+    private List<SegmentKey> resolveAvailableKeys(NameplateData entityData,
+                                                   Map<SegmentKey, NameplateRegistry.Segment> segments) {
+        List<SegmentKey> keys = new ArrayList<>();
+        for (String entryKey : entityData.getEntries().keySet()) {
+            SegmentKey matched = findSegmentKey(entryKey, segments);
+            if (matched != null) {
+                if (!keys.contains(matched)) {
+                    keys.add(matched);
+                }
+            } else {
+                // Undescribed segment — create a synthetic key
+                SegmentKey synthetic = new SegmentKey("_unknown", entryKey);
+                if (!keys.contains(synthetic)) {
+                    keys.add(synthetic);
+                }
+            }
+        }
+        return keys;
+    }
+
+    /**
+     * Find the SegmentKey in the registry that matches a component entry key.
+     * Tries exact segmentId match first.
+     */
+    private SegmentKey findSegmentKey(String entryKey, Map<SegmentKey, NameplateRegistry.Segment> segments) {
+        for (Map.Entry<SegmentKey, NameplateRegistry.Segment> entry : segments.entrySet()) {
+            if (entry.getKey().segmentId().equals(entryKey)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Build the final nameplate text for one entity as seen by one viewer.
+     * Text comes solely from the entity's {@link NameplateData} component.
+     */
     private String buildText(List<SegmentKey> ordered,
-                             Map<SegmentKey, NameplateRegistry.Segment> segments,
-                             UUID entityUuid,
-                             String entityTypeId,
-                             UUID viewerUuid) {
+                             NameplateData entityData,
+                             UUID viewerUuid,
+                             String entityTypeId) {
         StringBuilder builder = new StringBuilder();
         for (SegmentKey key : ordered) {
             if (!preferences.isEnabled(viewerUuid, entityTypeId, key)) {
                 continue;
             }
-            NameplateRegistry.Segment segment = segments.get(key);
-            if (segment == null) {
-                continue;
-            }
-            String text = null;
-            if (segment.getProvider() != null) {
-                text = segment.getProvider().getText(new NameplateContext(entityUuid, entityTypeId, viewerUuid));
-            }
-            if (text == null || text.isBlank()) {
-                text = segment.getEntityText().get(entityUuid);
-            }
-            if (text == null || text.isBlank()) {
-                text = segment.getGlobalText();
-            }
+
+            String text = entityData.getText(key.segmentId());
             if (text == null || text.isBlank()) {
                 continue;
             }
@@ -129,6 +195,42 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             builder.append(text);
         }
         return builder.toString();
+    }
+
+    /**
+     * Check if the viewer is looking at the target entity within a view cone.
+     */
+    private boolean isLookingAt(Store<EntityStore> store,
+                                Ref<EntityStore> viewerRef,
+                                Ref<EntityStore> entityRef) {
+        TransformComponent viewerTransform = store.getComponent(viewerRef, transformComponentType);
+        HeadRotation viewerHead = store.getComponent(viewerRef, headRotationType);
+        if (viewerTransform == null || viewerHead == null) {
+            return true;
+        }
+
+        TransformComponent entityTransform = store.getComponent(entityRef, transformComponentType);
+        if (entityTransform == null) {
+            return true;
+        }
+
+        Vector3d viewerPos = viewerTransform.getPosition();
+        Vector3d entityPos = entityTransform.getPosition();
+        Vector3d lookDir = viewerHead.getDirection();
+
+        double distance = viewerPos.distanceTo(entityPos);
+        if (distance > VIEW_RANGE || distance < 0.5) {
+            return false;
+        }
+
+        Vector3d toEntity = new Vector3d(
+                entityPos.getX() - viewerPos.getX(),
+                entityPos.getY() - viewerPos.getY(),
+                entityPos.getZ() - viewerPos.getZ()
+        ).normalize();
+
+        double dot = lookDir.dot(toEntity);
+        return dot >= VIEW_CONE_THRESHOLD;
     }
 
     private UUID getUuid(Store<EntityStore> store, Ref<EntityStore> ref) {
