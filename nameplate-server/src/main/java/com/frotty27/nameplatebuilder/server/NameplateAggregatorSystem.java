@@ -83,6 +83,12 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             List<SegmentKey> chain = preferences.getChain(viewerUuid, preferenceEntityType, available, defaultComparator);
             String text = buildText(chain, segments, entityUuid, preferenceEntityType, viewerUuid);
 
+            // No segments produced text for this entity — leave its nameplate untouched.
+            // This prevents overwriting nameplates managed by other mods (holograms, signs, etc.).
+            if (text.isEmpty()) {
+                continue;
+            }
+
             ComponentUpdate update = new ComponentUpdate();
             update.type = ComponentUpdateType.Nameplate;
             update.nameplate = new com.hypixel.hytale.protocol.Nameplate(text);
