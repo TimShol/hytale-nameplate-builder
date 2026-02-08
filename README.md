@@ -239,7 +239,7 @@ The ECS component attached to entities. Most mods should use `NameplateAPI.regis
 
 ## Player UI
 
-Players open the Nameplate Builder editor via the `/npb` command (alias: `/nameplatebuilder`). The UI lets them:
+Players open the Nameplate Builder editor via the `/nameplatebuilder` command (alias: `/npb`). The UI lets them:
 
 - **Browse** all registered segments from all mods, with `[All]`/`[Players]`/`[NPCs]` target tags
 - **Search** and filter by name, author, mod, or target category
