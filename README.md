@@ -15,7 +15,7 @@ A server-side nameplate aggregator for Hytale that lets multiple mods contribute
 
 ## Overview
 
-NameplateBuilder solves a core problem in for modders and players for Hytale: when multiple mods want to display information above entities (health, guild tags, titles, ranks, etc.), they conflict over the single `Nameplate` component. NameplateBuilder acts as a central aggregator — each mod registers its own named segments, and the system composites them into a single nameplate string per viewer, per entity, every tick.
+NameplateBuilder solves a core problem for modders and players for Hytale: when multiple mods want to display information above entities (health, guild tags, titles, ranks, etc.), they conflict over the single `Nameplate` component. NameplateBuilder acts as a central aggregator — each mod registers its own named segments, and the system composites them into a single nameplate string per viewer, per entity, every tick (in an efficient way).
 
 Players get a UI to choose which segments they see, reorder them, customize separators between individual segments, configure a vertical nameplate offset, and toggle a "only show when looking at entity" mode. Nameplates are automatically cleared when an entity dies.
 
