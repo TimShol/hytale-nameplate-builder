@@ -71,6 +71,21 @@ final class NameplatePreferenceStore {
                     set.order.put(key, order);
                     continue;
                 }
+                if (parts[0].equals("D")) {
+                    if (parts.length < 4) {
+                        continue;
+                    }
+                    UUID viewer = UUID.fromString(parts[1]);
+                    String entityType = parts[2];
+                    String separator = parts[3];
+                    // Unescape: \p → |, \\ → \
+                    separator = separator.replace("\\p", "|").replace("\\\\", "\\");
+                    PreferenceSet set = data
+                            .computeIfAbsent(viewer, ignored -> new HashMap<>())
+                            .computeIfAbsent(entityType, ignored -> new PreferenceSet());
+                    set.separator = separator;
+                    continue;
+                }
                 // Legacy format: viewer|entityType|pluginId|segmentId|enabled|order
                 if (parts.length >= 6) {
                     UUID viewer = UUID.fromString(parts[0]);
@@ -106,12 +121,18 @@ final class NameplatePreferenceStore {
             writer.newLine();
             writer.write("# U|viewerUuid|entityType|useGlobal|onlyShowWhenLooking");
             writer.newLine();
+            writer.write("# D|viewerUuid|entityType|separator");
+            writer.newLine();
             for (Map.Entry<UUID, Map<String, PreferenceSet>> viewerEntry : data.entrySet()) {
                 UUID viewer = viewerEntry.getKey();
                 for (Map.Entry<String, PreferenceSet> entityEntry : viewerEntry.getValue().entrySet()) {
                     String entityType = entityEntry.getKey();
                     PreferenceSet set = entityEntry.getValue();
                     writer.write("U|" + viewer + "|" + entityType + "|" + set.useGlobal + "|" + set.onlyShowWhenLooking);
+                    writer.newLine();
+                    // Escape pipe chars in separator: \ → \\, | → \p
+                    String escapedSep = set.separator.replace("\\", "\\\\").replace("|", "\\p");
+                    writer.write("D|" + viewer + "|" + entityType + "|" + escapedSep);
                     writer.newLine();
                     for (Map.Entry<SegmentKey, Boolean> enabledEntry : set.enabled.entrySet()) {
                         SegmentKey key = enabledEntry.getKey();
@@ -135,6 +156,18 @@ final class NameplatePreferenceStore {
         return set != null && set.useGlobal;
     }
 
+    /**
+     * Check if a viewer has any stored preferences for a specific entity type.
+     * Returns {@code false} for the global wildcard {@code "*"} or if no
+     * preferences have been saved for this entity type.
+     */
+    boolean hasPreferences(UUID viewer, String entityType) {
+        if ("*".equals(entityType)) {
+            return false;
+        }
+        return getSet(viewer, entityType, false) != null;
+    }
+
     void toggleUseGlobal(UUID viewer, String entityType) {
         if ("*".equals(entityType)) {
             return;
@@ -151,6 +184,19 @@ final class NameplatePreferenceStore {
     void setOnlyShowWhenLooking(UUID viewer, String entityType, boolean value) {
         PreferenceSet set = getSet(viewer, entityType, true);
         set.onlyShowWhenLooking = value;
+    }
+
+    String getSeparator(UUID viewer, String entityType) {
+        PreferenceSet set = getSet(viewer, entityType, false);
+        if (set == null) {
+            return " - ";
+        }
+        return set.separator;
+    }
+
+    void setSeparator(UUID viewer, String entityType, String separator) {
+        PreferenceSet set = getSet(viewer, entityType, true);
+        set.separator = (separator == null || separator.isEmpty()) ? " - " : separator;
     }
 
     boolean isEnabled(UUID viewer, String entityType, SegmentKey key) {
@@ -174,6 +220,18 @@ final class NameplatePreferenceStore {
     void disable(UUID viewer, String entityType, SegmentKey key) {
         PreferenceSet set = getSet(viewer, entityType, true);
         set.enabled.put(key, false);
+    }
+
+    /**
+     * Disable all segments for a viewer on the given entity type.
+     * This clears the entire chain without removing ordering information,
+     * so segments can be re-added individually later.
+     */
+    void disableAll(UUID viewer, String entityType, List<SegmentKey> available) {
+        PreferenceSet set = getSet(viewer, entityType, true);
+        for (SegmentKey key : available) {
+            set.enabled.put(key, false);
+        }
     }
 
     List<SegmentKey> getChain(UUID viewer,
@@ -261,5 +319,6 @@ final class NameplatePreferenceStore {
         private final Map<SegmentKey, Integer> order = new HashMap<>();
         private boolean useGlobal = false;
         private boolean onlyShowWhenLooking = false;
+        private String separator = " - ";
     }
 }

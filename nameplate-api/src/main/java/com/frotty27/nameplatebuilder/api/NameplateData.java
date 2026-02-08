@@ -36,8 +36,8 @@ public final class NameplateData implements Component<EntityStore> {
             .builder(NameplateData.class, NameplateData::new)
             .append(
                     new com.hypixel.hytale.codec.KeyedCodec<>("NpbEntries", Codec.STRING),
-                    (data, value) -> data.deserializeEntries(value),
-                    (data) -> data.serializeEntries())
+                    NameplateData::deserializeEntries, NameplateData::serializeEntries
+            )
             .add()
             .build();
 

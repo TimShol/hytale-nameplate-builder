@@ -9,6 +9,7 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.math.vector.Vector3d;
+import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.protocol.ComponentUpdate;
 import com.hypixel.hytale.protocol.ComponentUpdateType;
 import com.hypixel.hytale.server.core.entity.Entity;
@@ -30,9 +31,10 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
     private static final double VIEW_RANGE = 30.0;
     private static final double VIEW_CONE_THRESHOLD = 0.9; // ~25° half-angle
+    private static final String EMPTY_HINT = "Type /npb to customize";
 
     private final ComponentType<EntityStore, EntityTrackerSystems.Visible> visibleComponentType;
-    private final ComponentType<EntityStore, Nameplate> nameplateComponentType;
+    private final ComponentType<EntityStore, Nameplate> nameplateType;
     private final ComponentType<EntityStore, UUIDComponent> uuidComponentType;
     private final ComponentType<EntityStore, TransformComponent> transformComponentType;
     private final ComponentType<EntityStore, HeadRotation> headRotationType;
@@ -44,7 +46,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                               NameplatePreferenceStore preferences,
                               ComponentType<EntityStore, NameplateData> nameplateDataType) {
         this.visibleComponentType = EntityTrackerSystems.Visible.getComponentType();
-        this.nameplateComponentType = Nameplate.getComponentType();
+        this.nameplateType = Nameplate.getComponentType();
         this.uuidComponentType = UUIDComponent.getComponentType();
         this.transformComponentType = TransformComponent.getComponentType();
         this.headRotationType = HeadRotation.getComponentType();
@@ -55,7 +57,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
     @Override
     public Archetype<EntityStore> getQuery() {
-        return Archetype.of(visibleComponentType, nameplateComponentType);
+        return Archetype.of(visibleComponentType, nameplateType);
     }
 
     @Override
@@ -66,28 +68,25 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     @Override
     public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk, Store<EntityStore> store, CommandBuffer<EntityStore> commandBuffer) {
         EntityTrackerSystems.Visible visible = chunk.getComponent(index, visibleComponentType);
-        Nameplate nameplate = chunk.getComponent(index, nameplateComponentType);
-        if (visible == null || nameplate == null || visible.visibleTo == null) {
+        if (visible == null || visible.visibleTo == null) {
             return;
         }
 
         Ref<EntityStore> entityRef = chunk.getReferenceTo(index);
         String entityTypeId = resolveEntityTypeId(chunk);
 
-        // Read the NameplateData component — this is the sole source of text
+        // Read the NameplateData component — this is the sole source of text.
+        // If the entity has no NameplateData at all, it was never registered
+        // with our system — don't interfere with its default nameplate.
         NameplateData entityData = store.getComponent(entityRef, nameplateDataType);
-        if (entityData == null || entityData.isEmpty()) {
+        if (entityData == null) {
             return;
         }
 
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
-
-        // Build the ordered list of segment keys from the component entries,
-        // respecting viewer preferences (order, enabled/disabled).
-        List<SegmentKey> available = resolveAvailableKeys(entityData, segments);
-        if (available.isEmpty()) {
-            return;
-        }
+        List<SegmentKey> available = entityData.isEmpty()
+                ? List.of()
+                : resolveAvailableKeys(entityData, segments);
 
         Comparator<SegmentKey> defaultComparator = Comparator
                 .comparing((SegmentKey k) -> {
@@ -105,28 +104,31 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             UUID viewerUuid = getUuid(store, viewerRef);
 
             String preferenceEntityType = entityTypeId;
-            if (preferences.isUsingGlobal(viewerUuid, entityTypeId)) {
+            if (preferences.isUsingGlobal(viewerUuid, entityTypeId)
+                    || !preferences.hasPreferences(viewerUuid, entityTypeId)) {
                 preferenceEntityType = "*";
             }
 
-            // View-cone filter: skip entities the viewer isn't looking at
-            if (preferences.isOnlyShowWhenLooking(viewerUuid, preferenceEntityType)) {
-                if (!isLookingAt(store, viewerRef, entityRef)) {
-                    continue;
-                }
-            }
-
-            List<SegmentKey> chain = preferences.getChain(viewerUuid, preferenceEntityType, available, defaultComparator);
-            String text = buildText(chain, entityData, viewerUuid, preferenceEntityType);
-
-            if (text.isEmpty()) {
+            // View-cone filter: hide nameplate for entities the viewer isn't looking at.
+            // We still send an update (empty string) so the default value doesn't bleed through.
+            if (preferences.isOnlyShowWhenLooking(viewerUuid, preferenceEntityType)
+                    && !isLookingAt(store, viewerRef, entityRef)) {
+                viewer.queueUpdate(entityRef, nameplateUpdate(""));
                 continue;
             }
 
-            ComponentUpdate update = new ComponentUpdate();
-            update.type = ComponentUpdateType.Nameplate;
-            update.nameplate = new com.hypixel.hytale.protocol.Nameplate(text);
-            viewer.queueUpdate(entityRef, update);
+            String text;
+            if (available.isEmpty()) {
+                text = EMPTY_HINT;
+            } else {
+                List<SegmentKey> chain = preferences.getChain(viewerUuid, preferenceEntityType, available, defaultComparator);
+                text = buildText(chain, entityData, viewerUuid, preferenceEntityType);
+                if (text.isEmpty()) {
+                    text = EMPTY_HINT;
+                }
+            }
+
+            viewer.queueUpdate(entityRef, nameplateUpdate(text));
         }
     }
 
@@ -142,6 +144,10 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                                                    Map<SegmentKey, NameplateRegistry.Segment> segments) {
         List<SegmentKey> keys = new ArrayList<>();
         for (String entryKey : entityData.getEntries().keySet()) {
+            // Skip hidden metadata keys (prefixed with "_")
+            if (entryKey.startsWith("_")) {
+                continue;
+            }
             SegmentKey matched = findSegmentKey(entryKey, segments);
             if (matched != null) {
                 if (!keys.contains(matched)) {
@@ -179,6 +185,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                              NameplateData entityData,
                              UUID viewerUuid,
                              String entityTypeId) {
+        String separator = preferences.getSeparator(viewerUuid, entityTypeId);
         StringBuilder builder = new StringBuilder();
         for (SegmentKey key : ordered) {
             if (!preferences.isEnabled(viewerUuid, entityTypeId, key)) {
@@ -189,8 +196,8 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             if (text == null || text.isBlank()) {
                 continue;
             }
-            if (builder.length() > 0) {
-                builder.append(' ');
+            if (!builder.isEmpty()) {
+                builder.append(separator);
             }
             builder.append(text);
         }
@@ -199,13 +206,16 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
     /**
      * Check if the viewer is looking at the target entity within a view cone.
+     *
+     * <p>Uses {@link HeadRotation} for precise head direction when available,
+     * otherwise falls back to the body rotation from {@link TransformComponent}.
+     * The direction is derived from pitch (x) and yaw (y) Euler angles.</p>
      */
     private boolean isLookingAt(Store<EntityStore> store,
                                 Ref<EntityStore> viewerRef,
                                 Ref<EntityStore> entityRef) {
         TransformComponent viewerTransform = store.getComponent(viewerRef, transformComponentType);
-        HeadRotation viewerHead = store.getComponent(viewerRef, headRotationType);
-        if (viewerTransform == null || viewerHead == null) {
+        if (viewerTransform == null) {
             return true;
         }
 
@@ -216,11 +226,21 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
         Vector3d viewerPos = viewerTransform.getPosition();
         Vector3d entityPos = entityTransform.getPosition();
-        Vector3d lookDir = viewerHead.getDirection();
 
         double distance = viewerPos.distanceTo(entityPos);
         if (distance > VIEW_RANGE || distance < 0.5) {
             return false;
+        }
+
+        // Prefer HeadRotation (precise head aim), fall back to body rotation
+        Vector3d lookDir;
+        HeadRotation viewerHead = store.getComponent(viewerRef, headRotationType);
+        if (viewerHead != null) {
+            lookDir = viewerHead.getDirection();
+        } else {
+            // Derive direction from TransformComponent rotation (pitch=x, yaw=y)
+            Vector3f rotation = viewerTransform.getRotation();
+            lookDir = directionFromPitchYaw(rotation.getPitch(), rotation.getYaw());
         }
 
         Vector3d toEntity = new Vector3d(
@@ -231,6 +251,27 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
         double dot = lookDir.dot(toEntity);
         return dot >= VIEW_CONE_THRESHOLD;
+    }
+
+    /**
+     * Convert pitch and yaw (in degrees) to a normalized direction vector.
+     */
+    private static Vector3d directionFromPitchYaw(float pitchDeg, float yawDeg) {
+        double pitch = Math.toRadians(pitchDeg);
+        double yaw = Math.toRadians(yawDeg);
+        double cosPitch = Math.cos(pitch);
+        return new Vector3d(
+                -Math.sin(yaw) * cosPitch,
+                -Math.sin(pitch),
+                Math.cos(yaw) * cosPitch
+        ).normalize();
+    }
+
+    private static ComponentUpdate nameplateUpdate(String text) {
+        ComponentUpdate update = new ComponentUpdate();
+        update.type = ComponentUpdateType.Nameplate;
+        update.nameplate = new com.hypixel.hytale.protocol.Nameplate(text);
+        return update;
     }
 
     private UUID getUuid(Store<EntityStore> store, Ref<EntityStore> ref) {

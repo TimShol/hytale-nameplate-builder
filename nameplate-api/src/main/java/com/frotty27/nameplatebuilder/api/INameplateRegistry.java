@@ -4,16 +4,26 @@ import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 
 /**
  * Internal registry interface backing the {@link NameplateAPI}.
- * Use {@link NameplateAPI} directly rather than this interface.
+ *
+ * <p><b>Do not implement this interface.</b> Use {@link NameplateAPI} directly.</p>
  */
 public interface INameplateRegistry {
 
-    /** @see NameplateAPI#describe(JavaPlugin, String, String) */
-    void describe(JavaPlugin plugin, String segmentId, String displayName);
+    /**
+     * Convenience overload that defaults to {@link SegmentTarget#ALL}.
+     *
+     * @see NameplateAPI#describe(JavaPlugin, String, String)
+     */
+    default void describe(JavaPlugin plugin, String segmentId, String displayName) {
+        describe(plugin, segmentId, displayName, SegmentTarget.ALL);
+    }
+
+    /** @see NameplateAPI#describe(JavaPlugin, String, String, SegmentTarget) */
+    void describe(JavaPlugin plugin, String segmentId, String displayName, SegmentTarget target);
 
     /** @see NameplateAPI#undescribe(JavaPlugin, String) */
     void undescribe(JavaPlugin plugin, String segmentId);
 
-    /** @see NameplateAPI#undescribeAll(JavaPlugin) */
+    /** Removes all segment descriptions registered by a plugin. Internal use only. */
     void undescribeAll(JavaPlugin plugin);
 }

@@ -2,6 +2,7 @@ package com.frotty27.nameplatebuilder.example;
 
 import com.frotty27.nameplatebuilder.api.NameplateAPI;
 import com.frotty27.nameplatebuilder.api.NameplateData;
+import com.frotty27.nameplatebuilder.api.SegmentTarget;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -12,22 +13,37 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 /**
  * Example mod demonstrating the NameplateBuilder API.
  *
- * <h3>Modder workflow:</h3>
- * <ol>
- *   <li>In {@code setup()} — call {@link NameplateAPI#describe} to give your
- *       segments a human-readable name in the Nameplate Builder UI.</li>
- *   <li>At runtime — call {@link NameplateAPI#register} to set nameplate text on
- *       an entity, and {@link NameplateAPI#remove} to clear it.</li>
- * </ol>
+ * <p>This plugin shows the three main patterns that modders need:</p>
  *
- * <p>The component persists on the entity. Call {@code register()} again when the
- * value changes — no need to remove and re-register. The aggregator reads the
- * current values every tick automatically.</p>
+ * <h3>1. Describe segments (UI metadata)</h3>
+ * <p>In {@code setup()}, call {@link NameplateAPI#describe} to register a
+ * human-readable display name for each segment. This is optional but
+ * recommended — without it the player UI shows the raw segment ID.</p>
  *
- * <h3>Tick-based example:</h3>
- * <p>The "lifetime" segment is updated every tick by {@link LifetimeNameplateSystem}
- * to demonstrate that updating text each tick does not cause flashing — the component
- * stays on the entity and only its internal map value changes.</p>
+ * <h3>2. Attach nameplates to NPCs on spawn</h3>
+ * <p>The {@link ArchaeopteryxNameplateSystem} demonstrates how to detect newly
+ * spawned NPCs by role name and seed their initial nameplate data. It extends
+ * {@code EntityTickingSystem}, queries for the {@code NPCEntity} component,
+ * checks that the entity doesn't already have {@link NameplateData}, and
+ * calls {@link NameplateAPI#register} to create the component with default
+ * segment values. This pattern works for any NPC role — just change the
+ * role name constant.</p>
+ *
+ * <h3>3. Update segments every tick</h3>
+ * <p>The {@link LifetimeNameplateSystem} updates the "lifetime" segment text
+ * every server tick, showing that calling {@link NameplateAPI#register} (or
+ * {@link NameplateData#setText} directly) each tick does <b>not</b> cause
+ * flashing — the component stays on the entity and only its internal map
+ * value changes in place.</p>
+ *
+ * <h3>Additional runtime examples</h3>
+ * <p>The utility methods below ({@link #initializeEntity}, {@link #markElite},
+ * {@link #updateHealth}, etc.) demonstrate event-driven updates: setting,
+ * updating, and removing individual segments at any time.</p>
+ *
+ * @see ArchaeopteryxNameplateSystem
+ * @see LifetimeNameplateSystem
+ * @see NameplateAPI
  */
 public final class NameplateExamplePlugin extends JavaPlugin {
 
@@ -39,32 +55,42 @@ public final class NameplateExamplePlugin extends JavaPlugin {
     protected void setup() {
 
         // ── Describe segments for the UI ──
-        // Each describe() call registers a human-readable name for the
-        // Nameplate Builder UI. This is optional — undescribed segments
-        // still work but show their raw ID in the UI.
+        // Each describe() call registers a human-readable name and target
+        // for the Nameplate Builder UI. The SegmentTarget enum tells players
+        // which entity types the segment applies to (shown as a tag in the UI).
+        // This is optional — undescribed segments still work but show the raw ID.
 
-        NameplateAPI.describe(this, "health", "Health Bar");
-        NameplateAPI.describe(this, "tier", "Elite Tier");
-        NameplateAPI.describe(this, "level", "Level");
-        NameplateAPI.describe(this, "buff", "Active Buff");
-        NameplateAPI.describe(this, "guild", "Guild Tag");
-        NameplateAPI.describe(this, "title", "Player Title");
-        NameplateAPI.describe(this, "faction", "Faction");
-        NameplateAPI.describe(this, "score", "Score");
-        NameplateAPI.describe(this, "rank", "Server Rank");
-        NameplateAPI.describe(this, "mood", "Mood");
-        NameplateAPI.describe(this, "quest", "Active Quest");
-        NameplateAPI.describe(this, "clan", "Clan");
-        NameplateAPI.describe(this, "bounty", "Bounty");
-        NameplateAPI.describe(this, "status", "Online Status");
-        NameplateAPI.describe(this, "custom-tag", "Custom Tag");
-        NameplateAPI.describe(this, "vip-label", "VIP Label");
-        NameplateAPI.describe(this, "lifetime", "Lifetime");
+        // Segments applicable to all entities
+        NameplateAPI.describe(this, "health", "Health Bar", SegmentTarget.ALL);
+        NameplateAPI.describe(this, "level", "Level", SegmentTarget.ALL);
+        NameplateAPI.describe(this, "guild", "Guild Tag", SegmentTarget.ALL);
+        NameplateAPI.describe(this, "title", "Title", SegmentTarget.ALL);
+        NameplateAPI.describe(this, "lifetime", "Lifetime", SegmentTarget.ALL);
+        NameplateAPI.describe(this, "custom-tag", "Custom Tag", SegmentTarget.ALL);
 
-        // ── Register tick-based system ──
-        // The LifetimeNameplateSystem updates the "lifetime" segment every tick
-        // on any entity that has it set, demonstrating per-tick text updates.
+        // NPC-only segments
+        NameplateAPI.describe(this, "tier", "Elite Tier", SegmentTarget.NPCS);
+        NameplateAPI.describe(this, "buff", "Active Buff", SegmentTarget.NPCS);
+        NameplateAPI.describe(this, "faction", "Faction", SegmentTarget.NPCS);
+        NameplateAPI.describe(this, "mood", "Mood", SegmentTarget.NPCS);
+        NameplateAPI.describe(this, "quest", "Active Quest", SegmentTarget.NPCS);
+        NameplateAPI.describe(this, "bounty", "Bounty", SegmentTarget.NPCS);
+
+        // Player-only segments
+        NameplateAPI.describe(this, "score", "Score", SegmentTarget.PLAYERS);
+        NameplateAPI.describe(this, "rank", "Server Rank", SegmentTarget.PLAYERS);
+        NameplateAPI.describe(this, "clan", "Clan", SegmentTarget.PLAYERS);
+        NameplateAPI.describe(this, "status", "Online Status", SegmentTarget.PLAYERS);
+        NameplateAPI.describe(this, "vip-label", "VIP Label", SegmentTarget.PLAYERS);
+
+        // ── Register tick-based systems ──
         ComponentType<EntityStore, NameplateData> nameplateDataType = NameplateAPI.getComponentType();
+
+        // Attaches NameplateData to Archaeopteryx NPCs on their first tick (spawn).
+        getEntityStoreRegistry().registerSystem(new ArchaeopteryxNameplateSystem(nameplateDataType));
+
+        // Updates the "lifetime" segment every tick on any entity that has it set,
+        // demonstrating per-tick text updates without flashing.
         getEntityStoreRegistry().registerSystem(new LifetimeNameplateSystem(nameplateDataType));
     }
 

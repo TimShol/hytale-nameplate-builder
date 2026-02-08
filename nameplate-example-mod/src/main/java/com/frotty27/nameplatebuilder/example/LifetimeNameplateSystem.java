@@ -1,6 +1,5 @@
 package com.frotty27.nameplatebuilder.example;
 
-import com.frotty27.nameplatebuilder.api.NameplateAPI;
 import com.frotty27.nameplatebuilder.api.NameplateData;
 import com.hypixel.hytale.component.Archetype;
 import com.hypixel.hytale.component.ArchetypeChunk;
@@ -8,40 +7,40 @@ import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
-import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 import com.hypixel.hytale.server.core.modules.entity.tracker.EntityTrackerSystems;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 /**
- * Example {@link EntityTickingSystem} that updates a nameplate segment every tick.
+ * Example {@link EntityTickingSystem} that updates a per-entity "lifetime" segment.
  *
- * <p>This demonstrates that calling {@link NameplateAPI#register} each tick does
- * <b>not</b> cause flashing — the {@link NameplateData} component stays on the
- * entity and only its internal map value is updated in place.</p>
+ * <p>Each entity's lifetime is tracked individually by storing the spawn tick
+ * inside the {@link NameplateData} component under a hidden key
+ * ({@code "_lifetime_tick"}). On each tick, the system reads the spawn tick,
+ * computes the elapsed time, and formats it as human-readable text
+ * (e.g. {@code "1m 23s"}).</p>
  *
- * <p>Each tick, the "lifetime" segment text is recalculated from an internal
- * counter, showing how long (in seconds) the entity has been alive.</p>
+ * <p>This demonstrates that calling {@link NameplateData#setText} each tick does
+ * <b>not</b> cause flashing — the component stays on the entity and only its
+ * internal map value is updated in place.</p>
  */
 final class LifetimeNameplateSystem extends EntityTickingSystem<EntityStore> {
 
     private static final String SEGMENT_ID = "lifetime";
+    /** Hidden key storing the global tick at which this entity was initialized. */
+    private static final String SPAWN_TICK_KEY = "_lifetime_tick";
 
-    private final ComponentType<EntityStore, EntityTrackerSystems.Visible> visibleType;
-    private final ComponentType<EntityStore, Nameplate> nameplateType;
     private final ComponentType<EntityStore, NameplateData> nameplateDataType;
 
-    private int tickCounter;
+    /** Global tick counter, incremented once per system tick. */
+    private long globalTick;
 
     LifetimeNameplateSystem(ComponentType<EntityStore, NameplateData> nameplateDataType) {
-        this.visibleType = EntityTrackerSystems.Visible.getComponentType();
-        this.nameplateType = Nameplate.getComponentType();
         this.nameplateDataType = nameplateDataType;
     }
 
     @Override
     public Archetype<EntityStore> getQuery() {
-        // Only tick entities that have both Visible + NameplateData components
-        return Archetype.of(visibleType, nameplateDataType);
+        return Archetype.of(nameplateDataType);
     }
 
     @Override
@@ -52,10 +51,7 @@ final class LifetimeNameplateSystem extends EntityTickingSystem<EntityStore> {
     @Override
     public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk,
                      Store<EntityStore> store, CommandBuffer<EntityStore> commandBuffer) {
-        // The tickCounter is shared across all entities — it counts global server ticks.
-        // Each entity just reads the current value and formats it as seconds.
-        // In a real mod you'd track per-entity spawn time instead.
-        tickCounter++;
+        globalTick++;
 
         NameplateData data = chunk.getComponent(index, nameplateDataType);
         if (data == null) {
@@ -68,8 +64,25 @@ final class LifetimeNameplateSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
-        // Update the text in place — no component add/remove, no flashing
-        int seconds = tickCounter / 20; // 20 ticks per second
+        // Read or initialize the per-entity spawn tick
+        String spawnTickStr = data.getText(SPAWN_TICK_KEY);
+        long spawnTick;
+        if (spawnTickStr == null) {
+            // First tick for this entity — record the current global tick
+            spawnTick = globalTick;
+            data.setText(SPAWN_TICK_KEY, String.valueOf(spawnTick));
+        } else {
+            try {
+                spawnTick = Long.parseLong(spawnTickStr);
+            } catch (NumberFormatException e) {
+                spawnTick = globalTick;
+                data.setText(SPAWN_TICK_KEY, String.valueOf(spawnTick));
+            }
+        }
+
+        // Compute elapsed time for this specific entity
+        long elapsed = globalTick - spawnTick;
+        int seconds = (int) (elapsed / 20); // 20 ticks per second
         int minutes = seconds / 60;
         int secs = seconds % 60;
 

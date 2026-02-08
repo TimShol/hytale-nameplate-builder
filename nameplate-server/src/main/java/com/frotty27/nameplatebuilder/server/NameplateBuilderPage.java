@@ -10,6 +10,7 @@ import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCu
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -22,9 +23,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
 
     private static final int CHAIN_PAGE_SIZE = 4;
     private static final int AVAIL_PAGE_SIZE = 8;
+    private static final int MOD_NAME_MAX_LENGTH = 24;
+    private static final int PREVIEW_MAX_LENGTH = 120;
     private static final String ENTITY_TYPE = "*";
 
-    private final PlayerRef playerRef;
     private final NameplateRegistry registry;
     private final NameplatePreferenceStore preferences;
     private final UUID viewerUuid;
@@ -42,7 +44,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         super(playerRef,
                 com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime.CanDismiss,
                 SettingsData.CODEC);
-        this.playerRef = playerRef;
         this.viewerUuid = viewerUuid;
         this.registry = registry;
         this.preferences = preferences;
@@ -56,15 +57,23 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
     }
 
     @Override
-    public void build(Ref<EntityStore> ref, UICommandBuilder commands, UIEventBuilder events, Store<EntityStore> store) {
+    public void build(@NonNull Ref<EntityStore> ref, UICommandBuilder commands, UIEventBuilder events, @NonNull Store<EntityStore> store) {
         commands.append("Pages/NameplateBuilder_Editor.ui");
         commands.set("#FilterField.Value", filter);
+        commands.set("#SeparatorField.Value", preferences.getSeparator(viewerUuid, ENTITY_TYPE));
 
         // Filter field binding
         events.addEventBinding(
                 com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
                 "#FilterField",
                 com.hypixel.hytale.server.core.ui.builder.EventData.of("@Filter", "#FilterField.Value"),
+                false);
+
+        // Separator field binding
+        events.addEventBinding(
+                com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
+                "#SeparatorField",
+                com.hypixel.hytale.server.core.ui.builder.EventData.of("@Separator", "#SeparatorField.Value"),
                 false);
 
         // Button bindings
@@ -87,6 +96,9 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             bindAction(events, "#AvailBlock" + i + "Add", "Add_" + i);
         }
 
+        // Clear chain
+        bindAction(events, "#ClearChainButton", "ClearChain");
+
         // Look-at toggle
         bindAction(events, "#LookToggle", "ToggleLook");
 
@@ -106,8 +118,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
 
         boolean lookOnly = preferences.isOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE);
         commands.set("#LookToggle.Text", lookOnly
-                ? "\u2611 Only show when looking at entity"
-                : "\u2610 Only show when looking at entity");
+                ? "[x] Only show when looking at entity"
+                : "[ ] Only show when looking at entity");
     }
 
     private void bindAction(UIEventBuilder events, String selector, String action) {
@@ -119,7 +131,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
     }
 
     @Override
-    public void handleDataEvent(Ref<EntityStore> ref, Store<EntityStore> store, SettingsData data) {
+    public void handleDataEvent(@NonNull Ref<EntityStore> ref, @NonNull Store<EntityStore> store, @NonNull SettingsData data) {
         if (data == null) {
             return;
         }
@@ -128,52 +140,58 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             availPage = 0;
         }
 
+        if (data.separator != null) {
+            preferences.setSeparator(viewerUuid, ENTITY_TYPE, data.separator);
+        }
+
         if (data.action == null || data.action.isBlank()) {
             sendUpdate(buildUpdate());
             return;
         }
 
-        if (data.action.equals("Close")) {
-            close();
-            return;
-        }
-
-        if (data.action.equals("Save")) {
-            preferences.save();
-            persistUiState();
-            close();
-            return;
-        }
-
-        if (data.action.equals("PrevAvail")) {
-            availPage = Math.max(0, availPage - 1);
-            sendUpdate(buildUpdate());
-            return;
-        }
-
-        if (data.action.equals("NextAvail")) {
-            availPage = availPage + 1;
-            sendUpdate(buildUpdate());
-            return;
-        }
-
-        if (data.action.equals("PrevChain")) {
-            chainPage = Math.max(0, chainPage - 1);
-            sendUpdate(buildUpdate());
-            return;
-        }
-
-        if (data.action.equals("NextChain")) {
-            chainPage = chainPage + 1;
-            sendUpdate(buildUpdate());
-            return;
-        }
-
-        if (data.action.equals("ToggleLook")) {
-            boolean current = preferences.isOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE);
-            preferences.setOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE, !current);
-            sendUpdate(buildUpdate());
-            return;
+        switch (data.action) {
+            case "Close" -> {
+                close();
+                return;
+            }
+            case "Save" -> {
+                preferences.save();
+                persistUiState();
+                close();
+                return;
+            }
+            case "PrevAvail" -> {
+                availPage = Math.max(0, availPage - 1);
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "NextAvail" -> {
+                availPage = availPage + 1;
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "PrevChain" -> {
+                chainPage = Math.max(0, chainPage - 1);
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "NextChain" -> {
+                chainPage = chainPage + 1;
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "ToggleLook" -> {
+                boolean current = preferences.isOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE);
+                preferences.setOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE, !current);
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "ClearChain" -> {
+                clearChain();
+                chainPage = 0;
+                sendUpdate(buildUpdate());
+                return;
+            }
         }
 
         if (data.action.startsWith("Add_")) {
@@ -201,7 +219,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             int row = parseRowIndex(data.action, "Right_");
             moveRow(row, 1);
             sendUpdate(buildUpdate());
-            return;
         }
     }
 
@@ -213,6 +230,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         UICommandBuilder commands = new UICommandBuilder();
 
         commands.set("#FilterField.Value", filter);
+        commands.set("#SeparatorField.Value", preferences.getSeparator(viewerUuid, ENTITY_TYPE));
 
         List<SegmentView> available = getAvailableViews();
         List<SegmentView> chain = getChainViews();
@@ -230,8 +248,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
 
         boolean lookOnly = preferences.isOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE);
         commands.set("#LookToggle.Text", lookOnly
-                ? "\u2611 Only show when looking at entity"
-                : "\u2610 Only show when looking at entity");
+                ? "[x] Only show when looking at entity"
+                : "[ ] Only show when looking at entity");
 
         return commands;
     }
@@ -250,6 +268,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         int start = chainPage * CHAIN_PAGE_SIZE;
         int end = Math.min(chain.size(), start + CHAIN_PAGE_SIZE);
 
+        String separator = preferences.getSeparator(viewerUuid, ENTITY_TYPE);
+
         for (int i = 0; i < CHAIN_PAGE_SIZE; i++) {
             int index = start + i;
             boolean visible = index < end;
@@ -258,8 +278,17 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             if (visible) {
                 SegmentView view = chain.get(index);
                 commands.set(prefix + "Label.Text", view.displayName());
-                commands.set(prefix + "Sub.Text", view.previewText().isBlank() ? view.modName() : view.previewText());
+                commands.set(prefix + "Sub.Text", truncateModName(view.modName()));
                 commands.set(prefix + "Author.Text", "by " + view.author());
+            }
+
+            // Separator indicator between blocks
+            if (i < CHAIN_PAGE_SIZE - 1) {
+                boolean sepVisible = visible && (start + i + 1) < end;
+                commands.set("#ChainSep" + i + ".Visible", sepVisible);
+                if (sepVisible) {
+                    commands.set("#ChainSep" + i + ".Text", separator);
+                }
             }
         }
 
@@ -293,7 +322,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             if (visible) {
                 SegmentView view = available.get(index);
                 commands.set(prefix + "Label.Text", view.displayName());
-                commands.set(prefix + "Sub.Text", view.previewText().isBlank() ? "" : view.previewText());
+                commands.set(prefix + "Sub.Text", truncateModName(view.modName()));
                 commands.set(prefix + "Author.Text", "by " + view.author());
             }
         }
@@ -331,17 +360,19 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         preferences.disable(viewerUuid, ENTITY_TYPE, view.key());
     }
 
+    private void clearChain() {
+        Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
+        List<SegmentKey> available = new ArrayList<>(segments.keySet());
+        preferences.disableAll(viewerUuid, ENTITY_TYPE, available);
+    }
+
     private void moveRow(int row, int delta) {
         SegmentView view = getChainRow(row);
         if (view == null) {
             return;
         }
-        List<SegmentView> chain = getChainViews();
-        List<SegmentKey> allKeys = new ArrayList<>();
-        for (SegmentView segment : chain) {
-            allKeys.add(segment.key());
-        }
-        preferences.move(viewerUuid, ENTITY_TYPE, view.key(), delta, allKeys, getDefaultComparator());
+        List<SegmentKey> chainKeys = getChainViews().stream().map(SegmentView::key).toList();
+        preferences.move(viewerUuid, ENTITY_TYPE, view.key(), delta, chainKeys, getDefaultComparator());
     }
 
     private SegmentView getAvailableRow(int row) {
@@ -371,31 +402,20 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         if (segments.isEmpty()) {
             return List.of();
         }
-        List<SegmentKey> available = new ArrayList<>(segments.keySet());
-        List<SegmentKey> ordered = preferences.getAvailable(viewerUuid, ENTITY_TYPE, available, getDefaultComparator());
+        List<SegmentKey> allKeys = new ArrayList<>(segments.keySet());
+        List<SegmentKey> ordered = preferences.getAvailable(viewerUuid, ENTITY_TYPE, allKeys, getDefaultComparator());
         List<SegmentView> views = new ArrayList<>();
+        String lowerFilter = filter.isBlank() ? null : filter.toLowerCase();
         for (SegmentKey key : ordered) {
             NameplateRegistry.Segment segment = segments.get(key);
             if (segment == null) {
                 continue;
             }
-            String displayName = segment.getDisplayName();
-            String modName = segment.getPluginName();
-            String author = segment.getPluginAuthor();
-            String previewText = resolvePreviewText(segment);
-
-            if (!filter.isBlank()) {
-                String lowerFilter = filter.toLowerCase();
-                boolean matches = displayName.toLowerCase().contains(lowerFilter)
-                        || modName.toLowerCase().contains(lowerFilter)
-                        || author.toLowerCase().contains(lowerFilter)
-                        || segment.getPluginId().toLowerCase().contains(lowerFilter)
-                        || (previewText != null && previewText.toLowerCase().contains(lowerFilter));
-                if (!matches) {
-                    continue;
-                }
+            SegmentView view = toView(key, segment);
+            if (lowerFilter != null && !matchesFilter(view, segment, lowerFilter)) {
+                continue;
             }
-            views.add(new SegmentView(key, displayName, modName, author, previewText != null ? previewText : ""));
+            views.add(view);
         }
         return views;
     }
@@ -405,26 +425,37 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         if (segments.isEmpty()) {
             return List.of();
         }
-        List<SegmentKey> available = new ArrayList<>(segments.keySet());
-        List<SegmentKey> ordered = preferences.getChain(viewerUuid, ENTITY_TYPE, available, getDefaultComparator());
+        List<SegmentKey> allKeys = new ArrayList<>(segments.keySet());
+        List<SegmentKey> ordered = preferences.getChain(viewerUuid, ENTITY_TYPE, allKeys, getDefaultComparator());
         List<SegmentView> views = new ArrayList<>();
         for (SegmentKey key : ordered) {
             NameplateRegistry.Segment segment = segments.get(key);
             if (segment == null) {
                 continue;
             }
-            String displayName = segment.getDisplayName();
-            String modName = segment.getPluginName();
-            String author = segment.getPluginAuthor();
-            String previewText = resolvePreviewText(segment);
-            views.add(new SegmentView(key, displayName, modName, author, previewText != null ? previewText : ""));
+            views.add(toView(key, segment));
         }
         return views;
     }
 
-    private String resolvePreviewText(NameplateRegistry.Segment segment) {
-        // UI metadata only — no preview text available from describe()
-        return null;
+    private static SegmentView toView(SegmentKey key, NameplateRegistry.Segment segment) {
+        return new SegmentView(
+                key,
+                segment.getDisplayName(),
+                segment.getPluginName(),
+                formatAuthorWithTarget(segment));
+    }
+
+    private static boolean matchesFilter(SegmentView view, NameplateRegistry.Segment segment, String lowerFilter) {
+        return view.displayName().toLowerCase().contains(lowerFilter)
+                || view.modName().toLowerCase().contains(lowerFilter)
+                || view.author().toLowerCase().contains(lowerFilter)
+                || segment.getTarget().getLabel().toLowerCase().contains(lowerFilter)
+                || segment.getPluginId().toLowerCase().contains(lowerFilter);
+    }
+
+    private static String formatAuthorWithTarget(NameplateRegistry.Segment segment) {
+        return segment.getPluginAuthor() + " [" + segment.getTarget().getLabel() + "]";
     }
 
     private Comparator<SegmentKey> getDefaultComparator() {
@@ -435,21 +466,37 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
     }
 
     private String buildPreview(List<SegmentView> views) {
-        StringBuilder builder = new StringBuilder();
-        for (SegmentView view : views) {
-            String text = view.previewText();
-            if (text == null || text.isBlank()) {
-                text = view.displayName();
-            }
-            if (!builder.isEmpty()) {
-                builder.append(' ');
-            }
-            builder.append(text);
-        }
-        if (builder.isEmpty()) {
+        String separator = preferences.getSeparator(viewerUuid, ENTITY_TYPE);
+        if (views.isEmpty()) {
             return "(no blocks enabled)";
         }
+
+        // Build segments one at a time, stopping when the next one won't fit
+        StringBuilder builder = new StringBuilder();
+        for (SegmentView view : views) {
+            String name = view.displayName();
+            String candidate = builder.isEmpty()
+                    ? name
+                    : builder.toString() + separator + name;
+
+            if (candidate.length() > PREVIEW_MAX_LENGTH) {
+                // This segment won't fit — truncate with ellipsis after the last one that did
+                if (builder.isEmpty()) {
+                    // Even the first segment is too long — hard truncate it
+                    return name.substring(0, PREVIEW_MAX_LENGTH - 2) + " …";
+                }
+                return builder + " …";
+            }
+            builder = new StringBuilder(candidate);
+        }
         return builder.toString();
+    }
+
+    private static String truncateModName(String name) {
+        if (name == null || name.length() <= MOD_NAME_MAX_LENGTH) {
+            return name;
+        }
+        return name.substring(0, MOD_NAME_MAX_LENGTH - 1) + "…";
     }
 
     private int parseRowIndex(String action, String prefix) {
@@ -462,7 +509,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
 
     // ── Records ──
 
-    private record SegmentView(SegmentKey key, String displayName, String modName, String author, String previewText) {
+    private record SegmentView(SegmentKey key, String displayName, String modName, String author) {
     }
 
     private record UiState(String filter, int availPage, int chainPage) {
@@ -471,17 +518,22 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
     static final class SettingsData {
         public static final BuilderCodec<SettingsData> CODEC = BuilderCodec
                 .builder(SettingsData.class, SettingsData::new)
-                .append(new KeyedCodec<String>("@Filter", Codec.STRING),
+                .append(new KeyedCodec<>("@Filter", Codec.STRING),
                         (SettingsData data, String value) -> data.filter = value,
                         (SettingsData data) -> data.filter)
                 .add()
-                .append(new KeyedCodec<String>("Action", Codec.STRING),
+                .append(new KeyedCodec<>("Action", Codec.STRING),
                         (SettingsData data, String value) -> data.action = value,
                         (SettingsData data) -> data.action)
+                .add()
+                .append(new KeyedCodec<>("@Separator", Codec.STRING),
+                        (SettingsData data, String value) -> data.separator = value,
+                        (SettingsData data) -> data.separator)
                 .add()
                 .build();
 
         String filter;
         String action;
+        String separator;
     }
 }

@@ -20,7 +20,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
  * // At runtime — register nameplate text to an entity
  * NameplateAPI.register(store, entityRef, "health", "67/67");
  *
- * // Update when value changes
+ * // Update when value changes — just call register() again
  * NameplateAPI.register(store, entityRef, "health", "23/67");
  *
  * // Remove a single segment from an entity
@@ -30,10 +30,25 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
  * store.tryRemoveComponent(entityRef, NameplateAPI.getComponentType());
  * }</pre>
  *
+ * <h3>Attaching nameplates to NPCs on spawn</h3>
+ * <p>The recommended approach is an {@code EntityTickingSystem} that queries for
+ * {@code NPCEntity}, checks the role name, and calls {@link #register} on entities
+ * that don't yet have a {@link NameplateData} component. The first {@code register()}
+ * call creates and attaches the component automatically, so subsequent ticks skip
+ * the entity. See {@code ArchaeopteryxNameplateSystem} in the example mod for a
+ * full working implementation.</p>
+ *
+ * <h3>Tick-based updates</h3>
+ * <p>Calling {@link #register} every tick is safe — it updates the internal map
+ * value in place without adding or removing the component, so there is no
+ * flashing. For direct access inside a tick system, use
+ * {@link NameplateData#setText} on the component instance instead.</p>
+ *
  * <p><b>Dependency:</b> your mod's {@code manifest.json} must declare
  * {@code "Frotty27:NameplateBuilder": "*"} in its Dependencies to ensure
  * the API is available before your plugin loads.</p>
  *
+ * @see NameplateData
  * @see NameplateNotInitializedException
  * @see NameplateArgumentException
  */
@@ -46,13 +61,23 @@ public final class NameplateAPI {
     }
 
     // ── Internal setters (called by NameplateBuilder server plugin) ──
+    // These must be public for cross-module access but are NOT part of the mod API.
+    // External mods should never call these — doing so will break the system.
 
-    /** Called internally by the NameplateBuilder server plugin during startup. */
+    /**
+     * Called internally by the NameplateBuilder server plugin during startup.
+     *
+     * <p><b>Internal — do not call from external mods.</b></p>
+     */
     public static void setRegistry(INameplateRegistry registry) {
         NameplateAPI.registry = registry;
     }
 
-    /** Called internally after registering the {@link NameplateData} component. */
+    /**
+     * Called internally after registering the {@link NameplateData} component.
+     *
+     * <p><b>Internal — do not call from external mods.</b></p>
+     */
     public static void setComponentType(ComponentType<EntityStore, NameplateData> type) {
         NameplateAPI.componentType = type;
     }
@@ -66,6 +91,10 @@ public final class NameplateAPI {
      * UI can show a human-readable block for this segment. Calling this is
      * <b>optional</b> — if skipped, the UI will show the raw segment ID instead.</p>
      *
+     * <p>Defaults the target to {@link SegmentTarget#ALL}. Use
+     * {@link #describe(JavaPlugin, String, String, SegmentTarget)} to specify
+     * a more specific target.</p>
+     *
      * <p>Call once during your plugin's {@code setup()} method:</p>
      * <pre>{@code
      * NameplateAPI.describe(this, "health", "Health Bar");
@@ -78,10 +107,37 @@ public final class NameplateAPI {
      * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
      */
     public static void describe(JavaPlugin plugin, String segmentId, String displayName) {
+        describe(plugin, segmentId, displayName, SegmentTarget.ALL);
+    }
+
+    /**
+     * Describe a nameplate segment for the player UI, with an entity target hint.
+     *
+     * <p>The {@link SegmentTarget} is shown as a tag in the UI (e.g. {@code [Players]},
+     * {@code [NPCs]}) so players know which entities the segment is relevant to.
+     * This is purely informational — it does not restrict which entities the segment
+     * can be registered on at runtime.</p>
+     *
+     * <pre>{@code
+     * NameplateAPI.describe(this, "health", "Health Bar", SegmentTarget.ALL);
+     * NameplateAPI.describe(this, "status", "Online Status", SegmentTarget.PLAYERS);
+     * NameplateAPI.describe(this, "tier", "Elite Tier", SegmentTarget.NPCS);
+     * }</pre>
+     *
+     * @param plugin      the plugin owning this segment
+     * @param segmentId   a unique identifier for this segment within your plugin
+     * @param displayName human-readable name shown in the Nameplate Builder UI
+     * @param target      the entity target hint shown as a tag in the UI
+     * @throws NameplateArgumentException       if any parameter is null or blank
+     * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
+     * @see SegmentTarget
+     */
+    public static void describe(JavaPlugin plugin, String segmentId, String displayName, SegmentTarget target) {
         requireNonNull(plugin, "plugin");
         requireNonBlank(segmentId, "segmentId");
         requireNonBlank(displayName, "displayName");
-        getRegistry().describe(plugin, segmentId, displayName);
+        requireNonNull(target, "target");
+        getRegistry().describe(plugin, segmentId, displayName, target);
     }
 
     /**
@@ -101,19 +157,6 @@ public final class NameplateAPI {
         getRegistry().undescribe(plugin, segmentId);
     }
 
-    /**
-     * Remove all segment descriptions registered by a plugin.
-     * Called automatically on server shutdown.
-     *
-     * @param plugin the plugin whose descriptions should be removed
-     * @throws NameplateArgumentException       if plugin is null
-     * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
-     */
-    public static void undescribeAll(JavaPlugin plugin) {
-        requireNonNull(plugin, "plugin");
-        getRegistry().undescribeAll(plugin);
-    }
-
     // ── Register / Remove (per-entity text) ──
 
     /**
@@ -127,12 +170,25 @@ public final class NameplateAPI {
      * NameplateAPI.register(store, entityRef, "health", "67/67");
      * }</pre>
      *
+     * <p><b>Important:</b> this method calls {@code store.addComponent()} internally
+     * when the entity doesn't already have a {@link NameplateData} component. This
+     * means it <b>cannot</b> be called from inside an {@code EntityTickingSystem}
+     * (the store is locked for writes during system processing). For tick-system
+     * initialization, build a {@link NameplateData} manually and use
+     * {@code commandBuffer.addComponent()} instead. See
+     * {@code ArchaeopteryxNameplateSystem} in the example mod.</p>
+     *
+     * <p>However, if the entity <b>already has</b> the component, this method only
+     * mutates the existing map in place — which is safe from tick systems.</p>
+     *
      * @param store     the entity store
      * @param entityRef reference to the entity
      * @param segmentId the segment identifier (should match what was passed to {@link #describe})
      * @param text      the text to display
      * @throws NameplateArgumentException       if any parameter is null or blank
      * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
+     * @throws IllegalStateException            if the entity has no NameplateData and this is called
+     *                                          from inside an EntityTickingSystem (store is locked)
      */
     public static void register(Store<EntityStore> store,
                                 Ref<EntityStore> entityRef,

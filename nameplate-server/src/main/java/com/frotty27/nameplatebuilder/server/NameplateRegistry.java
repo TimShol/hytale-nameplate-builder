@@ -1,6 +1,7 @@
 package com.frotty27.nameplatebuilder.server;
 
 import com.frotty27.nameplatebuilder.api.INameplateRegistry;
+import com.frotty27.nameplatebuilder.api.SegmentTarget;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 
 import java.util.Map;
@@ -10,9 +11,9 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Server-side implementation of {@link INameplateRegistry}.
  *
- * <p>Stores UI metadata (display name, author, plugin info) for each described
- * segment. The aggregator uses this metadata to match component entries to
- * human-readable UI blocks. Segments that are not described still work at
+ * <p>Stores UI metadata (display name, author, plugin info, target) for each
+ * described segment. The aggregator uses this metadata to match component entries
+ * to human-readable UI blocks. Segments that are not described still work at
  * runtime — the UI falls back to showing the raw segment ID.</p>
  */
 final class NameplateRegistry implements INameplateRegistry {
@@ -20,15 +21,24 @@ final class NameplateRegistry implements INameplateRegistry {
     private final Map<SegmentKey, Segment> segments = new ConcurrentHashMap<>();
 
     @Override
-    public void describe(JavaPlugin plugin, String segmentId, String displayName) {
+    public void describe(JavaPlugin plugin, String segmentId, String displayName, SegmentTarget target) {
         Objects.requireNonNull(plugin, "plugin");
         Objects.requireNonNull(segmentId, "segmentId");
         Objects.requireNonNull(displayName, "displayName");
+        Objects.requireNonNull(target, "target");
 
         String pluginId = toPluginId(plugin);
+        String pluginName = plugin.getName();
         String pluginAuthor = plugin.getIdentifier().getGroup();
+        // Strip group prefix if present (e.g. "Frotty27:MyMod" → "MyMod")
+        if (pluginName != null && pluginName.contains(":")) {
+            pluginName = pluginName.substring(pluginName.indexOf(':') + 1).trim();
+        }
+        if (pluginAuthor != null && pluginAuthor.contains(":")) {
+            pluginAuthor = pluginAuthor.substring(0, pluginAuthor.indexOf(':'));
+        }
         SegmentKey key = new SegmentKey(pluginId, segmentId);
-        segments.put(key, new Segment(pluginId, plugin.getName(), pluginAuthor, segmentId, displayName));
+        segments.put(key, new Segment(pluginId, pluginName, pluginAuthor, segmentId, displayName, target));
     }
 
     @Override
@@ -66,14 +76,16 @@ final class NameplateRegistry implements INameplateRegistry {
         private final String pluginAuthor;
         private final String segmentId;
         private final String displayName;
+        private final SegmentTarget target;
 
         Segment(String pluginId, String pluginName, String pluginAuthor,
-                String segmentId, String displayName) {
+                String segmentId, String displayName, SegmentTarget target) {
             this.pluginId = pluginId;
             this.pluginName = pluginName;
             this.pluginAuthor = pluginAuthor;
             this.segmentId = segmentId;
             this.displayName = displayName;
+            this.target = target;
         }
 
         String getPluginId()     { return pluginId; }
@@ -81,6 +93,7 @@ final class NameplateRegistry implements INameplateRegistry {
         String getPluginAuthor() { return pluginAuthor; }
         String getSegmentId()    { return segmentId; }
         String getDisplayName()  { return displayName; }
+        SegmentTarget getTarget() { return target; }
 
         @Override
         public String toString() {
