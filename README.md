@@ -6,7 +6,7 @@ A server-side nameplate aggregator for Hytale that lets multiple mods contribute
 
 [![CurseForge Server Plugin](https://img.shields.io/badge/Server_Plugin-F16436?style=for-the-badge&logo=curseforge&logoColor=white)](https://www.curseforge.com/hytale/mods/PLACEHOLDER_SERVER_SLUG)
 [![CurseForge API](https://img.shields.io/badge/API_(for_mod_devs)-F16436?style=for-the-badge&logo=curseforge&logoColor=white)](https://www.curseforge.com/hytale/mods/PLACEHOLDER_API_SLUG)
-[![GitHub Example Mod](https://img.shields.io/badge/Example_Mod-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/PLACEHOLDER_USER/NameplateBuilder/releases/latest)
+[![GitHub Example Mod](https://img.shields.io/badge/Example_Mod-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/TimShol/hytale-nameplate-builder/releases/tag/v1.0.0)
 
 <!-- TODO: Replace PLACEHOLDER_SERVER_SLUG, PLACEHOLDER_API_SLUG, and PLACEHOLDER_USER with actual values -->
 
@@ -15,7 +15,7 @@ A server-side nameplate aggregator for Hytale that lets multiple mods contribute
 
 ## Overview
 
-NameplateBuilder solves a core problem in modded Hytale servers: when multiple mods want to display information above entities (health, guild tags, titles, ranks, etc.), they conflict over the single `Nameplate` component. NameplateBuilder acts as a central aggregator — each mod registers its own named segments, and the system composites them into a single nameplate string per viewer, per entity, every tick.
+NameplateBuilder solves a core problem in for modders and players for Hytale: when multiple mods want to display information above entities (health, guild tags, titles, ranks, etc.), they conflict over the single `Nameplate` component. NameplateBuilder acts as a central aggregator — each mod registers its own named segments, and the system composites them into a single nameplate string per viewer, per entity, every tick.
 
 Players get a UI to choose which segments they see, reorder them, customize separators between individual segments, configure a vertical nameplate offset, and toggle a "only show when looking at entity" mode. Nameplates are automatically cleared when an entity dies.
 
