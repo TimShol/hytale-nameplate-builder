@@ -1,0 +1,57 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '9.3.0'
+}
+
+group = rootProject.property('group')
+version = rootProject.property('version')
+base.archivesName.set(rootProject.property('name') + '-Example')
+
+dependencies {
+    compileOnly project(':nameplate-api')
+    compileOnly files(rootProject.ext.hytaleJar)
+}
+
+tasks.processResources {
+    def expandProps = [
+            'name'          : rootProject.property('name') + ' Example',
+            'version'       : rootProject.property('version'),
+            'group'         : rootProject.property('group'),
+            'description'   : 'Example mod that registers sample nameplate segments.',
+            'website'       : rootProject.property('website'),
+            'server_version': rootProject.property('server_version'),
+            'entry_point'   : 'com.frotty27.nameplatebuilder.example.NameplateExamplePlugin',
+    ]
+
+    filesMatching('manifest.json') {
+        expand(expandProps)
+    }
+    inputs.properties(expandProps)
+}
+
+tasks.shadowJar {
+    archiveClassifier.set('')
+}
+
+tasks.register('deploy') {
+    group = 'hytale'
+    description = 'Deploys the example plugin JAR to the Hytale Mods folder'
+    dependsOn tasks.shadowJar
+
+    doLast {
+        rootProject.ext.userModsDir.mkdirs()
+        def jarFile = tasks.shadowJar.archiveFile.get().asFile
+
+        copy {
+            from jarFile
+            into rootProject.ext.userModsDir
+        }
+
+        println "Deployed ${jarFile.name} to ${rootProject.ext.userModsDir}"
+    }
+}
+
+tasks.build {
+    dependsOn tasks.shadowJar
+    finalizedBy tasks.deploy
+}

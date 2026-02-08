@@ -1,0 +1,36 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = rootProject.property('group')
+version = rootProject.property('version')
+base.archivesName.set(rootProject.property('name') + '-API')
+
+dependencies {
+    compileOnly files(rootProject.ext.hytaleJar)
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+tasks.javadoc {
+    options {
+        encoding = 'UTF-8'
+        docEncoding = 'UTF-8'
+        charSet = 'UTF-8'
+        addStringOption('Xdoclint:none', '-quiet')
+        links 'https://docs.oracle.com/en/java/javase/25/docs/api/'
+    }
+}
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            artifactId = 'nameplatebuilder-api'
+            from components.java
+        }
+    }
+}

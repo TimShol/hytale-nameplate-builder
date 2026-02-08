@@ -1,0 +1,22 @@
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    java {
+        toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+}
+
+ext {
+    hytaleJar = file("${System.getProperty('user.home')}/AppData/Roaming/Hytale/install/release/package/game/${rootProject.property('game_build')}/Server/HytaleServer.jar")
+    userModsDir = file("${System.getProperty('user.home')}/AppData/Roaming/Hytale/UserData/Mods")
+}

@@ -1,0 +1,25 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+*.launch
+.factorypath
+out/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Runtime
+*.log
