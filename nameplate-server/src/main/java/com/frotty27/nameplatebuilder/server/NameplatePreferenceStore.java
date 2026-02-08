@@ -55,6 +55,17 @@ final class NameplatePreferenceStore {
                         PreferenceSet set = getSet(UUID.fromString(parts[1]), parts[2], true);
                         set.separator = parts[3].replace("\\p", "|").replace("\\\\", "\\");
                     }
+                    case "B" -> {
+                        if (parts.length < 6) continue;
+                        PreferenceSet set = getSet(UUID.fromString(parts[1]), parts[2], true);
+                        SegmentKey key = new SegmentKey(parts[3], parts[4]);
+                        set.separatorAfter.put(key, parts[5].replace("\\p", "|").replace("\\\\", "\\"));
+                    }
+                    case "O" -> {
+                        if (parts.length < 4) continue;
+                        PreferenceSet set = getSet(UUID.fromString(parts[1]), parts[2], true);
+                        set.offset = Double.parseDouble(parts[3]);
+                    }
                     default -> {
                         // Legacy format: viewer|entityType|pluginId|segmentId|enabled|order
                         if (parts.length >= 6) {
@@ -85,6 +96,10 @@ final class NameplatePreferenceStore {
             writer.newLine();
             writer.write("# D|viewerUuid|entityType|separator");
             writer.newLine();
+            writer.write("# B|viewerUuid|entityType|pluginId|segmentId|separatorAfter");
+            writer.newLine();
+            writer.write("# O|viewerUuid|entityType|offset");
+            writer.newLine();
             for (Map.Entry<UUID, Map<String, PreferenceSet>> viewerEntry : data.entrySet()) {
                 UUID viewer = viewerEntry.getKey();
                 for (Map.Entry<String, PreferenceSet> entityEntry : viewerEntry.getValue().entrySet()) {
@@ -101,6 +116,16 @@ final class NameplatePreferenceStore {
                         boolean enabled = enabledEntry.getValue();
                         int order = set.order.getOrDefault(key, -1);
                         writer.write("S|" + viewer + "|" + entityType + "|" + key.pluginId() + "|" + key.segmentId() + "|" + enabled + "|" + order);
+                        writer.newLine();
+                    }
+                    for (Map.Entry<SegmentKey, String> sepEntry : set.separatorAfter.entrySet()) {
+                        SegmentKey key = sepEntry.getKey();
+                        String escapedBlockSep = sepEntry.getValue().replace("\\", "\\\\").replace("|", "\\p");
+                        writer.write("B|" + viewer + "|" + entityType + "|" + key.pluginId() + "|" + key.segmentId() + "|" + escapedBlockSep);
+                        writer.newLine();
+                    }
+                    if (set.offset != 0.0) {
+                        writer.write("O|" + viewer + "|" + entityType + "|" + set.offset);
                         writer.newLine();
                     }
                 }
@@ -151,6 +176,41 @@ final class NameplatePreferenceStore {
     void setSeparator(UUID viewer, String entityType, String separator) {
         PreferenceSet set = getSet(viewer, entityType, true);
         set.separator = (separator == null || separator.isEmpty()) ? " - " : separator;
+    }
+
+    /**
+     * Get the separator shown after the given segment in the chain.
+     * Falls back to the global default separator if no per-block override is set.
+     */
+    String getSeparatorAfter(UUID viewer, String entityType, SegmentKey key) {
+        PreferenceSet set = getSet(viewer, entityType, false);
+        if (set == null) {
+            return " - ";
+        }
+        String sep = set.separatorAfter.get(key);
+        return sep != null ? sep : set.separator;
+    }
+
+    void setSeparatorAfter(UUID viewer, String entityType, SegmentKey key, String separator) {
+        PreferenceSet set = getSet(viewer, entityType, true);
+        if (separator == null) {
+            set.separatorAfter.remove(key);
+        } else {
+            set.separatorAfter.put(key, separator);
+        }
+    }
+
+    double getOffset(UUID viewer, String entityType) {
+        PreferenceSet set = getSet(viewer, entityType, false);
+        if (set == null) {
+            return 0.0;
+        }
+        return set.offset;
+    }
+
+    void setOffset(UUID viewer, String entityType, double offset) {
+        PreferenceSet set = getSet(viewer, entityType, true);
+        set.offset = Math.max(-5.0, Math.min(5.0, offset));
     }
 
     boolean isEnabled(UUID viewer, String entityType, SegmentKey key) {
@@ -271,8 +331,10 @@ final class NameplatePreferenceStore {
     private static final class PreferenceSet {
         private final Map<SegmentKey, Boolean> enabled = new HashMap<>();
         private final Map<SegmentKey, Integer> order = new HashMap<>();
+        private final Map<SegmentKey, String> separatorAfter = new HashMap<>();
         private boolean useGlobal = false;
         private boolean onlyShowWhenLooking = false;
         private String separator = " - ";
+        private double offset = 0.0;
     }
 }

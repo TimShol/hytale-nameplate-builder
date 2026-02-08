@@ -17,6 +17,7 @@ import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.modules.entity.EntityModule;
 import com.hypixel.hytale.server.core.modules.entity.component.HeadRotation;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
 import com.hypixel.hytale.server.core.modules.entity.tracker.EntityTrackerSystems;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
@@ -37,6 +38,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     private final ComponentType<EntityStore, UUIDComponent> uuidComponentType;
     private final ComponentType<EntityStore, TransformComponent> transformComponentType;
     private final ComponentType<EntityStore, HeadRotation> headRotationType;
+    private final ComponentType<EntityStore, DeathComponent> deathComponentType;
     private final ComponentType<EntityStore, NameplateData> nameplateDataType;
     private final NameplateRegistry registry;
     private final NameplatePreferenceStore preferences;
@@ -48,6 +50,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         this.uuidComponentType = UUIDComponent.getComponentType();
         this.transformComponentType = TransformComponent.getComponentType();
         this.headRotationType = HeadRotation.getComponentType();
+        this.deathComponentType = DeathComponent.getComponentType();
         this.nameplateDataType = nameplateDataType;
         this.registry = registry;
         this.preferences = preferences;
@@ -71,6 +74,19 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         }
 
         Ref<EntityStore> entityRef = chunk.getReferenceTo(index);
+
+        // If the entity is dead, send an empty nameplate to all viewers so the
+        // text disappears immediately rather than lingering through the death animation.
+        // We also remove the NameplateData component so we stop ticking for it.
+        DeathComponent deathComponent = store.getComponent(entityRef, deathComponentType);
+        if (deathComponent != null) {
+            for (Map.Entry<Ref<EntityStore>, EntityTrackerSystems.EntityViewer> viewerEntry : visible.visibleTo.entrySet()) {
+                viewerEntry.getValue().queueUpdate(entityRef, nameplateUpdate(""));
+            }
+            commandBuffer.removeComponent(entityRef, nameplateDataType);
+            return;
+        }
+
         String entityTypeId = resolveEntityTypeId(chunk);
 
         // Read the NameplateData component — this is the sole source of text.
@@ -183,8 +199,8 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                              NameplateData entityData,
                              UUID viewerUuid,
                              String entityTypeId) {
-        String separator = preferences.getSeparator(viewerUuid, entityTypeId);
         StringBuilder builder = new StringBuilder();
+        SegmentKey prevKey = null;
         for (SegmentKey key : ordered) {
             if (!preferences.isEnabled(viewerUuid, entityTypeId, key)) {
                 continue;
@@ -194,10 +210,11 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             if (text == null || text.isBlank()) {
                 continue;
             }
-            if (!builder.isEmpty()) {
-                builder.append(separator);
+            if (!builder.isEmpty() && prevKey != null) {
+                builder.append(preferences.getSeparatorAfter(viewerUuid, entityTypeId, prevKey));
             }
             builder.append(text);
+            prevKey = key;
         }
         return builder.toString();
     }

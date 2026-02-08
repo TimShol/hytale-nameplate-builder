@@ -21,6 +21,9 @@ import java.util.Map;
  * that segment on this entity. The NameplateBuilder aggregator reads
  * this component every tick for each visible entity.</p>
  *
+ * <p>This component is automatically removed when an entity dies (receives a
+ * {@code DeathComponent}). Mods do not need to handle death cleanup.</p>
+ *
  * @see NameplateAPI#register
  * @see NameplateAPI#remove
  * @see NameplateAPI#getComponentType()

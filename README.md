@@ -17,7 +17,21 @@ A server-side nameplate aggregator for Hytale that lets multiple mods contribute
 
 NameplateBuilder solves a core problem in modded Hytale servers: when multiple mods want to display information above entities (health, guild tags, titles, ranks, etc.), they conflict over the single `Nameplate` component. NameplateBuilder acts as a central aggregator — each mod registers its own named segments, and the system composites them into a single nameplate string per viewer, per entity, every tick.
 
-Players get a UI to choose which segments they see, reorder them, customize the separator between segments, and toggle a "only show when looking at entity" mode.
+Players get a UI to choose which segments they see, reorder them, customize separators between individual segments, configure a vertical nameplate offset, and toggle a "only show when looking at entity" mode. Nameplates are automatically cleared when an entity dies.
+
+## Features
+
+- **Multi-mod nameplate aggregation** — Any number of mods can register their own named segments (health, guild tag, tier, title, etc.) and NameplateBuilder composites them into a single nameplate per entity
+- **Per-player customization UI** — Players open `/npb` to browse, search, add, remove, and reorder nameplate segments from all installed mods
+- **Per-block separators** — Each segment in the chain can have its own separator to the next segment (or no separator at all), allowing fine-grained control over how segments are joined
+- **Nameplate offset** — Configurable vertical offset value per player, stored and ready for hologram-based rendering (accepts both comma and dot decimal separators)
+- **View-cone filtering** — Optional "only show when looking at" mode hides nameplates for entities outside a ~25° view cone at up to 30 blocks range
+- **Death cleanup** — Nameplates are automatically cleared when an entity dies, instead of lingering through the death animation
+- **Live preview** — The UI shows a real-time preview of the composited nameplate text with the player's current segment chain and separators
+- **Segment target hints** — Mods tag segments as `[All]`, `[Players]`, or `[NPCs]` so players know at a glance which segments are relevant
+- **Hidden metadata keys** — Keys prefixed with `_` are stored in the component but never displayed, useful for per-entity internal state
+- **Persistent preferences** — All player settings (chain order, separators, offset, toggles) are saved to disk and survive server restarts
+- **Safe concurrent initialization** — Uses `putComponent()` (upsert) pattern to avoid race conditions when multiple mods initialize the same entity
 
 ## Architecture
 
@@ -29,7 +43,7 @@ nameplate-example-mod/    Example mod demonstrating the API
 
 **nameplate-api** exposes `NameplateAPI`, `NameplateData`, `SegmentTarget`, and the exception types. Mods depend on this at compile time.
 
-**nameplate-server** registers the `NameplateData` ECS component, runs the `NameplateAggregatorSystem` tick system, manages the player UI page, and persists per-player preferences.
+**nameplate-server** registers the `NameplateData` ECS component, runs the `NameplateAggregatorSystem` tick system (including death cleanup), manages the player UI page, and persists per-player preferences (chain order, per-block separators, offset, toggles).
 
 **nameplate-example-mod** shows the full modder workflow: describing segments, attaching nameplates to NPCs on spawn, and updating segments every tick.
 
@@ -255,7 +269,8 @@ Players open the Nameplate Builder editor via the `/nameplatebuilder` command (a
 - **Search** and filter by name, author, mod, or target category
 - **Build** their nameplate chain by adding/removing/reordering blocks
 - **Preview** the composited nameplate text in real time (truncated with ellipsis if too long)
-- **Separator** — customize the text shown between segments (default `" - "`)
+- **Per-block separators** — click the separator label between any two chain blocks to edit that specific separator. Each block can have its own separator (or none). A green highlight shows which separator is selected for editing. Click again to deselect, or click a different separator to switch. The default separator (`" - "`) is used for newly added blocks
+- **Offset** — set a vertical offset for the nameplate position (accepts both `,` and `.` as decimal separators, clamped to -5.0 – 5.0)
 - **Clear All** — remove all blocks from the chain in one click
 - **Toggle** "only show when looking at entity" mode (view-cone filter)
 
@@ -281,9 +296,9 @@ Preferences are saved per player and persist across sessions.
 ![Preview](docs/screenshots/preview.png)
 <!-- SCREENSHOT: Close-up of the Preview bar showing composited text like "Health Bar - Guild Tag - Elite Tier" -->
 
-#### Settings row
-![Settings row](docs/screenshots/settings-row.png)
-<!-- SCREENSHOT: Close-up of the settings row showing the look-at toggle, SEPARATOR label, separator text field, and Clear All button all at the same height -->
+#### Settings rows
+![Settings rows](docs/screenshots/settings-rows.png)
+<!-- SCREENSHOT: Close-up of the two settings rows: Row 1 with look-at toggle, Clear All, OFFSET label and text field; Row 2 with SEPARATOR label, separator text field, and context label showing "(default for new blocks)" or "(after Block Name)" -->
 
 #### In-world nameplate on NPC
 ![In-world nameplate](docs/screenshots/nameplate-ingame.png)
@@ -307,11 +322,13 @@ Preferences are saved per player and persist across sessions.
 
 2. **NPC initialization** — An `EntityTickingSystem` checks for newly spawned NPCs that don't yet have `NameplateData`. On their first tick, the system seeds default segments by adding a `NameplateData` component via the `CommandBuffer`. The aggregator picks up any visible entity that has `NameplateData` — no native `Nameplate` component is needed. Subsequent ticks skip already-initialized entities.
 
-3. **Aggregation** — The `NameplateAggregatorSystem` ticks every frame. For each visible entity with a `NameplateData` component, it reads the segment entries (skipping hidden `_`-prefixed keys), applies the viewer's preferences (ordering, enabled/disabled, separator), composites the text, and queues a nameplate update to each viewer. If all segments are disabled, it shows a hint message instead of the raw entity ID.
+3. **Aggregation** — The `NameplateAggregatorSystem` ticks every frame. For each visible entity with a `NameplateData` component, it reads the segment entries (skipping hidden `_`-prefixed keys), applies the viewer's preferences (ordering, enabled/disabled, per-block separators), composites the text, and queues a nameplate update to each viewer. If all segments are disabled, it shows a hint message instead of the raw entity ID.
 
-4. **View-cone filtering** — When enabled, the aggregator uses dot-product math to check if the viewer is looking at the entity (within a ~25 degree half-angle cone at up to 30 blocks range). Entities outside the cone receive an empty nameplate update to prevent the default ID from bleeding through.
+4. **Death cleanup** — When an entity receives a `DeathComponent`, the aggregator sends an empty nameplate update to all viewers (clearing the displayed text immediately) and removes the `NameplateData` component so no further updates are produced. Without this, nameplates would linger through the death animation until the entity model despawns.
 
-5. **Preferences** — Each player's segment chain, ordering, separator, and settings are stored by `NameplatePreferenceStore` and persisted to disk. The UI stores preferences under a global wildcard (`*`), which the aggregator falls back to when no entity-type-specific preferences exist.
+5. **View-cone filtering** — When enabled, the aggregator uses dot-product math to check if the viewer is looking at the entity (within a ~25 degree half-angle cone at up to 30 blocks range). Entities outside the cone receive an empty nameplate update to prevent the default ID from bleeding through.
+
+6. **Preferences** — Each player's segment chain, ordering, per-block separators, offset, and settings are stored by `NameplatePreferenceStore` and persisted to disk. The UI stores preferences under a global wildcard (`*`), which the aggregator falls back to when no entity-type-specific preferences exist.
 
 ## Building
 
@@ -351,7 +368,7 @@ NameplateBuilder/
   nameplate-server/
     src/main/java/.../server/
       NameplateBuilderPlugin.java         Server plugin entry point
-      NameplateAggregatorSystem.java      Per-tick nameplate compositor
+      NameplateAggregatorSystem.java      Per-tick nameplate compositor + death cleanup
       NameplateRegistry.java              Segment metadata store
       NameplateBuilderPage.java           Player UI page
       NameplateBuilderCommand.java        /npb and /nameplatebuilder command

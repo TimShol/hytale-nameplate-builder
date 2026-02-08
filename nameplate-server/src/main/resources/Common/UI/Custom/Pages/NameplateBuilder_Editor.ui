@@ -71,9 +71,9 @@ $C.@PageOverlay {
           }
         }
 
-        // Separator 0
-        Label #ChainSep0 {
-          Style: (FontSize: 11, TextColor: #5a6d82, HorizontalAlignment: Center, VerticalAlignment: Center);
+        // Separator 0 (clickable — edits this block's separator)
+        $C.@SmallSecondaryTextButton #ChainSep0 {
+          @Text = "-";
           Anchor: (Width: 28, Height: 104);
           Visible: false;
         }
@@ -95,9 +95,9 @@ $C.@PageOverlay {
           }
         }
 
-        // Separator 1
-        Label #ChainSep1 {
-          Style: (FontSize: 11, TextColor: #5a6d82, HorizontalAlignment: Center, VerticalAlignment: Center);
+        // Separator 1 (clickable — edits this block's separator)
+        $C.@SmallSecondaryTextButton #ChainSep1 {
+          @Text = "-";
           Anchor: (Width: 28, Height: 104);
           Visible: false;
         }
@@ -119,9 +119,9 @@ $C.@PageOverlay {
           }
         }
 
-        // Separator 2
-        Label #ChainSep2 {
-          Style: (FontSize: 11, TextColor: #5a6d82, HorizontalAlignment: Center, VerticalAlignment: Center);
+        // Separator 2 (clickable — edits this block's separator)
+        $C.@SmallSecondaryTextButton #ChainSep2 {
+          @Text = "-";
           Anchor: (Width: 28, Height: 104);
           Visible: false;
         }
@@ -186,15 +186,37 @@ $C.@PageOverlay {
         }
       }
 
-      // ── Settings ──
+      // ── Settings Row 1: Look toggle + Clear ──
       Group {
         LayoutMode: Left;
-        Anchor: (Height: 24, Bottom: 8);
+        Anchor: (Height: 24, Bottom: 6);
 
         $C.@SmallSecondaryTextButton #LookToggle {
           @Text = "";
           Anchor: (Width: 380, Height: 24, Right: 16);
         }
+
+        $C.@SmallSecondaryTextButton #ClearChainButton {
+          @Text = "Clear All";
+          Anchor: (Width: 120, Height: 24, Right: 16);
+        }
+
+        Label {
+          Text: "OFFSET";
+          Style: (TextColor: #96a9be, FontSize: 13, RenderBold: true, RenderUppercase: true, VerticalAlignment: Center);
+          Anchor: (Width: 65, Height: 24);
+        }
+
+        $C.@TextField #OffsetField {
+          Anchor: (Width: 80, Height: 24);
+          PlaceholderText: "0.0";
+        }
+      }
+
+      // ── Settings Row 2: Separator ──
+      Group {
+        LayoutMode: Left;
+        Anchor: (Height: 24, Bottom: 8);
 
         Label {
           Text: "SEPARATOR";
@@ -203,13 +225,13 @@ $C.@PageOverlay {
         }
 
         $C.@TextField #SeparatorField {
-          Anchor: (Width: 120, Height: 24);
+          Anchor: (Width: 120, Height: 24, Right: 8);
           PlaceholderText: " - ";
         }
 
-        $C.@SmallSecondaryTextButton #ClearChainButton {
-          @Text = "Clear All";
-          Anchor: (Width: 120, Height: 24, Left: 16);
+        Label #SeparatorContext {
+          Style: (TextColor: #5a6d82, FontSize: 11, VerticalAlignment: Center);
+          Anchor: (Width: 400, Height: 24);
         }
       }
 

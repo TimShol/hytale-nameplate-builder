@@ -35,6 +35,9 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
     private int availPage = 0;
     private int chainPage = 0;
 
+    /** Index into the current chain page for per-block separator editing. -1 = editing default separator. */
+    private int editingSepIndex = -1;
+
     private static final Map<UUID, UiState> UI_STATE = new ConcurrentHashMap<>();
 
     NameplateBuilderPage(PlayerRef playerRef,
@@ -76,6 +79,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
                 com.hypixel.hytale.server.core.ui.builder.EventData.of("@Separator", "#SeparatorField.Value"),
                 false);
 
+        // Offset field binding
+        events.addEventBinding(
+                com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
+                "#OffsetField",
+                com.hypixel.hytale.server.core.ui.builder.EventData.of("@Offset", "#OffsetField.Value"),
+                false);
+
         // Button bindings
         bindAction(events, "#SaveButton", "Save");
         bindAction(events, "#CloseButton", "Close");
@@ -89,6 +99,11 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             bindAction(events, "#ChainBlock" + i + "Left", "Left_" + i);
             bindAction(events, "#ChainBlock" + i + "Right", "Right_" + i);
             bindAction(events, "#ChainBlock" + i + "Remove", "Remove_" + i);
+        }
+
+        // Chain separator buttons (clickable — enter per-block separator editing)
+        for (int i = 0; i < CHAIN_PAGE_SIZE - 1; i++) {
+            bindAction(events, "#ChainSep" + i, "EditSep_" + i);
         }
 
         // Available block buttons (8 blocks)
@@ -124,7 +139,20 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         }
 
         if (data.separator != null) {
-            preferences.setSeparator(viewerUuid, ENTITY_TYPE, data.separator);
+            if (editingSepIndex >= 0) {
+                // Editing a per-block separator
+                SegmentKey key = getChainKeyAtPageIndex(editingSepIndex);
+                if (key != null) {
+                    preferences.setSeparatorAfter(viewerUuid, ENTITY_TYPE, key, data.separator);
+                }
+            } else {
+                // Editing the default separator
+                preferences.setSeparator(viewerUuid, ENTITY_TYPE, data.separator);
+            }
+        }
+
+        if (data.offset != null) {
+            handleOffsetChange(data.offset);
         }
 
         if (data.action == null || data.action.isBlank()) {
@@ -155,11 +183,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             }
             case "PrevChain" -> {
                 chainPage = Math.max(0, chainPage - 1);
+                editingSepIndex = -1;
                 sendUpdate(buildUpdate());
                 return;
             }
             case "NextChain" -> {
                 chainPage = chainPage + 1;
+                editingSepIndex = -1;
                 sendUpdate(buildUpdate());
                 return;
             }
@@ -172,9 +202,25 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             case "ClearChain" -> {
                 clearChain();
                 chainPage = 0;
+                editingSepIndex = -1;
                 sendUpdate(buildUpdate());
                 return;
             }
+            case "EditSepDefault" -> {
+                editingSepIndex = -1;
+                sendUpdate(buildUpdate());
+                return;
+            }
+        }
+
+        if (data.action.startsWith("EditSep_")) {
+            int row = parseRowIndex(data.action, "EditSep_");
+            if (row >= 0 && row < CHAIN_PAGE_SIZE - 1) {
+                // Toggle: click again to deselect, click different to switch
+                editingSepIndex = (editingSepIndex == row) ? -1 : row;
+            }
+            sendUpdate(buildUpdate());
+            return;
         }
 
         if (data.action.startsWith("Add_")) {
@@ -187,6 +233,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         if (data.action.startsWith("Remove_")) {
             int row = parseRowIndex(data.action, "Remove_");
             removeRow(row);
+            // If we removed the block whose separator we were editing, reset
+            editingSepIndex = -1;
             sendUpdate(buildUpdate());
             return;
         }
@@ -194,6 +242,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         if (data.action.startsWith("Left_")) {
             int row = parseRowIndex(data.action, "Left_");
             moveRow(row, -1);
+            editingSepIndex = -1;
             sendUpdate(buildUpdate());
             return;
         }
@@ -201,7 +250,17 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         if (data.action.startsWith("Right_")) {
             int row = parseRowIndex(data.action, "Right_");
             moveRow(row, 1);
+            editingSepIndex = -1;
             sendUpdate(buildUpdate());
+        }
+    }
+
+    private void handleOffsetChange(String rawOffset) {
+        try {
+            double value = Double.parseDouble(rawOffset.replace(',', '.'));
+            preferences.setOffset(viewerUuid, ENTITY_TYPE, value);
+        } catch (NumberFormatException _) {
+            // Ignore invalid input — field keeps its previous value
         }
     }
 
@@ -218,10 +277,44 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
     /** Shared logic for populating all dynamic UI properties (used by both build and update). */
     private void populateCommands(UICommandBuilder commands) {
         commands.set("#FilterField.Value", filter);
-        commands.set("#SeparatorField.Value", preferences.getSeparator(viewerUuid, ENTITY_TYPE));
+
+        List<SegmentView> chain = getChainViews();
+
+        // Validate editingSepIndex — the block may have been removed or chain changed
+        if (editingSepIndex >= 0) {
+            int start = chainPage * CHAIN_PAGE_SIZE;
+            int end = Math.min(chain.size(), start + CHAIN_PAGE_SIZE);
+            int visibleCount = end - start;
+            // Can only edit separator after block i if block i+1 also exists on this page
+            if (editingSepIndex >= visibleCount - 1) {
+                editingSepIndex = -1;
+            }
+        }
+
+        // Separator field + context label
+        if (editingSepIndex >= 0) {
+            SegmentKey key = getChainKeyAtPageIndex(editingSepIndex, chain);
+            if (key != null) {
+                String sep = preferences.getSeparatorAfter(viewerUuid, ENTITY_TYPE, key);
+                commands.set("#SeparatorField.Value", sep);
+                SegmentView view = getChainViewAtPageIndex(editingSepIndex, chain);
+                String blockName = view != null ? view.displayName() : "block";
+                commands.set("#SeparatorContext.Text", "(after " + blockName + ") — click to edit default");
+            } else {
+                editingSepIndex = -1;
+                commands.set("#SeparatorField.Value", preferences.getSeparator(viewerUuid, ENTITY_TYPE));
+                commands.set("#SeparatorContext.Text", "(default for new blocks)");
+            }
+        } else {
+            commands.set("#SeparatorField.Value", preferences.getSeparator(viewerUuid, ENTITY_TYPE));
+            commands.set("#SeparatorContext.Text", "(default for new blocks)");
+        }
+
+        // Offset field
+        double offset = preferences.getOffset(viewerUuid, ENTITY_TYPE);
+        commands.set("#OffsetField.Value", offset == 0.0 ? "0.0" : String.valueOf(offset));
 
         List<SegmentView> available = getAvailableViews();
-        List<SegmentView> chain = getChainViews();
 
         int totalAvailPages = Math.max(1, (int) Math.ceil(available.size() / (double) AVAIL_PAGE_SIZE));
         int totalChainPages = Math.max(1, (int) Math.ceil(chain.size() / (double) CHAIN_PAGE_SIZE));
@@ -253,8 +346,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         int start = chainPage * CHAIN_PAGE_SIZE;
         int end = Math.min(chain.size(), start + CHAIN_PAGE_SIZE);
 
-        String separator = preferences.getSeparator(viewerUuid, ENTITY_TYPE);
-
         for (int i = 0; i < CHAIN_PAGE_SIZE; i++) {
             int index = start + i;
             boolean visible = index < end;
@@ -267,12 +358,18 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
                 commands.set(prefix + "Author.Text", "by " + view.author());
             }
 
-            // Separator indicator between blocks
+            // Separator indicator between blocks — now shows per-block separator
             if (i < CHAIN_PAGE_SIZE - 1) {
                 boolean sepVisible = visible && (start + i + 1) < end;
-                commands.set("#ChainSep" + i + ".Visible", sepVisible);
+                String sepId = "#ChainSep" + i;
+                commands.set(sepId + ".Visible", sepVisible);
                 if (sepVisible) {
-                    commands.set("#ChainSep" + i + ".Text", separator);
+                    SegmentKey blockKey = chain.get(index).key();
+                    String sep = preferences.getSeparatorAfter(viewerUuid, ENTITY_TYPE, blockKey);
+                    commands.set(sepId + ".Text", sep.isEmpty() ? "." : sep);
+                    // Highlight selected separator in green
+                    boolean selected = editingSepIndex == i;
+                    commands.set(sepId + ".Background.Color", selected ? "#2d6b3f" : "#1a2840");
                 }
             }
         }
@@ -380,6 +477,31 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         return list.get(index);
     }
 
+    /**
+     * Get the SegmentKey for a block at the given page-relative index in the current chain page.
+     */
+    private SegmentKey getChainKeyAtPageIndex(int pageIndex) {
+        return getChainKeyAtPageIndex(pageIndex, getChainViews());
+    }
+
+    private SegmentKey getChainKeyAtPageIndex(int pageIndex, List<SegmentView> chain) {
+        int start = chainPage * CHAIN_PAGE_SIZE;
+        int index = start + pageIndex;
+        if (index < 0 || index >= chain.size()) {
+            return null;
+        }
+        return chain.get(index).key();
+    }
+
+    private SegmentView getChainViewAtPageIndex(int pageIndex, List<SegmentView> chain) {
+        int start = chainPage * CHAIN_PAGE_SIZE;
+        int index = start + pageIndex;
+        if (index < 0 || index >= chain.size()) {
+            return null;
+        }
+        return chain.get(index);
+    }
+
     // ── Data Views ──
 
     private List<SegmentView> getAvailableViews() {
@@ -451,28 +573,33 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
     }
 
     private String buildPreview(List<SegmentView> views) {
-        String separator = preferences.getSeparator(viewerUuid, ENTITY_TYPE);
         if (views.isEmpty()) {
             return "(no blocks enabled)";
         }
 
-        // Build segments one at a time, stopping when the next one won't fit
+        // Build segments one at a time using per-block separators, stopping when the next one won't fit
         StringBuilder builder = new StringBuilder();
+        SegmentView prevView = null;
         for (SegmentView view : views) {
             String name = view.displayName();
+            String sep = "";
+            if (prevView != null) {
+                sep = preferences.getSeparatorAfter(viewerUuid, ENTITY_TYPE, prevView.key());
+            }
             String candidate = builder.isEmpty()
                     ? name
-                    : builder + separator + name;
+                    : builder + sep + name;
 
             if (candidate.length() > PREVIEW_MAX_LENGTH) {
                 // This segment won't fit — truncate with ellipsis after the last one that did
                 if (builder.isEmpty()) {
                     // Even the first segment is too long — hard truncate it
-                    return name.substring(0, PREVIEW_MAX_LENGTH - 2) + " …";
+                    return name.substring(0, PREVIEW_MAX_LENGTH - 2) + " ...";
                 }
-                return builder + " …";
+                return builder + " ...";
             }
             builder = new StringBuilder(candidate);
+            prevView = view;
         }
         return builder.toString();
     }
@@ -481,7 +608,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         if (name == null || name.length() <= MOD_NAME_MAX_LENGTH) {
             return name;
         }
-        return name.substring(0, MOD_NAME_MAX_LENGTH - 1) + "…";
+        return name.substring(0, MOD_NAME_MAX_LENGTH - 1) + "...";
     }
 
     private int parseRowIndex(String action, String prefix) {
@@ -515,10 +642,15 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
                         (SettingsData data, String value) -> data.separator = value,
                         (SettingsData data) -> data.separator)
                 .add()
+                .append(new KeyedCodec<>("@Offset", Codec.STRING),
+                        (SettingsData data, String value) -> data.offset = value,
+                        (SettingsData data) -> data.offset)
+                .add()
                 .build();
 
         String filter;
         String action;
         String separator;
+        String offset;
     }
 }

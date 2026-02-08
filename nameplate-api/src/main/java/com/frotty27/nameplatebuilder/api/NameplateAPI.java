@@ -44,6 +44,12 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
  * flashing. For direct access inside a tick system, use
  * {@link NameplateData#setText} on the component instance instead.</p>
  *
+ * <h3>Death cleanup</h3>
+ * <p>When an entity receives a {@code DeathComponent}, the aggregator
+ * automatically sends an empty nameplate to all viewers and removes the
+ * {@link NameplateData} component. Mods do not need to handle death cleanup
+ * themselves — nameplates are cleared as soon as the entity dies.</p>
+ *
  * <p><b>Dependency:</b> your mod's {@code manifest.json} must declare
  * {@code "Frotty27:NameplateBuilder": "*"} in its Dependencies to ensure
  * the API is available before your plugin loads.</p>
