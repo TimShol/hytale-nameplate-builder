@@ -35,10 +35,21 @@ final class NameplatePreferenceStore {
     private final Path filePath;
     private final Map<UUID, Map<String, PreferenceSet>> data = new HashMap<>();
 
+    /**
+     * Creates a new preference store backed by the given file.
+     *
+     * @param filePath path to the {@code preferences.txt} file
+     */
     NameplatePreferenceStore(Path filePath) {
         this.filePath = filePath;
     }
 
+    /**
+     * Loads all player preferences from disk, replacing any in-memory state.
+     *
+     * <p>If the file does not exist or is corrupt, the store starts empty
+     * and all players receive default settings.</p>
+     */
     void load() {
         data.clear();
         if (!Files.exists(filePath)) {
@@ -134,6 +145,12 @@ final class NameplatePreferenceStore {
         }
     }
 
+    /**
+     * Persists all player preferences to disk.
+     *
+     * <p>Called during server shutdown and after admin configuration changes.
+     * The file includes comment headers documenting each line format.</p>
+     */
     void save() {
         try {
             Files.createDirectories(filePath.getParent());
@@ -233,6 +250,7 @@ final class NameplatePreferenceStore {
         }
     }
 
+    /** Returns {@code true} if the viewer uses global preferences for the given entity type. */
     boolean isUsingGlobal(UUID viewer, String entityType) {
         if ("*".equals(entityType)) {
             return false;
@@ -253,36 +271,43 @@ final class NameplatePreferenceStore {
         return getSet(viewer, entityType, false) != null;
     }
 
+    /** Returns {@code true} if nameplates are enabled for the viewer (defaults to {@code true}). */
     boolean isNameplatesEnabled(UUID viewer) {
         PreferenceSet set = getSet(viewer, "*", false);
         return set == null || set.nameplatesEnabled;
     }
 
+    /** Sets the master nameplate enable/disable toggle for the viewer. */
     void setNameplatesEnabled(UUID viewer, boolean enabled) {
         PreferenceSet set = getSet(viewer, "*", true);
         set.nameplatesEnabled = enabled;
     }
 
+    /** Returns {@code true} if the viewer wants to see the join welcome message (defaults to {@code true}). */
     boolean isShowWelcomeMessage(UUID viewer) {
         PreferenceSet set = getSet(viewer, "*", false);
         return set == null || set.showWelcomeMessage;
     }
 
+    /** Sets whether the viewer sees the coloured join welcome message. */
     void setShowWelcomeMessage(UUID viewer, boolean show) {
         PreferenceSet set = getSet(viewer, "*", true);
         set.showWelcomeMessage = show;
     }
 
+    /** Returns {@code true} if the viewer has the "only show when looking at" filter enabled. */
     boolean isOnlyShowWhenLooking(UUID viewer, String entityType) {
         PreferenceSet set = getSet(viewer, entityType, false);
         return set != null && set.onlyShowWhenLooking;
     }
 
+    /** Sets the "only show when looking at" view-cone filter for the viewer. */
     void setOnlyShowWhenLooking(UUID viewer, String entityType, boolean value) {
         PreferenceSet set = getSet(viewer, entityType, true);
         set.onlyShowWhenLooking = value;
     }
 
+    /** Returns the default separator string between segments (defaults to {@code " - "}). */
     String getSeparator(UUID viewer, String entityType) {
         PreferenceSet set = getSet(viewer, entityType, false);
         if (set == null) {
@@ -291,6 +316,7 @@ final class NameplatePreferenceStore {
         return set.separator;
     }
 
+    /** Sets the default separator string between segments for the viewer. */
     void setSeparator(UUID viewer, String entityType, String separator) {
         PreferenceSet set = getSet(viewer, entityType, true);
         set.separator = separator == null ? "" : separator;
@@ -309,6 +335,11 @@ final class NameplatePreferenceStore {
         return sep != null ? sep : set.separator;
     }
 
+    /**
+     * Sets or removes the per-block separator shown after a specific segment.
+     *
+     * @param separator the separator text, or {@code null} to revert to the default
+     */
     void setSeparatorAfter(UUID viewer, String entityType, SegmentKey key, String separator) {
         PreferenceSet set = getSet(viewer, entityType, true);
         if (separator == null) {
@@ -318,6 +349,7 @@ final class NameplatePreferenceStore {
         }
     }
 
+    /** Returns the vertical nameplate offset for the viewer (defaults to {@code 0.0}). */
     double getOffset(UUID viewer, String entityType) {
         PreferenceSet set = getSet(viewer, entityType, false);
         if (set == null) {
@@ -326,11 +358,13 @@ final class NameplatePreferenceStore {
         return set.offset;
     }
 
+    /** Sets the vertical nameplate offset, clamped to {@code [-5.0, 5.0]}. */
     void setOffset(UUID viewer, String entityType, double offset) {
         PreferenceSet set = getSet(viewer, entityType, true);
         set.offset = Math.max(-5.0, Math.min(5.0, offset));
     }
 
+    /** Returns {@code true} if the segment is enabled in the viewer's chain (defaults to {@code true}). */
     boolean isEnabled(UUID viewer, String entityType, SegmentKey key) {
         PreferenceSet set = getSet(viewer, entityType, false);
         if (set == null) {
@@ -339,6 +373,7 @@ final class NameplatePreferenceStore {
         return set.enabled.getOrDefault(key, true);
     }
 
+    /** Enables a segment in the viewer's chain, appending it at the end of the ordering. */
     void enable(UUID viewer, String entityType, SegmentKey key) {
         PreferenceSet set = getSet(viewer, entityType, true);
         if (set.enabled.getOrDefault(key, false)) {
@@ -349,6 +384,7 @@ final class NameplatePreferenceStore {
         set.order.put(key, nextOrder);
     }
 
+    /** Disables a segment in the viewer's chain (removes it from the visible output). */
     void disable(UUID viewer, String entityType, SegmentKey key) {
         PreferenceSet set = getSet(viewer, entityType, true);
         set.enabled.put(key, false);
@@ -366,6 +402,17 @@ final class NameplatePreferenceStore {
         }
     }
 
+    /**
+     * Returns the viewer's enabled segment chain, ordered by stored preference.
+     *
+     * <p>Segments without stored preferences default to enabled. If no
+     * preferences exist at all, all available segments are returned in the
+     * default comparator order.</p>
+     *
+     * @param available         all available segment keys for this entity
+     * @param defaultComparator fallback ordering for segments without stored order
+     * @return ordered list of enabled segments
+     */
     List<SegmentKey> getChain(UUID viewer,
                               String entityType,
                               List<SegmentKey> available,
@@ -394,6 +441,16 @@ final class NameplatePreferenceStore {
         return copy;
     }
 
+    /**
+     * Returns segments that the viewer has explicitly disabled (removed from their chain).
+     *
+     * <p>Only returns segments that have an explicit {@code false} entry in the
+     * enabled map — segments with no stored preference are considered enabled.</p>
+     *
+     * @param available         all available segment keys for this entity
+     * @param defaultComparator ordering for the returned list
+     * @return sorted list of disabled segments
+     */
     List<SegmentKey> getAvailable(UUID viewer,
                                   String entityType,
                                   List<SegmentKey> available,
@@ -436,6 +493,7 @@ final class NameplatePreferenceStore {
         }
     }
 
+    /** Returns the viewer's selected format variant index for a segment (defaults to {@code 0}). */
     int getSelectedVariant(UUID viewer, String entityType, SegmentKey key) {
         PreferenceSet set = getSet(viewer, entityType, false);
         if (set == null) {
@@ -444,6 +502,7 @@ final class NameplatePreferenceStore {
         return set.selectedVariant.getOrDefault(key, 0);
     }
 
+    /** Sets the format variant index for a segment. Index {@code 0} clears the override. */
     void setSelectedVariant(UUID viewer, String entityType, SegmentKey key, int variantIndex) {
         PreferenceSet set = getSet(viewer, entityType, true);
         if (variantIndex == 0) {
@@ -453,12 +512,14 @@ final class NameplatePreferenceStore {
         }
     }
 
+    /** Returns the prefix text wrapping a segment's output (defaults to empty). */
     String getPrefix(UUID viewer, String entityType, SegmentKey key) {
         PreferenceSet set = getSet(viewer, entityType, false);
         if (set == null) return "";
         return set.prefix.getOrDefault(key, "");
     }
 
+    /** Sets or clears the prefix text for a segment. Empty or {@code null} clears it. */
     void setPrefix(UUID viewer, String entityType, SegmentKey key, String value) {
         PreferenceSet set = getSet(viewer, entityType, true);
         if (value == null || value.isEmpty()) {
@@ -468,12 +529,14 @@ final class NameplatePreferenceStore {
         }
     }
 
+    /** Returns the suffix text wrapping a segment's output (defaults to empty). */
     String getSuffix(UUID viewer, String entityType, SegmentKey key) {
         PreferenceSet set = getSet(viewer, entityType, false);
         if (set == null) return "";
         return set.suffix.getOrDefault(key, "");
     }
 
+    /** Sets or clears the suffix text for a segment. Empty or {@code null} clears it. */
     void setSuffix(UUID viewer, String entityType, SegmentKey key, String value) {
         PreferenceSet set = getSet(viewer, entityType, true);
         if (value == null || value.isEmpty()) {
@@ -491,6 +554,7 @@ final class NameplatePreferenceStore {
         return val != null && !val.isEmpty() ? val : "-";
     }
 
+    /** Sets or clears the custom bar empty character. {@code null}, empty, or {@code "-"} resets to default. */
     void setBarEmptyChar(UUID viewer, String entityType, SegmentKey key, String value) {
         PreferenceSet set = getSet(viewer, entityType, true);
         if (value == null || value.isEmpty() || "-".equals(value)) {
@@ -500,6 +564,12 @@ final class NameplatePreferenceStore {
         }
     }
 
+    /**
+     * Moves a segment within the chain by the given delta ({@code -1} = up, {@code +1} = down).
+     *
+     * <p>Reorders the chain and reassigns order indices for all segments
+     * in the chain. No-op if the segment is already at the boundary.</p>
+     */
     void move(UUID viewer, String entityType, SegmentKey key, int delta, List<SegmentKey> available, Comparator<SegmentKey> defaultComparator) {
         PreferenceSet set = getSet(viewer, entityType, true);
         List<SegmentKey> ordered = getChain(viewer, entityType, available, defaultComparator);
