@@ -6,6 +6,8 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
+import java.util.List;
+
 /**
  * Static entry point for the Nameplate Builder API.
  *
@@ -97,9 +99,9 @@ public final class NameplateAPI {
      * UI can show a human-readable block for this segment. Calling this is
      * <b>optional</b> — if skipped, the UI will show the raw segment ID instead.</p>
      *
-     * <p>Defaults the target to {@link SegmentTarget#ALL}. Use
-     * {@link #describe(JavaPlugin, String, String, SegmentTarget)} to specify
-     * a more specific target.</p>
+     * <p>Defaults the target to {@link SegmentTarget#ALL} and no example text. Use
+     * {@link #describe(JavaPlugin, String, String, SegmentTarget, String)} to specify
+     * a more specific target and an example.</p>
      *
      * <p>Call once during your plugin's {@code setup()} method:</p>
      * <pre>{@code
@@ -113,22 +115,15 @@ public final class NameplateAPI {
      * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
      */
     public static void describe(JavaPlugin plugin, String segmentId, String displayName) {
-        describe(plugin, segmentId, displayName, SegmentTarget.ALL);
+        describe(plugin, segmentId, displayName, SegmentTarget.ALL, null);
     }
 
     /**
      * Describe a nameplate segment for the player UI, with an entity target hint.
      *
-     * <p>The {@link SegmentTarget} is shown as a tag in the UI (e.g. {@code [Players]},
-     * {@code [NPCs]}) so players know which entities the segment is relevant to.
-     * This is purely informational — it does not restrict which entities the segment
-     * can be registered on at runtime.</p>
-     *
-     * <pre>{@code
-     * NameplateAPI.describe(this, "health", "Health Bar", SegmentTarget.ALL);
-     * NameplateAPI.describe(this, "status", "Online Status", SegmentTarget.PLAYERS);
-     * NameplateAPI.describe(this, "tier", "Elite Tier", SegmentTarget.NPCS);
-     * }</pre>
+     * <p>Defaults to no example text. Use
+     * {@link #describe(JavaPlugin, String, String, SegmentTarget, String)} to also
+     * provide an example.</p>
      *
      * @param plugin      the plugin owning this segment
      * @param segmentId   a unique identifier for this segment within your plugin
@@ -139,11 +134,43 @@ public final class NameplateAPI {
      * @see SegmentTarget
      */
     public static void describe(JavaPlugin plugin, String segmentId, String displayName, SegmentTarget target) {
+        describe(plugin, segmentId, displayName, target, null);
+    }
+
+    /**
+     * Describe a nameplate segment for the player UI, with an entity target hint
+     * and an example value.
+     *
+     * <p>The {@link SegmentTarget} is shown as a tag in the UI (e.g. {@code [Players]},
+     * {@code [NPCs]}) so players know which entities the segment is relevant to.
+     * This is purely informational — it does not restrict which entities the segment
+     * can be registered on at runtime.</p>
+     *
+     * <p>The {@code example} is shown in the Nameplate Builder UI as a preview of
+     * what this segment typically looks like at runtime. It helps players understand
+     * what the segment shows before they enable it. Pass {@code null} for no example.</p>
+     *
+     * <pre>{@code
+     * NameplateAPI.describe(this, "health", "Health Bar", SegmentTarget.ALL, "67/67");
+     * NameplateAPI.describe(this, "tier", "Elite Tier", SegmentTarget.NPCS, "(Common, ...)");
+     * NameplateAPI.describe(this, "guild", "Guild Tag", SegmentTarget.PLAYERS, "[Warriors]");
+     * }</pre>
+     *
+     * @param plugin      the plugin owning this segment
+     * @param segmentId   a unique identifier for this segment within your plugin
+     * @param displayName human-readable name shown in the Nameplate Builder UI
+     * @param target      the entity target hint shown as a tag in the UI
+     * @param example     example value shown in the UI (nullable)
+     * @throws NameplateArgumentException       if any parameter is null or blank
+     * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
+     * @see SegmentTarget
+     */
+    public static void describe(JavaPlugin plugin, String segmentId, String displayName, SegmentTarget target, String example) {
         requireNonNull(plugin, "plugin");
         requireNonBlank(segmentId, "segmentId");
         requireNonBlank(displayName, "displayName");
         requireNonNull(target, "target");
-        getRegistry().describe(plugin, segmentId, displayName, target);
+        getRegistry().describe(plugin, segmentId, displayName, target, example);
     }
 
     /**
@@ -161,6 +188,44 @@ public final class NameplateAPI {
         requireNonNull(plugin, "plugin");
         requireNonBlank(segmentId, "segmentId");
         getRegistry().undescribe(plugin, segmentId);
+    }
+
+    // ── Format Variants ──
+
+    /**
+     * Register display format variants for a segment.
+     *
+     * <p>Variants let players choose how a segment's data is displayed. For example,
+     * a health segment might offer {@code ["Current/Max", "Percentage"]} so the
+     * player can toggle between {@code "42/67"} and {@code "63%"}.</p>
+     *
+     * <p>The {@code variantNames} list describes all variants including the default
+     * (index 0). At runtime, push variant texts using suffixed keys in
+     * {@link NameplateData}:</p>
+     * <pre>{@code
+     * // In your tick system:
+     * data.setText("health",   "42/67");  // variant 0 (default)
+     * data.setText("health.1", "63%");    // variant 1
+     * }</pre>
+     *
+     * <p>The player UI shows a "Format" button on segments that have variants.
+     * The aggregator automatically reads the correct variant key based on the
+     * viewer's selection.</p>
+     *
+     * @param plugin       the plugin owning this segment
+     * @param segmentId    the segment identifier (must match a previously described segment)
+     * @param variantNames human-readable variant names (index 0 = default)
+     * @throws NameplateArgumentException       if any parameter is null/blank or list is empty
+     * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
+     */
+    public static void describeVariants(JavaPlugin plugin, String segmentId, List<String> variantNames) {
+        requireNonNull(plugin, "plugin");
+        requireNonBlank(segmentId, "segmentId");
+        requireNonNull(variantNames, "variantNames");
+        if (variantNames.isEmpty()) {
+            throw new NameplateArgumentException("variantNames", "'variantNames' must not be empty");
+        }
+        getRegistry().describeVariants(plugin, segmentId, variantNames);
     }
 
     // ── Register / Remove (per-entity text) ──
