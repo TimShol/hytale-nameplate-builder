@@ -115,6 +115,11 @@ $C.@PageOverlay {
           Anchor: (Height: 28, Bottom: 4);
         }
 
+        $C.@SmallSecondaryTextButton #NavDisabled {
+          @Text = "  Disabled";
+          Anchor: (Height: 28, Bottom: 4);
+        }
+
         Group { FlexWeight: 1; }
 
         Group #AdminSection {
@@ -133,6 +138,16 @@ $C.@PageOverlay {
           }
 
           $C.@SmallSecondaryTextButton #NavAdmin {
+            @Text = "  Required";
+            Anchor: (Height: 28, Bottom: 4);
+          }
+
+          $C.@SmallSecondaryTextButton #NavAdminDisabled {
+            @Text = "  Disabled";
+            Anchor: (Height: 28, Bottom: 4);
+          }
+
+          $C.@SmallSecondaryTextButton #NavAdminSettings {
             @Text = "  Settings";
             Anchor: (Height: 28, Bottom: 4);
           }
@@ -173,6 +188,13 @@ $C.@PageOverlay {
             }
           }
 
+          Label #AllDisabledNotice {
+            Text: "All segments disabled by admin. Nameplates are inactive.";
+            Style: (TextColor: #c94c4c, FontSize: 12, RenderBold: true);
+            Anchor: (Height: 20, Bottom: 4);
+            Visible: false;
+          }
+
           Group {
             Anchor: (Height: 2, Top: 3, Bottom: 17);
             Background: (Color: #1a2840);
@@ -197,6 +219,23 @@ $C.@PageOverlay {
 
             $C.@SmallSecondaryTextButton #LookToggle {
               @Text = "[ ]";
+              Anchor: (Width: 70, Height: 28);
+            }
+          }
+
+          Group {
+            LayoutMode: Left;
+            Anchor: (Height: 28, Bottom: 8);
+            Padding: (Left: 16, Right: 16);
+
+            Label {
+              Text: "Show Welcome Message";
+              Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center);
+              Anchor: (Width: 300, Height: 28);
+            }
+
+            $C.@SmallSecondaryTextButton #WelcomeToggle {
+              @Text = "[X]";
               Anchor: (Width: 70, Height: 28);
             }
           }
@@ -708,404 +747,1536 @@ $C.@PageOverlay {
           FlexWeight: 1;
           Visible: false;
 
-          Label {
-            Text: "REQUIRED SEGMENTS";
-            Style: (TextColor: #96a9be, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 1);
-            Anchor: (Height: 24, Bottom: 4);
-          }
-
-          Label {
-            Text: "Move segments to the right column to force them to display for all players. Use responsibly.";
-            Style: (TextColor: #5a6d82, FontSize: 13);
-            Anchor: (Height: 28, Bottom: 6);
-          }
-
-          $C.@TextField #AdminFilterField {
-            Anchor: (Width: 460, Height: 34, Bottom: 14);
-            PlaceholderText: "Search segments...";
-          }
-
-          Group {
+          Group #AdminSubTabBar {
             LayoutMode: Left;
-            Anchor: (Height: 20, Bottom: 6);
+            Anchor: (Height: 36, Bottom: 10);
 
-            Group {
-              FlexWeight: 1;
-              LayoutMode: Left;
-              Padding: (Left: 36, Right: 36);
-              Label {
-                Text: "AVAILABLE";
-                Style: (TextColor: #5a6d82, FontSize: 11, RenderBold: true, RenderUppercase: true, LetterSpacing: 1, HorizontalAlignment: Center);
-                Anchor: (Width: 275, Height: 20);
-              }
+            TextButton #AdminSubRequired {
+              Text: "Required";
+              Anchor: (Width: 160, Height: 32, Right: 8);
+              Style: @PaginationButtonStyle;
             }
 
-            Group { Anchor: (Width: 3, Height: 20); }
+            TextButton #AdminSubDisabled {
+              Text: "Disabled";
+              Anchor: (Width: 160, Height: 32, Right: 8);
+              Style: @PaginationButtonStyle;
+            }
 
-            Group {
-              FlexWeight: 1;
-              LayoutMode: Left;
-              Padding: (Left: 56, Right: 16);
-              Group { Anchor: (Width: 50, Height: 20); }
-              Label {
-                Text: "REQUIRED";
-                Style: (TextColor: #c9a84c, FontSize: 11, RenderBold: true, RenderUppercase: true, LetterSpacing: 1, HorizontalAlignment: Center);
-                Anchor: (Width: 275, Height: 20);
-              }
+            TextButton #AdminSubSettings {
+              Text: "Settings";
+              Anchor: (Width: 160, Height: 32);
+              Style: @PaginationButtonStyle;
             }
           }
 
-          Group {
-            LayoutMode: Left;
+          Group #AdminRequiredContent {
+            LayoutMode: Top;
             FlexWeight: 1;
 
-            Group #AdminLeftCol {
-              FlexWeight: 1;
-              LayoutMode: Top;
-              Padding: (Left: 36, Right: 36);
+            Label {
+              Text: "REQUIRED SEGMENTS";
+              Style: (TextColor: #c9a84c, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 1);
+              Anchor: (Height: 24, Bottom: 4);
+            }
 
-              Group #AdminLeftRow0 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group #AdminLeftBlock0 { Anchor: (Width: 275, Height: 56); Background: (Color: #162236); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminLeftBlock0Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminLeftBlock0Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminLeftBlock0ExampleBar { Anchor: (Height: 14); Background: (Color: #0f1824); Padding: (Left: 8, Right: 8);
-                    Label #AdminLeftBlock0Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminEnable0 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
-                  Group { FlexWeight: 1; }
-                }
-              }
+            Label {
+              Text: "Move segments to the right column to force them to display for all players. Use responsibly.";
+              Style: (TextColor: #5a6d82, FontSize: 13);
+              Anchor: (Height: 28, Bottom: 6);
+            }
 
-              Group #AdminLeftRow1 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group #AdminLeftBlock1 { Anchor: (Width: 275, Height: 56); Background: (Color: #162236); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminLeftBlock1Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminLeftBlock1Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminLeftBlock1ExampleBar { Anchor: (Height: 14); Background: (Color: #0f1824); Padding: (Left: 8, Right: 8);
-                    Label #AdminLeftBlock1Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminEnable1 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
-                  Group { FlexWeight: 1; }
-                }
-              }
+            $C.@TextField #AdminFilterField {
+              Anchor: (Width: 460, Height: 34, Bottom: 14);
+              PlaceholderText: "Search segments...";
+            }
 
-              Group #AdminLeftRow2 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group #AdminLeftBlock2 { Anchor: (Width: 275, Height: 56); Background: (Color: #162236); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminLeftBlock2Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminLeftBlock2Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminLeftBlock2ExampleBar { Anchor: (Height: 14); Background: (Color: #0f1824); Padding: (Left: 8, Right: 8);
-                    Label #AdminLeftBlock2Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminEnable2 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
-                  Group { FlexWeight: 1; }
-                }
-              }
+            Group {
+              LayoutMode: Left;
+              Anchor: (Height: 20, Bottom: 6);
 
-              Group #AdminLeftRow3 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group #AdminLeftBlock3 { Anchor: (Width: 275, Height: 56); Background: (Color: #162236); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminLeftBlock3Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminLeftBlock3Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminLeftBlock3ExampleBar { Anchor: (Height: 14); Background: (Color: #0f1824); Padding: (Left: 8, Right: 8);
-                    Label #AdminLeftBlock3Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminEnable3 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
-                  Group { FlexWeight: 1; }
-                }
-              }
-
-              Group #AdminLeftRow4 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group #AdminLeftBlock4 { Anchor: (Width: 275, Height: 56); Background: (Color: #162236); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminLeftBlock4Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminLeftBlock4Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminLeftBlock4ExampleBar { Anchor: (Height: 14); Background: (Color: #0f1824); Padding: (Left: 8, Right: 8);
-                    Label #AdminLeftBlock4Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminEnable4 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
-                  Group { FlexWeight: 1; }
-                }
-              }
-
-              Group #AdminLeftRow5 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group #AdminLeftBlock5 { Anchor: (Width: 275, Height: 56); Background: (Color: #162236); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminLeftBlock5Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminLeftBlock5Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminLeftBlock5ExampleBar { Anchor: (Height: 14); Background: (Color: #0f1824); Padding: (Left: 8, Right: 8);
-                    Label #AdminLeftBlock5Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminEnable5 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
-                  Group { FlexWeight: 1; }
-                }
-              }
-
-              Group #AdminLeftRow6 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group #AdminLeftBlock6 { Anchor: (Width: 275, Height: 56); Background: (Color: #162236); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminLeftBlock6Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminLeftBlock6Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminLeftBlock6ExampleBar { Anchor: (Height: 14); Background: (Color: #0f1824); Padding: (Left: 8, Right: 8);
-                    Label #AdminLeftBlock6Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminEnable6 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
-                  Group { FlexWeight: 1; }
-                }
-              }
-
-              Group #AdminLeftRow7 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group #AdminLeftBlock7 { Anchor: (Width: 275, Height: 56); Background: (Color: #162236); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminLeftBlock7Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminLeftBlock7Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminLeftBlock7ExampleBar { Anchor: (Height: 14); Background: (Color: #0f1824); Padding: (Left: 8, Right: 8);
-                    Label #AdminLeftBlock7Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminEnable7 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
-                  Group { FlexWeight: 1; }
-                }
-              }
-
-              Group #AdminLeftEmpty {
+              Group {
+                FlexWeight: 1;
                 LayoutMode: Left;
-                Anchor: (Height: 40);
-                Visible: false;
+                Padding: (Left: 36, Right: 36);
                 Label {
-                  Text: "All segments are required";
-                  Style: (TextColor: #5a6d82, FontSize: 12, HorizontalAlignment: Center);
-                  Anchor: (Width: 275, Height: 40);
+                  Text: "AVAILABLE";
+                  Style: (TextColor: #4c9a6c, FontSize: 11, RenderBold: true, RenderUppercase: true, LetterSpacing: 1, HorizontalAlignment: Center);
+                  Anchor: (Width: 275, Height: 20);
                 }
               }
 
-              Group #AdminLeftPagination {
-                LayoutMode: Left;
-                Anchor: (Height: 24, Top: 4, Bottom: 4);
-                Padding: (Left: 72, Right: 123);
+              Group { Anchor: (Width: 3, Height: 20); }
 
-                TextButton #PrevAdminLeft {
-                  Text: "<";
-                  Anchor: (Width: 24, Height: 24, Right: 6);
-                  Style: @PaginationButtonStyle;
-                }
-                Label #AdminLeftPageLabel {
-                  Style: (TextColor: #96a9be, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
-                  Anchor: (Width: 70, Height: 24);
-                }
-                TextButton #NextAdminLeft {
-                  Text: ">";
-                  Anchor: (Width: 24, Height: 24, Left: 6);
-                  Style: @PaginationButtonStyle;
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Left;
+                Padding: (Left: 56, Right: 16);
+                Group { Anchor: (Width: 50, Height: 20); }
+                Label {
+                  Text: "REQUIRED";
+                  Style: (TextColor: #c9a84c, FontSize: 11, RenderBold: true, RenderUppercase: true, LetterSpacing: 1, HorizontalAlignment: Center);
+                  Anchor: (Width: 275, Height: 20);
                 }
               }
             }
 
             Group {
-              Anchor: (Width: 3);
-              Background: (Color: #1a2840);
+              LayoutMode: Left;
+              FlexWeight: 1;
+
+              Group #AdminLeftCol {
+                FlexWeight: 1;
+                LayoutMode: Top;
+                Padding: (Left: 36, Right: 36);
+
+                Group #AdminLeftRow0 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group #AdminLeftBlock0 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminLeftBlock0Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminLeftBlock0Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminLeftBlock0ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
+                      Label #AdminLeftBlock0Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminEnable0 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
+                    Group { FlexWeight: 1; }
+                  }
+                }
+
+                Group #AdminLeftRow1 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group #AdminLeftBlock1 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminLeftBlock1Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminLeftBlock1Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminLeftBlock1ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
+                      Label #AdminLeftBlock1Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminEnable1 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
+                    Group { FlexWeight: 1; }
+                  }
+                }
+
+                Group #AdminLeftRow2 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group #AdminLeftBlock2 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminLeftBlock2Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminLeftBlock2Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminLeftBlock2ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
+                      Label #AdminLeftBlock2Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminEnable2 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
+                    Group { FlexWeight: 1; }
+                  }
+                }
+
+                Group #AdminLeftRow3 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group #AdminLeftBlock3 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminLeftBlock3Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminLeftBlock3Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminLeftBlock3ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
+                      Label #AdminLeftBlock3Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminEnable3 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
+                    Group { FlexWeight: 1; }
+                  }
+                }
+
+                Group #AdminLeftRow4 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group #AdminLeftBlock4 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminLeftBlock4Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminLeftBlock4Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminLeftBlock4ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
+                      Label #AdminLeftBlock4Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminEnable4 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
+                    Group { FlexWeight: 1; }
+                  }
+                }
+
+                Group #AdminLeftRow5 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group #AdminLeftBlock5 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminLeftBlock5Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminLeftBlock5Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminLeftBlock5ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
+                      Label #AdminLeftBlock5Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminEnable5 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
+                    Group { FlexWeight: 1; }
+                  }
+                }
+
+                Group #AdminLeftRow6 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group #AdminLeftBlock6 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminLeftBlock6Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminLeftBlock6Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminLeftBlock6ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
+                      Label #AdminLeftBlock6Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminEnable6 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
+                    Group { FlexWeight: 1; }
+                  }
+                }
+
+                Group #AdminLeftEmpty {
+                  LayoutMode: Left;
+                  Anchor: (Height: 40);
+                  Visible: false;
+                  Label {
+                    Text: "All segments are required";
+                    Style: (TextColor: #5a6d82, FontSize: 12, HorizontalAlignment: Center);
+                    Anchor: (Width: 275, Height: 40);
+                  }
+                }
+
+                Group { FlexWeight: 1; }
+
+                Group #AdminLeftPagination {
+                  LayoutMode: Left;
+                  Anchor: (Height: 24, Top: 4, Bottom: 16);
+                  Padding: (Left: 72, Right: 123);
+
+                  TextButton #PrevAdminLeft {
+                    Text: "<";
+                    Anchor: (Width: 24, Height: 24, Right: 6);
+                    Style: @PaginationButtonStyle;
+                  }
+                  Label #AdminLeftPageLabel {
+                    Style: (TextColor: #96a9be, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                    Anchor: (Width: 70, Height: 24);
+                  }
+                  TextButton #NextAdminLeft {
+                    Text: ">";
+                    Anchor: (Width: 24, Height: 24, Left: 6);
+                    Style: @PaginationButtonStyle;
+                  }
+                }
+              }
+
+              Group {
+                Anchor: (Width: 3);
+                Background: (Color: #1a2840);
+              }
+
+              Group #AdminRightCol {
+                FlexWeight: 1;
+                LayoutMode: Top;
+                Padding: (Left: 56, Right: 16);
+
+                Group #AdminRightRow0 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisable0 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
+                    Group { FlexWeight: 1; }
+                  }
+                  Group #AdminRightBlock0 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminRightBlock0Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminRightBlock0Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminRightBlock0ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
+                      Label #AdminRightBlock0Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                }
+
+                Group #AdminRightRow1 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisable1 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
+                    Group { FlexWeight: 1; }
+                  }
+                  Group #AdminRightBlock1 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminRightBlock1Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminRightBlock1Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminRightBlock1ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
+                      Label #AdminRightBlock1Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                }
+
+                Group #AdminRightRow2 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisable2 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
+                    Group { FlexWeight: 1; }
+                  }
+                  Group #AdminRightBlock2 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminRightBlock2Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminRightBlock2Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminRightBlock2ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
+                      Label #AdminRightBlock2Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                }
+
+                Group #AdminRightRow3 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisable3 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
+                    Group { FlexWeight: 1; }
+                  }
+                  Group #AdminRightBlock3 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminRightBlock3Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminRightBlock3Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminRightBlock3ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
+                      Label #AdminRightBlock3Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                }
+
+                Group #AdminRightRow4 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisable4 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
+                    Group { FlexWeight: 1; }
+                  }
+                  Group #AdminRightBlock4 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminRightBlock4Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminRightBlock4Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminRightBlock4ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
+                      Label #AdminRightBlock4Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                }
+
+                Group #AdminRightRow5 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisable5 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
+                    Group { FlexWeight: 1; }
+                  }
+                  Group #AdminRightBlock5 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminRightBlock5Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminRightBlock5Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminRightBlock5ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
+                      Label #AdminRightBlock5Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                }
+
+                Group #AdminRightRow6 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisable6 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
+                    Group { FlexWeight: 1; }
+                  }
+                  Group #AdminRightBlock6 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminRightBlock6Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminRightBlock6Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminRightBlock6ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
+                      Label #AdminRightBlock6Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                }
+
+                Group #AdminRightEmpty {
+                  LayoutMode: Left;
+                  Anchor: (Height: 40);
+                  Visible: false;
+                  Group { Anchor: (Width: 50, Height: 40); }
+                  Label {
+                    Text: "No required segments";
+                    Style: (TextColor: #5a6d82, FontSize: 12, HorizontalAlignment: Center);
+                    Anchor: (Width: 275, Height: 40);
+                  }
+                }
+
+                Group { FlexWeight: 1; }
+
+                Group #AdminRightPagination {
+                  LayoutMode: Left;
+                  Anchor: (Height: 24, Top: 4, Bottom: 16);
+                  Padding: (Left: 122, Right: 73);
+
+                  TextButton #PrevAdminRight {
+                    Text: "<";
+                    Anchor: (Width: 24, Height: 24, Right: 6);
+                    Style: @PaginationButtonStyle;
+                  }
+                  Label #AdminRightPageLabel {
+                    Style: (TextColor: #96a9be, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                    Anchor: (Width: 70, Height: 24);
+                  }
+                  TextButton #NextAdminRight {
+                    Text: ">";
+                    Anchor: (Width: 24, Height: 24, Left: 6);
+                    Style: @PaginationButtonStyle;
+                  }
+                }
+              }
             }
 
-            Group #AdminRightCol {
-              FlexWeight: 1;
-              LayoutMode: Top;
-              Padding: (Left: 56, Right: 16);
+            Group {
+              LayoutMode: Left;
+              Anchor: (Height: 42, Bottom: 4);
 
-              Group #AdminRightRow0 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminDisable0 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
-                  Group { FlexWeight: 1; }
-                }
-                Group #AdminRightBlock0 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminRightBlock0Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminRightBlock0Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminRightBlock0ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                    Label #AdminRightBlock0Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
+              TextButton #ResetButtonAdmin {
+                Text: "Reset";
+                Anchor: (Width: 140, Height: 36);
+                Style: @ResetButtonStyle;
               }
 
-              Group #AdminRightRow1 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminDisable1 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
-                  Group { FlexWeight: 1; }
-                }
-                Group #AdminRightBlock1 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminRightBlock1Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminRightBlock1Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminRightBlock1ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                    Label #AdminRightBlock1Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-              }
+              Group { FlexWeight: 1; }
 
-              Group #AdminRightRow2 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminDisable2 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
-                  Group { FlexWeight: 1; }
-                }
-                Group #AdminRightBlock2 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminRightBlock2Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminRightBlock2Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminRightBlock2ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                    Label #AdminRightBlock2Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-              }
-
-              Group #AdminRightRow3 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminDisable3 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
-                  Group { FlexWeight: 1; }
-                }
-                Group #AdminRightBlock3 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminRightBlock3Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminRightBlock3Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminRightBlock3ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                    Label #AdminRightBlock3Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-              }
-
-              Group #AdminRightRow4 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminDisable4 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
-                  Group { FlexWeight: 1; }
-                }
-                Group #AdminRightBlock4 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminRightBlock4Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminRightBlock4Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminRightBlock4ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                    Label #AdminRightBlock4Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-              }
-
-              Group #AdminRightRow5 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminDisable5 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
-                  Group { FlexWeight: 1; }
-                }
-                Group #AdminRightBlock5 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminRightBlock5Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminRightBlock5Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminRightBlock5ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                    Label #AdminRightBlock5Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-              }
-
-              Group #AdminRightRow6 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminDisable6 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
-                  Group { FlexWeight: 1; }
-                }
-                Group #AdminRightBlock6 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminRightBlock6Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminRightBlock6Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminRightBlock6ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                    Label #AdminRightBlock6Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-              }
-
-              Group #AdminRightRow7 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
-                Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
-                  Group { FlexWeight: 1; }
-                  $C.@SmallSecondaryTextButton #AdminDisable7 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
-                  Group { FlexWeight: 1; }
-                }
-                Group #AdminRightBlock7 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
-                  Label #AdminRightBlock7Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                  Label #AdminRightBlock7Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
-                  Group #AdminRightBlock7ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                    Label #AdminRightBlock7Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
-                  }
-                }
-              }
-
-              Group #AdminRightEmpty {
-                LayoutMode: Left;
-                Anchor: (Height: 40);
+              Label #SaveMessageAdmin {
+                Text: "";
+                Style: (TextColor: #4ade80, FontSize: 13, RenderBold: true, VerticalAlignment: Center);
+                Anchor: (Height: 36, Right: 10);
                 Visible: false;
-                Group { Anchor: (Width: 50, Height: 40); }
-                Label {
-                  Text: "No required segments";
-                  Style: (TextColor: #5a6d82, FontSize: 12, HorizontalAlignment: Center);
-                  Anchor: (Width: 275, Height: 40);
-                }
               }
 
-              Group #AdminRightPagination {
-                LayoutMode: Left;
-                Anchor: (Height: 24, Top: 4, Bottom: 4);
-                Padding: (Left: 122, Right: 73);
-
-                TextButton #PrevAdminRight {
-                  Text: "<";
-                  Anchor: (Width: 24, Height: 24, Right: 6);
-                  Style: @PaginationButtonStyle;
-                }
-                Label #AdminRightPageLabel {
-                  Style: (TextColor: #96a9be, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
-                  Anchor: (Width: 70, Height: 24);
-                }
-                TextButton #NextAdminRight {
-                  Text: ">";
-                  Anchor: (Width: 24, Height: 24, Left: 6);
-                  Style: @PaginationButtonStyle;
-                }
+              TextButton #SaveButtonAdmin {
+                Text: "Save";
+                Anchor: (Width: 140, Height: 36);
+                Style: @SaveButtonStyle;
               }
             }
           }
 
-          Group {
-            LayoutMode: Left;
-            Anchor: (Height: 42, Bottom: 4);
+          Group #AdminDisabledContent {
+            LayoutMode: Top;
+            FlexWeight: 1;
+            Visible: false;
 
-            TextButton #ResetButtonAdmin {
-              Text: "Reset";
-              Anchor: (Width: 140, Height: 36);
-              Style: @ResetButtonStyle;
+            Label {
+              Text: "DISABLED SEGMENTS";
+              Style: (TextColor: #c94c4c, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 1);
+              Anchor: (Height: 24, Bottom: 4);
+            }
+
+            Label {
+              Text: "Move segments to the right column to hide them from all players.";
+              Style: (TextColor: #5a6d82, FontSize: 13);
+              Anchor: (Height: 28, Bottom: 6);
+            }
+
+            $C.@TextField #AdminDisFilterField {
+              Anchor: (Width: 460, Height: 34, Bottom: 14);
+              PlaceholderText: "Search segments...";
+            }
+
+            Group {
+              LayoutMode: Left;
+              Anchor: (Height: 20, Bottom: 6);
+
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Left;
+                Padding: (Left: 36, Right: 36);
+                Label {
+                  Text: "AVAILABLE";
+                  Style: (TextColor: #4c9a6c, FontSize: 11, RenderBold: true, RenderUppercase: true, LetterSpacing: 1, HorizontalAlignment: Center);
+                  Anchor: (Width: 275, Height: 20);
+                }
+              }
+
+              Group { Anchor: (Width: 3, Height: 20); }
+
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Left;
+                Padding: (Left: 56, Right: 16);
+                Group { Anchor: (Width: 50, Height: 20); }
+                Label {
+                  Text: "DISABLED";
+                  Style: (TextColor: #c94c4c, FontSize: 11, RenderBold: true, RenderUppercase: true, LetterSpacing: 1, HorizontalAlignment: Center);
+                  Anchor: (Width: 275, Height: 20);
+                }
+              }
+            }
+
+            Group {
+              LayoutMode: Left;
+              FlexWeight: 1;
+
+              Group #AdminDisLeftCol {
+                FlexWeight: 1;
+                LayoutMode: Top;
+                Padding: (Left: 36, Right: 36);
+
+                Group #AdminDisLeftRow0 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group #AdminDisLeftBlock0 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminDisLeftBlock0Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminDisLeftBlock0Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminDisLeftBlock0ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
+                      Label #AdminDisLeftBlock0Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisDisable0 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
+                    Group { FlexWeight: 1; }
+                  }
+                }
+
+                Group #AdminDisLeftRow1 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group #AdminDisLeftBlock1 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminDisLeftBlock1Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminDisLeftBlock1Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminDisLeftBlock1ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
+                      Label #AdminDisLeftBlock1Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisDisable1 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
+                    Group { FlexWeight: 1; }
+                  }
+                }
+
+                Group #AdminDisLeftRow2 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group #AdminDisLeftBlock2 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminDisLeftBlock2Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminDisLeftBlock2Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminDisLeftBlock2ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
+                      Label #AdminDisLeftBlock2Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisDisable2 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
+                    Group { FlexWeight: 1; }
+                  }
+                }
+
+                Group #AdminDisLeftRow3 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group #AdminDisLeftBlock3 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminDisLeftBlock3Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminDisLeftBlock3Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminDisLeftBlock3ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
+                      Label #AdminDisLeftBlock3Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisDisable3 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
+                    Group { FlexWeight: 1; }
+                  }
+                }
+
+                Group #AdminDisLeftRow4 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group #AdminDisLeftBlock4 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminDisLeftBlock4Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminDisLeftBlock4Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminDisLeftBlock4ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
+                      Label #AdminDisLeftBlock4Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisDisable4 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
+                    Group { FlexWeight: 1; }
+                  }
+                }
+
+                Group #AdminDisLeftRow5 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group #AdminDisLeftBlock5 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminDisLeftBlock5Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminDisLeftBlock5Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminDisLeftBlock5ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
+                      Label #AdminDisLeftBlock5Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisDisable5 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
+                    Group { FlexWeight: 1; }
+                  }
+                }
+
+                Group #AdminDisLeftRow6 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group #AdminDisLeftBlock6 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminDisLeftBlock6Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminDisLeftBlock6Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminDisLeftBlock6ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
+                      Label #AdminDisLeftBlock6Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisDisable6 { @Text = ">"; Anchor: (Width: 36, Height: 28, Left: 10); }
+                    Group { FlexWeight: 1; }
+                  }
+                }
+
+                Group #AdminDisLeftEmpty {
+                  LayoutMode: Left;
+                  Anchor: (Height: 40);
+                  Visible: false;
+                  Label {
+                    Text: "All segments are disabled";
+                    Style: (TextColor: #5a6d82, FontSize: 12, HorizontalAlignment: Center);
+                    Anchor: (Width: 275, Height: 40);
+                  }
+                }
+
+                Group { FlexWeight: 1; }
+
+                Group #AdminDisLeftPagination {
+                  LayoutMode: Left;
+                  Anchor: (Height: 24, Top: 4, Bottom: 16);
+                  Padding: (Left: 72, Right: 123);
+
+                  TextButton #PrevAdminDisLeft {
+                    Text: "<";
+                    Anchor: (Width: 24, Height: 24, Right: 6);
+                    Style: @PaginationButtonStyle;
+                  }
+                  Label #AdminDisLeftPageLabel {
+                    Style: (TextColor: #96a9be, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                    Anchor: (Width: 70, Height: 24);
+                  }
+                  TextButton #NextAdminDisLeft {
+                    Text: ">";
+                    Anchor: (Width: 24, Height: 24, Left: 6);
+                    Style: @PaginationButtonStyle;
+                  }
+                }
+              }
+
+              Group {
+                Anchor: (Width: 3);
+                Background: (Color: #1a2840);
+              }
+
+              Group #AdminDisRightCol {
+                FlexWeight: 1;
+                LayoutMode: Top;
+                Padding: (Left: 56, Right: 16);
+
+                Group #AdminDisRightRow0 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisEnable0 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
+                    Group { FlexWeight: 1; }
+                  }
+                  Group #AdminDisRightBlock0 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d2020); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminDisRightBlock0Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminDisRightBlock0Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminDisRightBlock0ExampleBar { Anchor: (Height: 14); Background: (Color: #2a1010); Padding: (Left: 8, Right: 8);
+                      Label #AdminDisRightBlock0Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                }
+
+                Group #AdminDisRightRow1 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisEnable1 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
+                    Group { FlexWeight: 1; }
+                  }
+                  Group #AdminDisRightBlock1 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d2020); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminDisRightBlock1Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminDisRightBlock1Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminDisRightBlock1ExampleBar { Anchor: (Height: 14); Background: (Color: #2a1010); Padding: (Left: 8, Right: 8);
+                      Label #AdminDisRightBlock1Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                }
+
+                Group #AdminDisRightRow2 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisEnable2 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
+                    Group { FlexWeight: 1; }
+                  }
+                  Group #AdminDisRightBlock2 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d2020); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminDisRightBlock2Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminDisRightBlock2Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminDisRightBlock2ExampleBar { Anchor: (Height: 14); Background: (Color: #2a1010); Padding: (Left: 8, Right: 8);
+                      Label #AdminDisRightBlock2Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                }
+
+                Group #AdminDisRightRow3 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisEnable3 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
+                    Group { FlexWeight: 1; }
+                  }
+                  Group #AdminDisRightBlock3 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d2020); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminDisRightBlock3Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminDisRightBlock3Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminDisRightBlock3ExampleBar { Anchor: (Height: 14); Background: (Color: #2a1010); Padding: (Left: 8, Right: 8);
+                      Label #AdminDisRightBlock3Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                }
+
+                Group #AdminDisRightRow4 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisEnable4 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
+                    Group { FlexWeight: 1; }
+                  }
+                  Group #AdminDisRightBlock4 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d2020); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminDisRightBlock4Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminDisRightBlock4Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminDisRightBlock4ExampleBar { Anchor: (Height: 14); Background: (Color: #2a1010); Padding: (Left: 8, Right: 8);
+                      Label #AdminDisRightBlock4Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                }
+
+                Group #AdminDisRightRow5 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisEnable5 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
+                    Group { FlexWeight: 1; }
+                  }
+                  Group #AdminDisRightBlock5 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d2020); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminDisRightBlock5Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminDisRightBlock5Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminDisRightBlock5ExampleBar { Anchor: (Height: 14); Background: (Color: #2a1010); Padding: (Left: 8, Right: 8);
+                      Label #AdminDisRightBlock5Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                }
+
+                Group #AdminDisRightRow6 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
+                  Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
+                    Group { FlexWeight: 1; }
+                    $C.@SmallSecondaryTextButton #AdminDisEnable6 { @Text = "<"; Anchor: (Width: 36, Height: 28, Left: 4); }
+                    Group { FlexWeight: 1; }
+                  }
+                  Group #AdminDisRightBlock6 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d2020); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
+                    Label #AdminDisRightBlock6Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+                    Label #AdminDisRightBlock6Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Group #AdminDisRightBlock6ExampleBar { Anchor: (Height: 14); Background: (Color: #2a1010); Padding: (Left: 8, Right: 8);
+                      Label #AdminDisRightBlock6Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                    }
+                  }
+                }
+
+                Group #AdminDisRightEmpty {
+                  LayoutMode: Left;
+                  Anchor: (Height: 40);
+                  Visible: false;
+                  Group { Anchor: (Width: 50, Height: 40); }
+                  Label {
+                    Text: "No disabled segments";
+                    Style: (TextColor: #5a6d82, FontSize: 12, HorizontalAlignment: Center);
+                    Anchor: (Width: 275, Height: 40);
+                  }
+                }
+
+                Group { FlexWeight: 1; }
+
+                Group #AdminDisRightPagination {
+                  LayoutMode: Left;
+                  Anchor: (Height: 24, Top: 4, Bottom: 16);
+                  Padding: (Left: 122, Right: 73);
+
+                  TextButton #PrevAdminDisRight {
+                    Text: "<";
+                    Anchor: (Width: 24, Height: 24, Right: 6);
+                    Style: @PaginationButtonStyle;
+                  }
+                  Label #AdminDisRightPageLabel {
+                    Style: (TextColor: #96a9be, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                    Anchor: (Width: 70, Height: 24);
+                  }
+                  TextButton #NextAdminDisRight {
+                    Text: ">";
+                    Anchor: (Width: 24, Height: 24, Left: 6);
+                    Style: @PaginationButtonStyle;
+                  }
+                }
+              }
+            }
+
+            Group {
+              LayoutMode: Left;
+              Anchor: (Height: 42, Bottom: 4);
+
+              TextButton #ResetButtonAdminDis {
+                Text: "Reset";
+                Anchor: (Width: 140, Height: 36);
+                Style: @ResetButtonStyle;
+              }
+
+              Group { FlexWeight: 1; }
+
+              Label #SaveMessageAdminDis {
+                Text: "";
+                Style: (TextColor: #4ade80, FontSize: 13, RenderBold: true, VerticalAlignment: Center);
+                Anchor: (Height: 36, Right: 10);
+                Visible: false;
+              }
+
+              TextButton #SaveButtonAdminDis {
+                Text: "Save";
+                Anchor: (Width: 140, Height: 36);
+                Style: @SaveButtonStyle;
+              }
+            }
+          }
+
+          Group #AdminSettingsContent {
+            LayoutMode: Top;
+            FlexWeight: 1;
+            Visible: false;
+
+            Label {
+              Text: "ADMIN SETTINGS";
+              Style: (TextColor: #96a9be, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 1);
+              Anchor: (Height: 24, Bottom: 4);
+            }
+
+            Label {
+              Text: "Configure server-wide nameplate settings.";
+              Style: (TextColor: #5a6d82, FontSize: 13);
+              Anchor: (Height: 28, Bottom: 14);
+            }
+
+            Group {
+              LayoutMode: Left;
+              Anchor: (Height: 36, Bottom: 10);
+              Label {
+                Text: "Server Name:";
+                Style: (TextColor: #96a9be, FontSize: 13, VerticalAlignment: Center);
+                Anchor: (Width: 130, Height: 36);
+              }
+              $C.@TextField #AdminServerNameField {
+                Anchor: (Width: 330, Height: 34);
+                PlaceholderText: "NameplateBuilder";
+              }
+            }
+
+            Label {
+              Text: "Shown in the welcome message when players join. Leave blank for \"NameplateBuilder\".";
+              Style: (TextColor: #5a6d82, FontSize: 11);
+              Anchor: (Height: 20, Bottom: 20);
             }
 
             Group { FlexWeight: 1; }
 
-            Label #SaveMessageAdmin {
-              Text: "";
-              Style: (TextColor: #4ade80, FontSize: 13, RenderBold: true, VerticalAlignment: Center);
-              Anchor: (Height: 36, Right: 10);
+            Group {
+              LayoutMode: Left;
+              Anchor: (Height: 42, Bottom: 4);
+
+              TextButton #ResetButtonAdminSettings {
+                Text: "Reset";
+                Anchor: (Width: 140, Height: 36);
+                Style: @ResetButtonStyle;
+              }
+
+              Group { FlexWeight: 1; }
+
+              Label #SaveMessageAdminSettings {
+                Text: "";
+                Style: (TextColor: #4ade80, FontSize: 13, RenderBold: true, VerticalAlignment: Center);
+                Anchor: (Height: 36, Right: 10);
+                Visible: false;
+              }
+
+              TextButton #SaveButtonAdminSettings {
+                Text: "Save";
+                Anchor: (Width: 140, Height: 36);
+                Style: @SaveButtonStyle;
+              }
+            }
+          }
+        }
+
+        Group #TabDisabled {
+          LayoutMode: Top;
+          FlexWeight: 1;
+          Visible: false;
+          Padding: (Left: 24, Right: 24, Top: 20, Bottom: 20);
+
+          Label {
+            Text: "DISABLED SEGMENTS";
+            Style: (TextColor: #c94c4c, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 1);
+            Anchor: (Height: 24, Bottom: 4);
+          }
+
+          Label {
+            Text: "These segments have been disabled by the server admin and cannot be used.";
+            Style: (TextColor: #5a6d82, FontSize: 13);
+            Anchor: (Height: 28, Bottom: 12);
+          }
+
+          Label #DisabledEmpty {
+            Text: "No segments are disabled on this server.";
+            Style: (TextColor: #5a6d82, FontSize: 14, HorizontalAlignment: Center);
+            Anchor: (Height: 40);
+            Visible: false;
+          }
+
+          Group #DisabledRow1 {
+            LayoutMode: Left;
+            Anchor: (Height: 118, Bottom: 6);
+
+            Group #DisabledBlock0 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock0Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock0Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock0Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock0ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock0Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+
+            Group #DisabledBlock1 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock1Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock1Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock1Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock1ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock1Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+
+            Group #DisabledBlock2 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock2Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock2Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock2Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock2ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock2Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+
+            Group #DisabledBlock3 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock3Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock3Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock3Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock3ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock3Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+          }
+
+          Group #DisabledRow2 {
+            LayoutMode: Left;
+            Anchor: (Height: 118, Bottom: 6);
+
+            Group #DisabledBlock4 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock4Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock4Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock4Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock4ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock4Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+
+            Group #DisabledBlock5 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock5Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock5Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock5Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock5ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock5Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+
+            Group #DisabledBlock6 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock6Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock6Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock6Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock6ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock6Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+
+            Group #DisabledBlock7 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock7Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock7Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock7Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock7ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock7Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+          }
+
+          Group #DisabledRow3 {
+            LayoutMode: Left;
+            Anchor: (Height: 118, Bottom: 6);
+
+            Group #DisabledBlock8 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock8Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock8Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock8Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock8ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock8Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+
+            Group #DisabledBlock9 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock9Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock9Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock9Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock9ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock9Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+
+            Group #DisabledBlock10 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock10Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock10Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock10Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock10ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock10Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+
+            Group #DisabledBlock11 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock11Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock11Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock11Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock11ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock11Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+          }
+
+          Group #DisabledRow4 {
+            LayoutMode: Left;
+            Anchor: (Height: 118, Bottom: 6);
+
+            Group #DisabledBlock12 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock12Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock12Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock12Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock12ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock12Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+
+            Group #DisabledBlock13 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock13Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock13Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock13Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock13ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock13Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+
+            Group #DisabledBlock14 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock14Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock14Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock14Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock14ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock14Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+
+            Group #DisabledBlock15 {
+              Anchor: (Width: 194, Height: 118, Right: 8);
+              Background: (Color: #3d2020);
+              LayoutMode: Top;
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 8);
+              Visible: false;
+
+              Label #DisabledBlock15Label {
+                Text: "";
+                Style: (TextColor: #e2e8f0, FontSize: 14, RenderBold: true);
+                Anchor: (Height: 20, Bottom: 2);
+              }
+
+              Label #DisabledBlock15Sub {
+                Text: "";
+                Style: (TextColor: #96a9be, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 2);
+              }
+
+              Label #DisabledBlock15Author {
+                Text: "";
+                Style: (TextColor: #5a6d82, FontSize: 11);
+                Anchor: (Height: 16, Bottom: 4);
+              }
+
+              Group #DisabledBlock15ExampleBar {
+                Anchor: (Height: 18);
+                Background: (Color: #2a1010);
+                Padding: (Left: 8, Right: 8, Top: 2, Bottom: 2);
+                Visible: false;
+
+                Label #DisabledBlock15Example {
+                  Text: "";
+                  Style: (TextColor: #c94c4c, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
+                }
+              }
+            }
+          }
+
+          Group #DisabledPagination {
+            LayoutMode: Left;
+            Anchor: (Height: 36, Top: 8);
+
+            Group { FlexWeight: 1; }
+
+            TextButton #PrevDisabled {
+              Text: "<";
+              Anchor: (Width: 36, Height: 36, Right: 8);
+              Style: @PaginationButtonStyle;
               Visible: false;
             }
 
-            TextButton #SaveButtonAdmin {
-              Text: "Save";
-              Anchor: (Width: 140, Height: 36);
-              Style: @SaveButtonStyle;
+            Label #DisabledPageLabel {
+              Text: "";
+              Style: (TextColor: #5a6d82, FontSize: 12, HorizontalAlignment: Center, VerticalAlignment: Center);
+              Anchor: (Width: 80, Height: 36, Right: 8);
+              Visible: false;
             }
+
+            TextButton #NextDisabled {
+              Text: ">";
+              Anchor: (Width: 36, Height: 36);
+              Style: @PaginationButtonStyle;
+              Visible: false;
+            }
+
+            Group { FlexWeight: 1; }
           }
         }
       }
@@ -1167,7 +2338,7 @@ $C.@PageOverlay {
     Visible: false;
 
     Group {
-      Anchor: (Width: 320, Height: 460);
+      Anchor: (Width: 320, Height: 520);
       Background: (Color: #141c26);
       LayoutMode: Top;
       Padding: (Left: 20, Right: 20, Top: 16, Bottom: 16);

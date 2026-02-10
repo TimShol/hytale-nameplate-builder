@@ -23,15 +23,19 @@ import org.jspecify.annotations.NonNull;
  *   <li><b>Player Name</b> — auto-reads the player's display name, with an
  *       anonymize variant ({@code "Player"}) for privacy</li>
  *   <li><b>Health</b> — reads {@link EntityStatMap} health with three format variants:
- *       current/max ({@code "42/67"}, variant 0), percentage ({@code "63%"}, variant 1),
- *       and visual bar ({@code "||||||||||||........"}, variant 2). The bar uses
- *       {@code '.'} as an internal placeholder for empty slots; the aggregator replaces
- *       it with the viewer's configured empty fill character (default {@code '-'}).</li>
+ *       current/max, percentage, and visual bar.</li>
+ *   <li><b>Stamina</b> — same three format variants as health, using the stamina stat.</li>
+ *   <li><b>Mana</b> — same three format variants as health, using the mana stat.</li>
  * </ul>
  *
+ * <p>Bar variants use {@code '.'} as an internal placeholder for empty slots; the
+ * aggregator replaces it with the viewer's configured empty fill character
+ * (default {@code '-'}).</p>
+ *
  * <p>For Player entities that don't yet have a {@link NameplateData} component,
- * this system auto-creates one via the {@link CommandBuffer}. NPC entities are
- * left alone — mods must explicitly call {@code NameplateAPI.register()} for NPCs.</p>
+ * this system auto-creates one via the {@link CommandBuffer}. Non-Player entities
+ * (NPCs, mobs, etc.) that have an {@link EntityStatMap} with health, stamina, or
+ * mana stats are also auto-attached so their stats display on nameplates.</p>
  *
  * @see NameplateAggregatorSystem#buildText for variant resolution and bar character replacement
  */
@@ -42,6 +46,12 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
     static final String SEGMENT_HEALTH = "health";
     static final String SEGMENT_HEALTH_PCT = "health.1";
     static final String SEGMENT_HEALTH_BAR = "health.2";
+    static final String SEGMENT_STAMINA = "stamina";
+    static final String SEGMENT_STAMINA_PCT = "stamina.1";
+    static final String SEGMENT_STAMINA_BAR = "stamina.2";
+    static final String SEGMENT_MANA = "mana";
+    static final String SEGMENT_MANA_PCT = "mana.1";
+    static final String SEGMENT_MANA_BAR = "mana.2";
 
     private static final int BAR_LENGTH = 20;
 
@@ -84,6 +94,25 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
+        // Auto-attach NameplateData to non-Player entities (NPCs, mobs) that have
+        // stat data but no NameplateData yet — fixes health/stamina/mana not showing
+        if (player == null && existing == null) {
+            EntityStatMap statMap = store.getComponent(entityRef, statMapType);
+            if (statMap != null) {
+                boolean hasStats = statMap.get(DefaultEntityStatTypes.getHealth()) != null
+                        || statMap.get(DefaultEntityStatTypes.getStamina()) != null
+                        || statMap.get(DefaultEntityStatTypes.getMana()) != null;
+                if (hasStats) {
+                    NameplateData data = new NameplateData();
+                    setHealthText(data, store, entityRef);
+                    setStaminaText(data, store, entityRef);
+                    setManaText(data, store, entityRef);
+                    commandBuffer.putComponent(entityRef, nameplateDataType, data);
+                    return;
+                }
+            }
+        }
+
         // Update built-in segments on entities that already have NameplateData
         if (existing != null) {
             updateBuiltInSegments(existing, player, store, entityRef);
@@ -101,6 +130,12 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
 
         // Health (variant 0: current/max, variant 1: percentage, variant 2: bar)
         setHealthText(data, store, entityRef);
+
+        // Stamina (variant 0: current/max, variant 1: percentage, variant 2: bar)
+        setStaminaText(data, store, entityRef);
+
+        // Mana (variant 0: current/max, variant 1: percentage, variant 2: bar)
+        setManaText(data, store, entityRef);
     }
 
     private void updateBuiltInSegments(NameplateData data, Player player,
@@ -114,18 +149,26 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
             data.setText(SEGMENT_PLAYER_NAME_ANON, "Player");
         }
 
-        // Health — on any entity that has the health segment already set,
-        // or on any entity with an EntityStatMap
-        if (data.getText(SEGMENT_HEALTH) != null) {
-            setHealthText(data, store, entityRef);
-        } else {
-            // Check if entity has health stats — if so, initialize the segment
-            EntityStatMap statMap = store.getComponent(entityRef, statMapType);
-            if (statMap != null) {
-                EntityStatValue health = statMap.get(DefaultEntityStatTypes.getHealth());
-                if (health != null) {
-                    setHealthText(data, store, entityRef);
-                }
+        // Stat segments — update if already initialized, or lazy-init if stat is available
+        EntityStatMap statMap = store.getComponent(entityRef, statMapType);
+        if (statMap != null) {
+            // Health
+            if (data.getText(SEGMENT_HEALTH) != null) {
+                setHealthText(data, store, entityRef);
+            } else if (statMap.get(DefaultEntityStatTypes.getHealth()) != null) {
+                setHealthText(data, store, entityRef);
+            }
+            // Stamina
+            if (data.getText(SEGMENT_STAMINA) != null) {
+                setStaminaText(data, store, entityRef);
+            } else if (statMap.get(DefaultEntityStatTypes.getStamina()) != null) {
+                setStaminaText(data, store, entityRef);
+            }
+            // Mana
+            if (data.getText(SEGMENT_MANA) != null) {
+                setManaText(data, store, entityRef);
+            } else if (statMap.get(DefaultEntityStatTypes.getMana()) != null) {
+                setManaText(data, store, entityRef);
             }
         }
     }
@@ -158,4 +201,57 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
         for (int i = filled; i < BAR_LENGTH; i++) bar.append('.');
         data.setText(SEGMENT_HEALTH_BAR, bar.toString());
     }
+
+    private void setStaminaText(NameplateData data, Store<EntityStore> store, Ref<EntityStore> entityRef) {
+        EntityStatMap statMap = store.getComponent(entityRef, statMapType);
+        if (statMap == null) {
+            return;
+        }
+        EntityStatValue stamina = statMap.get(DefaultEntityStatTypes.getStamina());
+        if (stamina == null) {
+            return;
+        }
+
+        int current = Math.round(stamina.get());
+        int max = Math.round(stamina.getMax());
+
+        data.setText(SEGMENT_STAMINA, current + "/" + max);
+
+        int pct = max > 0 ? Math.round(100f * current / max) : 0;
+        data.setText(SEGMENT_STAMINA_PCT, pct + "%");
+
+        int filled = max > 0 ? Math.round((float) BAR_LENGTH * current / max) : 0;
+        filled = Math.max(0, Math.min(BAR_LENGTH, filled));
+        StringBuilder bar = new StringBuilder(BAR_LENGTH);
+        for (int i = 0; i < filled; i++) bar.append('|');
+        for (int i = filled; i < BAR_LENGTH; i++) bar.append('.');
+        data.setText(SEGMENT_STAMINA_BAR, bar.toString());
+    }
+
+    private void setManaText(NameplateData data, Store<EntityStore> store, Ref<EntityStore> entityRef) {
+        EntityStatMap statMap = store.getComponent(entityRef, statMapType);
+        if (statMap == null) {
+            return;
+        }
+        EntityStatValue mana = statMap.get(DefaultEntityStatTypes.getMana());
+        if (mana == null) {
+            return;
+        }
+
+        int current = Math.round(mana.get());
+        int max = Math.round(mana.getMax());
+
+        data.setText(SEGMENT_MANA, current + "/" + max);
+
+        int pct = max > 0 ? Math.round(100f * current / max) : 0;
+        data.setText(SEGMENT_MANA_PCT, pct + "%");
+
+        int filled = max > 0 ? Math.round((float) BAR_LENGTH * current / max) : 0;
+        filled = Math.max(0, Math.min(BAR_LENGTH, filled));
+        StringBuilder bar = new StringBuilder(BAR_LENGTH);
+        for (int i = 0; i < filled; i++) bar.append('|');
+        for (int i = filled; i < BAR_LENGTH; i++) bar.append('.');
+        data.setText(SEGMENT_MANA_BAR, bar.toString());
+    }
+
 }

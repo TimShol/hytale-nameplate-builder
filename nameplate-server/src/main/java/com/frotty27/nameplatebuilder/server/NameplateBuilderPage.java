@@ -48,7 +48,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
 
     private static final int CHAIN_PAGE_SIZE = 4;
     private static final int AVAIL_PAGE_SIZE = 8;
-    private static final int ADMIN_PAGE_SIZE = 8;
+    private static final int ADMIN_PAGE_SIZE = 7;
     private static final int MOD_NAME_MAX_LENGTH = 24;
     /** Global preference entity type used for settings that apply regardless of tab. */
     private static final String ENTITY_TYPE_GLOBAL = "*";
@@ -71,8 +71,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
     private static final String COLOR_VARIANT_SELECTED = "#2d6b3f";
     /** Maximum number of variants supported in the popup UI. */
     private static final int MAX_VARIANT_OPTIONS = 4;
+    /** Red-tinted background for disabled segments. */
+    private static final String COLOR_DISABLED = "#3d2020";
+    /** Number of disabled blocks per page in the player Disabled tab (4x4 grid). */
+    private static final int DISABLED_PAGE_SIZE = 16;
 
-    private enum ActiveTab { GENERAL, NPCS, PLAYERS, ADMIN }
+    private enum ActiveTab { GENERAL, NPCS, PLAYERS, ADMIN, DISABLED }
+    private enum AdminSubTab { REQUIRED, DISABLED, SETTINGS }
 
     private final NameplateRegistry registry;
     private final NameplatePreferenceStore preferences;
@@ -87,6 +92,12 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
     private int chainPage = 0;
     private int adminLeftPage = 0;
     private int adminRightPage = 0;
+    private AdminSubTab adminSubTab = AdminSubTab.REQUIRED;
+    private String adminDisFilter = "";
+    private String adminServerName = "";
+    private int adminDisLeftPage = 0;
+    private int adminDisRightPage = 0;
+    private int disabledPage = 0;
 
     /**
      * When non-null, the user is actively editing the offset field.
@@ -186,6 +197,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             this.chainPage = state.chainPage;
             this.adminLeftPage = state.adminLeftPage;
             this.adminRightPage = state.adminRightPage;
+            this.adminSubTab = state.adminSubTab != null ? state.adminSubTab : AdminSubTab.REQUIRED;
+            this.adminDisLeftPage = state.adminDisLeftPage;
+            this.adminDisRightPage = state.adminDisRightPage;
+            this.disabledPage = state.disabledPage;
         }
     }
 
@@ -264,6 +279,55 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         for (int i = 0; i < ADMIN_PAGE_SIZE; i++) {
             bindAction(events, "#AdminDisable" + i, "AdminDisable_" + i);
         }
+
+        // Admin disabled filter field binding
+        events.addEventBinding(
+                com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
+                "#AdminDisFilterField",
+                com.hypixel.hytale.server.core.ui.builder.EventData.of("@AdminDisFilter", "#AdminDisFilterField.Value"),
+                false);
+
+        // Admin server name field binding
+        events.addEventBinding(
+                com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
+                "#AdminServerNameField",
+                com.hypixel.hytale.server.core.ui.builder.EventData.of("@AdminServerName", "#AdminServerNameField.Value"),
+                false);
+
+        // Admin sub-tab buttons
+        bindAction(events, "#AdminSubRequired", "AdminSubRequired");
+        bindAction(events, "#AdminSubDisabled", "AdminSubDisabled");
+        bindAction(events, "#AdminSubSettings", "AdminSubSettings");
+        bindAction(events, "#NavAdminDisabled", "NavAdminDisabled");
+        bindAction(events, "#NavAdminSettings", "NavAdminSettings");
+
+        // Admin settings buttons
+        bindAction(events, "#SaveButtonAdminSettings", "SaveAdminSettings");
+        bindAction(events, "#ResetButtonAdminSettings", "ResetAdminSettings");
+
+        // Admin disabled panel — enable/disable buttons (8 rows each)
+        for (int i = 0; i < ADMIN_PAGE_SIZE; i++) {
+            bindAction(events, "#AdminDisDisable" + i, "AdminDisDisable_" + i);
+        }
+        for (int i = 0; i < ADMIN_PAGE_SIZE; i++) {
+            bindAction(events, "#AdminDisEnable" + i, "AdminDisEnable_" + i);
+        }
+        bindAction(events, "#ResetButtonAdminDis", "ResetAdminDis");
+        bindAction(events, "#SaveButtonAdminDis", "SaveAdminDis");
+
+        // Admin disabled panel pagination
+        bindAction(events, "#PrevAdminDisLeft", "PrevAdminDisLeft");
+        bindAction(events, "#NextAdminDisLeft", "NextAdminDisLeft");
+        bindAction(events, "#PrevAdminDisRight", "PrevAdminDisRight");
+        bindAction(events, "#NextAdminDisRight", "NextAdminDisRight");
+
+        // Player disabled tab
+        bindAction(events, "#NavDisabled", "NavDisabled");
+        bindAction(events, "#PrevDisabled", "PrevDisabled");
+        bindAction(events, "#NextDisabled", "NextDisabled");
+
+        // Welcome message toggle
+        bindAction(events, "#WelcomeToggle", "ToggleWelcome");
 
         // Clear chain
         bindAction(events, "#ClearChainButton", "ClearChain");
@@ -347,6 +411,22 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             adminRightPage = 0;
         }
 
+        if (data.adminDisFilter != null) {
+            adminDisFilter = data.adminDisFilter.trim();
+            adminDisLeftPage = 0;
+            adminDisRightPage = 0;
+        }
+
+        if (data.adminServerName != null) {
+            adminServerName = data.adminServerName;
+            // Store without sending update — avoids disrupting the active text field
+            if (data.action == null && data.filter == null && data.offset == null && data.adminFilter == null
+                    && data.adminDisFilter == null && data.sepText == null && data.prefixText == null
+                    && data.suffixText == null && data.barEmptyText == null) {
+                return;
+            }
+        }
+
         if (data.sepText != null) {
             sepText = data.sepText;
             pendingSepInput = data.sepText;
@@ -370,8 +450,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
                     preferences.setSuffix(viewerUuid, tabEntityType(), editingVariantKey, data.suffixText);
                 }
                 if (data.barEmptyText != null) {
-                    pendingBarEmptyInput = data.barEmptyText;
-                    preferences.setBarEmptyChar(viewerUuid, tabEntityType(), editingVariantKey, data.barEmptyText);
+                    String clamped = data.barEmptyText.length() > 1
+                            ? data.barEmptyText.substring(0, 1) : data.barEmptyText;
+                    pendingBarEmptyInput = clamped;
+                    preferences.setBarEmptyChar(viewerUuid, tabEntityType(), editingVariantKey, clamped);
                 }
             }
             // If only text fields changed (no action), just store and return
@@ -409,13 +491,88 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             case "NavAdmin" -> {
                 if (isAdmin) {
                     switchTab(ActiveTab.ADMIN);
+                    adminSubTab = AdminSubTab.REQUIRED;
                 }
                 sendUpdate(buildUpdate());
                 return;
             }
+            case "NavAdminDisabled" -> {
+                if (isAdmin) {
+                    switchTab(ActiveTab.ADMIN);
+                    adminSubTab = AdminSubTab.DISABLED;
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "NavAdminSettings" -> {
+                if (isAdmin) {
+                    switchTab(ActiveTab.ADMIN);
+                    adminSubTab = AdminSubTab.SETTINGS;
+                    adminServerName = adminConfig.getServerName();
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "AdminSubRequired" -> {
+                adminSubTab = AdminSubTab.REQUIRED;
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "AdminSubDisabled" -> {
+                adminSubTab = AdminSubTab.DISABLED;
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "AdminSubSettings" -> {
+                adminSubTab = AdminSubTab.SETTINGS;
+                adminServerName = adminConfig.getServerName();
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "SaveAdminSettings" -> {
+                if (isAdmin) {
+                    try {
+                        adminConfig.setServerName(adminServerName);
+                        adminConfig.save();
+                        persistUiState();
+                        saveMessage = "Admin config saved!";
+                        saveMessageSuccess = true;
+                    } catch (Throwable e) {
+                        LOGGER.atWarning().withCause(e).log("Failed to save admin config");
+                        saveMessage = "Could not save admin config!";
+                        saveMessageSuccess = false;
+                    }
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "ResetAdminSettings" -> {
+                if (isAdmin) {
+                    adminServerName = "";
+                    adminConfig.setServerName("");
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "NavDisabled" -> {
+                switchTab(ActiveTab.DISABLED);
+                sendUpdate(buildUpdate());
+                return;
+            }
             case "ToggleEnable" -> {
+                // Prevent toggling when all segments are disabled by admin
+                if (areAllSegmentsDisabled()) {
+                    sendUpdate(buildUpdate());
+                    return;
+                }
                 boolean current = preferences.isNameplatesEnabled(viewerUuid);
                 preferences.setNameplatesEnabled(viewerUuid, !current);
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "ToggleWelcome" -> {
+                boolean current = preferences.isShowWelcomeMessage(viewerUuid);
+                preferences.setShowWelcomeMessage(viewerUuid, !current);
                 sendUpdate(buildUpdate());
                 return;
             }
@@ -462,7 +619,30 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             }
             case "ResetAdmin" -> {
                 if (isAdmin) {
-                    adminConfig.clearAll();
+                    adminConfig.clearAllRequired();
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "SaveAdminDis" -> {
+                if (isAdmin) {
+                    try {
+                        adminConfig.save();
+                        persistUiState();
+                        saveMessage = "Admin config saved!";
+                        saveMessageSuccess = true;
+                    } catch (Throwable e) {
+                        LOGGER.atWarning().withCause(e).log("Failed to save admin config");
+                        saveMessage = "Could not save admin config!";
+                        saveMessageSuccess = false;
+                    }
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "ResetAdminDis" -> {
+                if (isAdmin) {
+                    adminConfig.clearAllDisabled();
                 }
                 sendUpdate(buildUpdate());
                 return;
@@ -507,6 +687,12 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
                 sendUpdate(buildUpdate());
                 return;
             }
+            case "PrevAdminDisLeft" -> { adminDisLeftPage = Math.max(0, adminDisLeftPage - 1); sendUpdate(buildUpdate()); return; }
+            case "NextAdminDisLeft" -> { adminDisLeftPage++; sendUpdate(buildUpdate()); return; }
+            case "PrevAdminDisRight" -> { adminDisRightPage = Math.max(0, adminDisRightPage - 1); sendUpdate(buildUpdate()); return; }
+            case "NextAdminDisRight" -> { adminDisRightPage++; sendUpdate(buildUpdate()); return; }
+            case "PrevDisabled" -> { disabledPage = Math.max(0, disabledPage - 1); sendUpdate(buildUpdate()); return; }
+            case "NextDisabled" -> { disabledPage++; sendUpdate(buildUpdate()); return; }
             case "ToggleLook" -> {
                 boolean current = preferences.isOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE_GLOBAL);
                 preferences.setOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE_GLOBAL, !current);
@@ -608,6 +794,24 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             if (isAdmin) {
                 int row = parseRowIndex(data.action, "AdminDisable_");
                 disableAdminRow(row);
+            }
+            sendUpdate(buildUpdate());
+            return;
+        }
+
+        // Admin disabled panel — move segments between available and disabled
+        if (data.action.startsWith("AdminDisDisable_")) {
+            if (isAdmin) {
+                int row = parseRowIndex(data.action, "AdminDisDisable_");
+                disableAdminDisRow(row);
+            }
+            sendUpdate(buildUpdate());
+            return;
+        }
+        if (data.action.startsWith("AdminDisEnable_")) {
+            if (isAdmin) {
+                int row = parseRowIndex(data.action, "AdminDisEnable_");
+                enableAdminDisRow(row);
             }
             sendUpdate(buildUpdate());
             return;
@@ -724,6 +928,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         chainPage = 0;
         adminLeftPage = 0;
         adminRightPage = 0;
+        adminSubTab = AdminSubTab.REQUIRED;
+        adminDisLeftPage = 0;
+        adminDisRightPage = 0;
+        disabledPage = 0;
         pendingOffsetInput = null;
     }
 
@@ -731,8 +939,20 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
      * Returns {@code true} if the given segment should be visible in the currently active tab.
      * Segments with {@code target = ALL} appear in both NPCS and PLAYERS tabs.
      */
+    /** Returns {@code true} if every registered segment is admin-disabled. */
+    private boolean areAllSegmentsDisabled() {
+        Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
+        if (segments.isEmpty()) return false;
+        for (SegmentKey key : segments.keySet()) {
+            if (!adminConfig.isDisabled(key)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private boolean isSegmentVisibleForActiveTab(NameplateRegistry.Segment segment) {
-        if (activeTab == ActiveTab.GENERAL || activeTab == ActiveTab.ADMIN) return false;
+        if (activeTab == ActiveTab.GENERAL || activeTab == ActiveTab.ADMIN || activeTab == ActiveTab.DISABLED) return false;
         SegmentTarget target = segment.target();
         if (target == SegmentTarget.ALL) return true;
         if (activeTab == ActiveTab.NPCS) return target == SegmentTarget.NPCS;
@@ -782,25 +1002,42 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         commands.set("#NavGeneral.Text", activeTab == ActiveTab.GENERAL ? "> Settings" : "  Settings");
         commands.set("#NavNpcs.Text", activeTab == ActiveTab.NPCS ? "> NPCs" : "  NPCs");
         commands.set("#NavPlayers.Text", activeTab == ActiveTab.PLAYERS ? "> Players" : "  Players");
+        commands.set("#NavDisabled.Text", activeTab == ActiveTab.DISABLED ? "> Disabled" : "  Disabled");
 
         // Admin sidebar — only visible to admins
         commands.set("#AdminSection.Visible", isAdmin);
         if (isAdmin) {
-            commands.set("#NavAdmin.Text", activeTab == ActiveTab.ADMIN ? "> Settings" : "  Settings");
+            boolean adminReq = activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.REQUIRED;
+            boolean adminDis = activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.DISABLED;
+            boolean adminSet = activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.SETTINGS;
+            commands.set("#NavAdmin.Text", adminReq ? "> Required" : "  Required");
+            commands.set("#NavAdminDisabled.Text", adminDis ? "> Disabled" : "  Disabled");
+            commands.set("#NavAdminSettings.Text", adminSet ? "> Settings" : "  Settings");
         }
 
         // ── Tab visibility ──
         commands.set("#TabGeneral.Visible", activeTab == ActiveTab.GENERAL);
         commands.set("#TabEditor.Visible", activeTab == ActiveTab.NPCS || activeTab == ActiveTab.PLAYERS);
         commands.set("#TabAdmin.Visible", activeTab == ActiveTab.ADMIN);
+        commands.set("#TabDisabled.Visible", activeTab == ActiveTab.DISABLED);
 
         // ── General tab content ──
         if (activeTab == ActiveTab.GENERAL) {
-            boolean enabled = preferences.isNameplatesEnabled(viewerUuid);
+            // Check if all segments are disabled by admin → force nameplates off
+            boolean allDisabled = areAllSegmentsDisabled();
+
+            boolean enabled = !allDisabled && preferences.isNameplatesEnabled(viewerUuid);
             commands.set("#EnableToggle.Text", enabled ? "  [X]  " : "  [ ]  ");
+            // Lock the toggle when all segments are disabled — no point enabling nameplates
+            commands.set("#EnableToggle.Style.Default.Background", allDisabled ? "#1a1a1a" : "#1a2840");
+            commands.set("#EnableToggle.Style.Hovered.Background", allDisabled ? "#1a1a1a" : "#253a55");
+            commands.set("#AllDisabledNotice.Visible", allDisabled);
 
             boolean lookOnly = preferences.isOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE_GLOBAL);
             commands.set("#LookToggle.Text", lookOnly ? "  [X]  " : "  [ ]  ");
+
+            boolean welcome = preferences.isShowWelcomeMessage(viewerUuid);
+            commands.set("#WelcomeToggle.Text", welcome ? "  [X]  " : "  [ ]  ");
 
             // Offset field — preserve the user's raw input while they're typing
             if (pendingOffsetInput != null) {
@@ -822,14 +1059,56 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         // ── Admin tab content ──
         if (activeTab == ActiveTab.ADMIN) {
             commands.set("#AdminFilterField.Value", adminFilter);
-            fillAdmin(commands);
 
-            // Save feedback message
-            commands.set("#SaveMessageAdmin.Visible", saveMessage != null);
-            if (saveMessage != null) {
-                commands.set("#SaveMessageAdmin.Text", saveMessage);
-                commands.set("#SaveMessageAdmin.Style.TextColor", saveMessageSuccess ? "#4ade80" : "#f87171");
+            // Sub-tab visibility + button styling
+            commands.set("#AdminRequiredContent.Visible", adminSubTab == AdminSubTab.REQUIRED);
+            commands.set("#AdminDisabledContent.Visible", adminSubTab == AdminSubTab.DISABLED);
+            commands.set("#AdminSettingsContent.Visible", adminSubTab == AdminSubTab.SETTINGS);
+
+            // Required sub-tab button: orange (#8b6b2f) when active (locked), default otherwise
+            boolean reqActive = adminSubTab == AdminSubTab.REQUIRED;
+            commands.set("#AdminSubRequired.Style.Default.Background", reqActive ? "#8b6b2f" : "#1a2840");
+            commands.set("#AdminSubRequired.Style.Hovered.Background", reqActive ? "#8b6b2f" : "#a07038");
+            commands.set("#AdminSubRequired.Style.Pressed.Background", reqActive ? "#8b6b2f" : "#704b24");
+
+            // Disabled sub-tab button: red (#8b3a3a) when active (locked), default otherwise
+            boolean disActive = adminSubTab == AdminSubTab.DISABLED;
+            commands.set("#AdminSubDisabled.Style.Default.Background", disActive ? "#8b3a3a" : "#1a2840");
+            commands.set("#AdminSubDisabled.Style.Hovered.Background", disActive ? "#8b3a3a" : "#9b4a4a");
+            commands.set("#AdminSubDisabled.Style.Pressed.Background", disActive ? "#8b3a3a" : "#7b2a2a");
+
+            // Settings sub-tab button: blue (#2a4a6b) when active (locked), default otherwise
+            boolean setActive = adminSubTab == AdminSubTab.SETTINGS;
+            commands.set("#AdminSubSettings.Style.Default.Background", setActive ? "#2a4a6b" : "#1a2840");
+            commands.set("#AdminSubSettings.Style.Hovered.Background", setActive ? "#2a4a6b" : "#3a5a7b");
+            commands.set("#AdminSubSettings.Style.Pressed.Background", setActive ? "#2a4a6b" : "#1a3a5b");
+
+            if (adminSubTab == AdminSubTab.REQUIRED) {
+                fillAdmin(commands);
+            } else if (adminSubTab == AdminSubTab.DISABLED) {
+                commands.set("#AdminDisFilterField.Value", adminDisFilter);
+                fillAdminDisabled(commands);
+            } else if (adminSubTab == AdminSubTab.SETTINGS) {
+                commands.set("#AdminServerNameField.Value", adminServerName);
             }
+
+            // Save feedback message (per sub-tab)
+            String saveMsgId = switch (adminSubTab) {
+                case REQUIRED -> "#SaveMessageAdmin";
+                case DISABLED -> "#SaveMessageAdminDis";
+                case SETTINGS -> "#SaveMessageAdminSettings";
+            };
+            commands.set(saveMsgId + ".Visible", saveMessage != null);
+            if (saveMessage != null) {
+                commands.set(saveMsgId + ".Text", saveMessage);
+                commands.set(saveMsgId + ".Style.TextColor", saveMessageSuccess ? "#4ade80" : "#f87171");
+            }
+            return;
+        }
+
+        // ── Player disabled tab content ──
+        if (activeTab == ActiveTab.DISABLED) {
+            fillDisabledTab(commands);
             return;
         }
 
@@ -875,12 +1154,26 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             if (varSeg != null) {
                 commands.set("#VariantSegmentName.Text", varSeg.displayName());
                 List<String> variants = varSeg.variants();
+                // Resolve the current bar empty character for dynamic preview
+                String barEmptyChar = pendingBarEmptyInput != null
+                        ? pendingBarEmptyInput
+                        : preferences.getBarEmptyChar(viewerUuid, tabEntityType(), editingVariantKey);
                 // Use pendingVariant (in-progress selection) instead of committed preferences
                 for (int vi = 0; vi < MAX_VARIANT_OPTIONS; vi++) {
                     boolean vVisible = vi < variants.size();
                     commands.set("#Variant" + vi + ".Visible", vVisible);
                     if (vVisible) {
                         String variantName = variants.get(vi);
+                        // Replace default dashes in bar preview with the player's chosen empty character
+                        if (barEmptyChar.length() == 1) {
+                            int pStart = variantName.indexOf('(');
+                            int pEnd = variantName.lastIndexOf(')');
+                            if (pStart >= 0 && pEnd > pStart) {
+                                String inside = variantName.substring(pStart + 1, pEnd);
+                                inside = inside.replace('-', barEmptyChar.charAt(0));
+                                variantName = variantName.substring(0, pStart + 1) + inside + variantName.substring(pEnd);
+                            }
+                        }
                         boolean selected = vi == pendingVariant;
                         commands.set("#Variant" + vi + ".Text", selected ? "> " + variantName : "  " + variantName);
                         // Selected option: locked green background on all states (no hover effect)
@@ -906,27 +1199,32 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
                     }
                 }
 
-                // Bar customization section — shown for segments with prefix/suffix support
-                // (currently only Health) so the player can customize the empty fill character
-                commands.set("#BarCustomSection.Visible", showPrefixSuffix);
-                if (showPrefixSuffix) {
-                    if (pendingBarEmptyInput == null) {
-                        String barEmpty = preferences.getBarEmptyChar(viewerUuid, tabEntityType(), editingVariantKey);
-                        commands.set("#BarEmptyField.Value", barEmpty);
-                    }
+                // Bar customization section — only shown when a Bar variant is selected,
+                // since the empty fill character only applies to bar-style formatting
+                boolean isBarVariant = showPrefixSuffix && pendingVariant >= 0
+                        && pendingVariant < variants.size()
+                        && variants.get(pendingVariant).startsWith("Bar");
+                commands.set("#BarCustomSection.Visible", isBarVariant);
+                if (isBarVariant) {
+                    String barEmpty = pendingBarEmptyInput != null
+                            ? pendingBarEmptyInput
+                            : preferences.getBarEmptyChar(viewerUuid, tabEntityType(), editingVariantKey);
+                    commands.set("#BarEmptyField.Value", barEmpty);
                 }
             }
         }
     }
 
     private void persistUiState() {
-        UI_STATE.put(viewerUuid, new UiState(activeTab, filter, availPage, chainPage, adminLeftPage, adminRightPage));
+        UI_STATE.put(viewerUuid, new UiState(activeTab, filter, availPage, chainPage,
+                adminLeftPage, adminRightPage, adminSubTab, adminDisLeftPage, adminDisRightPage, disabledPage));
     }
 
     // ── Fill Chain Strip ──
 
     private void fillChain(UICommandBuilder commands, List<SegmentView> chain, int totalPages) {
         boolean hasChain = !chain.isEmpty();
+        boolean singleBlock = chain.size() <= 1;
         commands.set("#ChainEmpty.Visible", !hasChain);
         commands.set("#ChainStrip.Visible", hasChain);
 
@@ -971,6 +1269,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
                     } else {
                         example = variantName;
                     }
+                    // Replace default dashes in bar preview with the player's chosen empty character
+                    if (chainSeg.supportsPrefixSuffix()) {
+                        String emptyChar = preferences.getBarEmptyChar(viewerUuid, tabEntityType(), view.key());
+                        if (emptyChar.length() == 1) {
+                            example = example.replace('-', emptyChar.charAt(0));
+                        }
+                    }
                 }
                 boolean hasExample = example != null && !example.isBlank();
                 commands.set(prefix + "ExampleBar.Visible", hasExample);
@@ -981,10 +1286,17 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
                 // Hide remove button for required segments (locked in chain)
                 commands.set(prefix + "Remove.Visible", !required);
 
-                // For required blocks, show spacers to center the < > buttons
-                commands.set(prefix + "TopSpacer.Visible", required);
-                commands.set(prefix + "BtnLeftSpacer.Visible", required);
-                commands.set(prefix + "BtnRightSpacer.Visible", required);
+                // Hide < > arrows when only 1 block (nothing to reorder)
+                commands.set(prefix + "Left.Visible", !singleBlock);
+                commands.set(prefix + "Right.Visible", !singleBlock);
+
+                // Center buttons horizontally when items are missing from the row:
+                // - required blocks (no X button) → center < >
+                // - single non-required block (no < > arrows) → center X
+                boolean centerButtons = (required && !singleBlock) || (!required && singleBlock);
+                commands.set(prefix + "TopSpacer.Visible", false);
+                commands.set(prefix + "BtnLeftSpacer.Visible", centerButtons);
+                commands.set(prefix + "BtnRightSpacer.Visible", centerButtons);
 
                 // Format button — shown when the segment has multiple variants
                 // Green background + "Formatted" text when a non-default variant is selected
@@ -1001,6 +1313,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
                 commands.set(prefix + ".Background.Color", COLOR_CHAIN_EMPTY);
                 commands.set(prefix + "ExampleBar.Visible", false);
                 commands.set(prefix + "Remove.Visible", true);
+                commands.set(prefix + "Left.Visible", true);
+                commands.set(prefix + "Right.Visible", true);
                 commands.set(prefix + "TopSpacer.Visible", false);
                 commands.set(prefix + "BtnLeftSpacer.Visible", false);
                 commands.set(prefix + "BtnRightSpacer.Visible", false);
@@ -1090,10 +1404,15 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         String lowerAdminFilter = adminFilter.isBlank() ? null : adminFilter.toLowerCase();
 
-        // Split into left (available / not required) and right (required), applying filter
+        // Split into left (available / not required) and right (required), applying filter.
+        // Disabled segments are excluded — they have their own sub-tab.
         List<SegmentView> leftList = new ArrayList<>();
         List<SegmentView> rightList = new ArrayList<>();
         for (SegmentView view : allSegments) {
+            // Skip disabled segments — managed in the Disabled sub-tab
+            if (adminConfig.isDisabled(view.key())) {
+                continue;
+            }
             if (lowerAdminFilter != null) {
                 NameplateRegistry.Segment segment = segments.get(view.key());
                 if (segment != null && !matchesFilter(view, segment, lowerAdminFilter)) {
@@ -1144,9 +1463,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         }
 
         boolean showPagination = totalPages > 1;
-        commands.set("#PrevAdminLeft.Visible", showPagination);
-        commands.set("#AdminLeftPageLabel.Visible", showPagination);
-        commands.set("#NextAdminLeft.Visible", showPagination);
+        commands.set("#AdminLeftPagination.Visible", showPagination);
         if (showPagination) {
             commands.set("#AdminLeftPageLabel.Text", "Page " + (adminLeftPage + 1) + "/" + totalPages);
         }
@@ -1185,11 +1502,173 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         }
 
         boolean showPagination = totalPages > 1;
-        commands.set("#PrevAdminRight.Visible", showPagination);
-        commands.set("#AdminRightPageLabel.Visible", showPagination);
-        commands.set("#NextAdminRight.Visible", showPagination);
+        commands.set("#AdminRightPagination.Visible", showPagination);
         if (showPagination) {
             commands.set("#AdminRightPageLabel.Text", "Page " + (adminRightPage + 1) + "/" + totalPages);
+        }
+    }
+
+    // ── Fill Admin Disabled Columns ──
+
+    private void fillAdminDisabled(UICommandBuilder commands) {
+        List<SegmentView> allSegments = getAllSegmentViews();
+        Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
+        String lowerAdminFilter = adminDisFilter.isBlank() ? null : adminDisFilter.toLowerCase();
+
+        // Split into left (available / not disabled) and right (disabled), applying filter.
+        // Required segments are excluded — they cannot be disabled.
+        List<SegmentView> leftList = new ArrayList<>();
+        List<SegmentView> rightList = new ArrayList<>();
+        for (SegmentView view : allSegments) {
+            // Skip required segments — they cannot be disabled
+            if (adminConfig.isRequired(view.key())) {
+                continue;
+            }
+            if (lowerAdminFilter != null) {
+                NameplateRegistry.Segment segment = segments.get(view.key());
+                if (segment != null && !matchesFilter(view, segment, lowerAdminFilter)) {
+                    continue;
+                }
+            }
+            if (adminConfig.isDisabled(view.key())) {
+                rightList.add(view);
+            } else {
+                leftList.add(view);
+            }
+        }
+
+        fillAdminDisLeft(commands, leftList);
+        fillAdminDisRight(commands, rightList);
+    }
+
+    private void fillAdminDisLeft(UICommandBuilder commands, List<SegmentView> leftList) {
+        boolean hasLeft = !leftList.isEmpty();
+        commands.set("#AdminDisLeftEmpty.Visible", !hasLeft);
+
+        int totalPages = Math.max(1, (int) Math.ceil(leftList.size() / (double) ADMIN_PAGE_SIZE));
+        if (adminDisLeftPage >= totalPages) adminDisLeftPage = totalPages - 1;
+
+        int start = adminDisLeftPage * ADMIN_PAGE_SIZE;
+        int end = Math.min(leftList.size(), start + ADMIN_PAGE_SIZE);
+
+        for (int i = 0; i < ADMIN_PAGE_SIZE; i++) {
+            int index = start + i;
+            boolean visible = index < end;
+            commands.set("#AdminDisLeftRow" + i + ".Visible", visible);
+            if (visible) {
+                SegmentView view = leftList.get(index);
+                String prefix = "#AdminDisLeftBlock" + i;
+                commands.set(prefix + "Label.Text", view.displayName());
+                String sub = truncateModName(view.modName()) + " - by " + view.author();
+                if (!sub.contains("[")) {
+                    sub += " [" + view.targetLabel() + "]";
+                }
+                commands.set(prefix + "Sub.Text", sub);
+                String example = view.example();
+                boolean hasExample = example != null && !example.isBlank();
+                commands.set(prefix + "ExampleBar.Visible", hasExample);
+                if (hasExample) {
+                    commands.set(prefix + "Example.Text", example);
+                }
+            }
+        }
+
+        boolean showPagination = totalPages > 1;
+        commands.set("#AdminDisLeftPagination.Visible", showPagination);
+        if (showPagination) {
+            commands.set("#AdminDisLeftPageLabel.Text", "Page " + (adminDisLeftPage + 1) + "/" + totalPages);
+        }
+    }
+
+    private void fillAdminDisRight(UICommandBuilder commands, List<SegmentView> rightList) {
+        boolean hasRight = !rightList.isEmpty();
+        commands.set("#AdminDisRightEmpty.Visible", !hasRight);
+
+        int totalPages = Math.max(1, (int) Math.ceil(rightList.size() / (double) ADMIN_PAGE_SIZE));
+        if (adminDisRightPage >= totalPages) adminDisRightPage = totalPages - 1;
+
+        int start = adminDisRightPage * ADMIN_PAGE_SIZE;
+        int end = Math.min(rightList.size(), start + ADMIN_PAGE_SIZE);
+
+        for (int i = 0; i < ADMIN_PAGE_SIZE; i++) {
+            int index = start + i;
+            boolean visible = index < end;
+            commands.set("#AdminDisRightRow" + i + ".Visible", visible);
+            if (visible) {
+                SegmentView view = rightList.get(index);
+                String prefix = "#AdminDisRightBlock" + i;
+                commands.set(prefix + "Label.Text", view.displayName());
+                String sub = truncateModName(view.modName()) + " - by " + view.author();
+                if (!sub.contains("[")) {
+                    sub += " [" + view.targetLabel() + "]";
+                }
+                commands.set(prefix + "Sub.Text", sub);
+                String example = view.example();
+                boolean hasExample = example != null && !example.isBlank();
+                commands.set(prefix + "ExampleBar.Visible", hasExample);
+                if (hasExample) {
+                    commands.set(prefix + "Example.Text", example);
+                }
+            }
+        }
+
+        boolean showPagination = totalPages > 1;
+        commands.set("#AdminDisRightPagination.Visible", showPagination);
+        if (showPagination) {
+            commands.set("#AdminDisRightPageLabel.Text", "Page " + (adminDisRightPage + 1) + "/" + totalPages);
+        }
+    }
+
+    // ── Fill Player Disabled Tab ──
+
+    private void fillDisabledTab(UICommandBuilder commands) {
+        // Collect all disabled segments, sorted alphabetically
+        List<SegmentView> disabledViews = new ArrayList<>();
+        Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
+        for (SegmentView view : getAllSegmentViews()) {
+            if (adminConfig.isDisabled(view.key())) {
+                disabledViews.add(view);
+            }
+        }
+
+        boolean hasDisabled = !disabledViews.isEmpty();
+        commands.set("#DisabledEmpty.Visible", !hasDisabled);
+
+        int totalPages = Math.max(1, (int) Math.ceil(disabledViews.size() / (double) DISABLED_PAGE_SIZE));
+        if (disabledPage >= totalPages) disabledPage = totalPages - 1;
+
+        int start = disabledPage * DISABLED_PAGE_SIZE;
+        int end = Math.min(disabledViews.size(), start + DISABLED_PAGE_SIZE);
+
+        for (int i = 0; i < DISABLED_PAGE_SIZE; i++) {
+            int index = start + i;
+            boolean visible = index < end;
+            String prefix = "#DisabledBlock" + i;
+            commands.set(prefix + ".Visible", visible);
+            if (visible) {
+                SegmentView view = disabledViews.get(index);
+                commands.set(prefix + "Label.Text", view.displayName());
+                commands.set(prefix + "Sub.Text", truncateModName(view.modName()));
+                String authorWithTag = "by " + view.author();
+                if (!authorWithTag.contains("[")) {
+                    authorWithTag += " [" + view.targetLabel() + "]";
+                }
+                commands.set(prefix + "Author.Text", authorWithTag);
+                String example = view.example();
+                boolean hasExample = example != null && !example.isBlank();
+                commands.set(prefix + "ExampleBar.Visible", hasExample);
+                if (hasExample) {
+                    commands.set(prefix + "Example.Text", example);
+                }
+            }
+        }
+
+        boolean showPagination = totalPages > 1;
+        commands.set("#PrevDisabled.Visible", showPagination);
+        commands.set("#DisabledPageLabel.Visible", showPagination);
+        commands.set("#NextDisabled.Visible", showPagination);
+        if (showPagination) {
+            commands.set("#DisabledPageLabel.Text", "Page " + (disabledPage + 1) + "/" + totalPages);
         }
     }
 
@@ -1258,11 +1737,35 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         adminConfig.setRequired(rightList.get(index).key(), false);
     }
 
+    /** Move a segment from the left (available) column to the right (disabled) column. */
+    private void disableAdminDisRow(int row) {
+        List<SegmentView> leftList = getAdminDisLeftList();
+        int index = adminDisLeftPage * ADMIN_PAGE_SIZE + row;
+        if (index < 0 || index >= leftList.size()) {
+            return;
+        }
+        adminConfig.setDisabled(leftList.get(index).key(), true);
+    }
+
+    /** Move a segment from the right (disabled) column back to the left (available) column. */
+    private void enableAdminDisRow(int row) {
+        List<SegmentView> rightList = getAdminDisRightList();
+        int index = adminDisRightPage * ADMIN_PAGE_SIZE + row;
+        if (index < 0 || index >= rightList.size()) {
+            return;
+        }
+        adminConfig.setDisabled(rightList.get(index).key(), false);
+    }
+
     private List<SegmentView> getAdminLeftList() {
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         String lowerFilter = adminFilter.isBlank() ? null : adminFilter.toLowerCase();
         List<SegmentView> left = new ArrayList<>();
         for (SegmentView view : getAllSegmentViews()) {
+            // Skip disabled segments — managed in the Disabled sub-tab
+            if (adminConfig.isDisabled(view.key())) {
+                continue;
+            }
             if (lowerFilter != null) {
                 NameplateRegistry.Segment segment = segments.get(view.key());
                 if (segment != null && !matchesFilter(view, segment, lowerFilter)) {
@@ -1281,6 +1784,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         String lowerFilter = adminFilter.isBlank() ? null : adminFilter.toLowerCase();
         List<SegmentView> right = new ArrayList<>();
         for (SegmentView view : getAllSegmentViews()) {
+            // Skip disabled segments — managed in the Disabled sub-tab
+            if (adminConfig.isDisabled(view.key())) {
+                continue;
+            }
             if (lowerFilter != null) {
                 NameplateRegistry.Segment segment = segments.get(view.key());
                 if (segment != null && !matchesFilter(view, segment, lowerFilter)) {
@@ -1288,6 +1795,52 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
                 }
             }
             if (adminConfig.isRequired(view.key())) {
+                right.add(view);
+            }
+        }
+        return right;
+    }
+
+    /** Returns segments not currently disabled — left column of admin Disabled sub-tab. */
+    private List<SegmentView> getAdminDisLeftList() {
+        Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
+        String lowerFilter = adminDisFilter.isBlank() ? null : adminDisFilter.toLowerCase();
+        List<SegmentView> left = new ArrayList<>();
+        for (SegmentView view : getAllSegmentViews()) {
+            // Skip required segments — they cannot be disabled
+            if (adminConfig.isRequired(view.key())) {
+                continue;
+            }
+            if (lowerFilter != null) {
+                NameplateRegistry.Segment segment = segments.get(view.key());
+                if (segment != null && !matchesFilter(view, segment, lowerFilter)) {
+                    continue;
+                }
+            }
+            if (!adminConfig.isDisabled(view.key())) {
+                left.add(view);
+            }
+        }
+        return left;
+    }
+
+    /** Returns segments currently disabled — right column of admin Disabled sub-tab. */
+    private List<SegmentView> getAdminDisRightList() {
+        Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
+        String lowerFilter = adminDisFilter.isBlank() ? null : adminDisFilter.toLowerCase();
+        List<SegmentView> right = new ArrayList<>();
+        for (SegmentView view : getAllSegmentViews()) {
+            // Skip required segments — they cannot be disabled
+            if (adminConfig.isRequired(view.key())) {
+                continue;
+            }
+            if (lowerFilter != null) {
+                NameplateRegistry.Segment segment = segments.get(view.key());
+                if (segment != null && !matchesFilter(view, segment, lowerFilter)) {
+                    continue;
+                }
+            }
+            if (adminConfig.isDisabled(view.key())) {
                 right.add(view);
             }
         }
@@ -1326,6 +1879,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         List<SegmentKey> filtered = new ArrayList<>();
         for (Map.Entry<SegmentKey, NameplateRegistry.Segment> entry : segments.entrySet()) {
             if (isSegmentVisibleForActiveTab(entry.getValue())) {
+                // Hide disabled segments from player chain/available lists
+                if (adminConfig.isDisabled(entry.getKey())) {
+                    continue;
+                }
                 filtered.add(entry.getKey());
             }
         }
@@ -1341,6 +1898,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         List<SegmentKey> filtered = new ArrayList<>();
         for (Map.Entry<SegmentKey, NameplateRegistry.Segment> entry : segments.entrySet()) {
+            // Skip disabled segments
+            if (adminConfig.isDisabled(entry.getKey())) {
+                continue;
+            }
             SegmentTarget target = entry.getValue().target();
             if (target == SegmentTarget.ALL) {
                 filtered.add(entry.getKey());
@@ -1500,7 +2061,9 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
     private record SegmentView(SegmentKey key, String displayName, String modName, String author, String targetLabel, String example) {
     }
 
-    private record UiState(ActiveTab activeTab, String filter, int availPage, int chainPage, int adminLeftPage, int adminRightPage) {
+    private record UiState(ActiveTab activeTab, String filter, int availPage, int chainPage,
+                               int adminLeftPage, int adminRightPage, AdminSubTab adminSubTab,
+                               int adminDisLeftPage, int adminDisRightPage, int disabledPage) {
     }
 
     static final class SettingsData {
@@ -1538,12 +2101,22 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
                         (SettingsData data, String value) -> data.barEmptyText = value,
                         (SettingsData data) -> data.barEmptyText)
                 .add()
+                .append(new KeyedCodec<>("@AdminDisFilter", Codec.STRING),
+                        (SettingsData data, String value) -> data.adminDisFilter = value,
+                        (SettingsData data) -> data.adminDisFilter)
+                .add()
+                .append(new KeyedCodec<>("@AdminServerName", Codec.STRING),
+                        (SettingsData data, String value) -> data.adminServerName = value,
+                        (SettingsData data) -> data.adminServerName)
+                .add()
                 .build();
 
         String filter;
         String action;
         String offset;
         String adminFilter;
+        String adminDisFilter;
+        String adminServerName;
         String sepText;
         String prefixText;
         String suffixText;

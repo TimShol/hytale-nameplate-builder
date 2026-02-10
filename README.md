@@ -17,7 +17,7 @@ A server-side nameplate aggregator for Hytale that lets multiple mods contribute
 
 NameplateBuilder solves a core problem for modders and players for Hytale: when multiple mods want to display information above entities (health, guild tags, titles, ranks, etc.), they conflict over the single `Nameplate` component. NameplateBuilder acts as a central aggregator — each mod registers its own named segments, and the system composites them into a single nameplate string per viewer, per entity, every tick (in an efficient way).
 
-Players get a UI to choose which segments they see, reorder them, customize separators between individual segments, pick format variants, configure prefix/suffix wrapping, adjust bar display styles, configure a vertical nameplate offset, and toggle a "only show when looking at entity" mode. Server administrators can force specific segments to always display for all players. Nameplates are automatically cleared when an entity dies.
+Players get a UI to choose which segments they see, reorder them, customize separators between individual segments, pick format variants, configure prefix/suffix wrapping, adjust bar display styles, configure a vertical nameplate offset, and toggle a "only show when looking at entity" mode. Server administrators can force specific segments to always display for all players, disable segments globally, and configure a custom server name. A coloured welcome message is shown on join. Nameplates are automatically cleared when an entity dies.
 
 ## Features
 
@@ -32,8 +32,11 @@ Players get a UI to choose which segments they see, reorder them, customize sepa
 - **Live preview** — The UI shows a real-time preview of the composited nameplate text with the player's current segment chain and separators
 - **Segment target hints** — Mods tag segments as `[All]`, `[Players]`, or `[NPCs]` so players know at a glance which segments are relevant
 - **Admin required segments** — Server owners can force specific segments to always display for all players via a two-column admin panel (requires `nameplatebuilder.admin` permission). Move segments between "Available" and "Required" columns; required segments appear with a yellow tint and cannot be removed from the chain
+- **Admin disabled segments** — Admins can globally disable specific segments so they are hidden from all players entirely — disabled segments cannot be enabled, added to chains, or seen in any available list. When every registered segment is disabled, the aggregator blanks all nameplates globally and the welcome message reports nameplates as disabled
+- **Admin server name** — Admins can set a custom server display name (via the Settings sub-tab) that appears in the join welcome message (e.g. `[MyServer] - Use /npb to customize your nameplates.`). Defaults to "NameplateBuilder" if left blank
+- **Welcome message** — A coloured join message is sent to players on connect: green when nameplates are available (`Use /npb to customize your nameplates.`) or red when all segments are admin-disabled (`Nameplates are disabled on this server.`). Players can toggle this message off via General settings
 - **Format variants** — Mods can register multiple display formats per segment (e.g. health as `"42/67"`, `"63%"`, or `"||||||------"`). Players choose their preferred format via a popup in the editor. The selected variant persists per player per segment
-- **Built-in segments** — NameplateBuilder ships with **Player Name** (with an anonymize variant that shows "Player" instead of real names) and **Health** (with current/max, percentage, and visual bar variants) out of the box. Built-in segments are shown with a distinct warm-purple tint in the available blocks list
+- **Built-in segments** — NameplateBuilder ships with **Player Name** (with an anonymize variant that shows "Player" instead of real names), **Health**, **Stamina**, and **Mana** (each with current/max, percentage, and visual bar variants) out of the box. Built-in segments are shown with a distinct warm-purple tint in the available blocks list
 - **Prefix/suffix wrapping** — For segments that support it (e.g. Health), players can type custom prefix and suffix text (e.g. `"HP: ["` and `"]"`) to wrap the segment output
 - **Bar empty-fill customization** — Players can customize the empty-slot character used in visual bar variants (default: `"-"`, but can be changed to any character like `"."`, `"_"`, `"░"`, etc.)
 - **Confirm/cancel workflow** — The format popup uses a confirm/cancel pattern: variant selection, prefix/suffix, and bar style changes are previewed live but only persisted on Confirm. Cancel reverts all changes to their original values
@@ -51,7 +54,7 @@ nameplate-example-mod/    Example mod demonstrating the API
 
 **nameplate-api** exposes `NameplateAPI`, `NameplateData`, `SegmentTarget`, and the exception types. Mods depend on this at compile time.
 
-**nameplate-server** registers the `NameplateData` ECS component, runs the `NameplateAggregatorSystem` tick system (including death cleanup and required segment enforcement), manages the player UI page, and persists per-player preferences and admin configuration.
+**nameplate-server** registers the `NameplateData` ECS component, runs the `DefaultSegmentSystem` (built-in Player Name, Health, Stamina, Mana segments with NPC auto-attach) and `NameplateAggregatorSystem` tick system (including death cleanup, required/disabled segment enforcement, and global blanking), manages the player UI page, sends coloured welcome messages on join, and persists per-player preferences and admin configuration.
 
 **nameplate-example-mod** shows the full modder workflow: describing segments with example text, attaching nameplates to NPCs on spawn, and updating segments every tick.
 
@@ -313,16 +316,19 @@ The ECS component attached to entities. Most mods should use `NameplateAPI.regis
 
 ## Player UI
 
-Players open the Nameplate Builder editor via the `/nameplatebuilder` command (aliases: `/npb`, `/nameplateui`). The UI features a sidebar on the left with four sections:
+Players open the Nameplate Builder editor via the `/nameplatebuilder` command (aliases: `/npb`, `/nameplateui`). The UI features a sidebar on the left with five sections:
 
 ### Sidebar
 
 | Section | Contents |
 |---------|----------|
-| **GENERAL** | Settings — master enable/disable, look-at toggle, vertical offset |
+| **GENERAL** | Settings — master enable/disable, look-at toggle, vertical offset, welcome message toggle |
 | **NAMEPLATES** | NPCs — segment chain editor for NPC nameplates |
 | | Players — segment chain editor for player nameplates |
-| **ADMIN** | Settings — required segments panel (only visible with `nameplatebuilder.admin` permission) |
+| | Disabled — read-only view of all admin-disabled segments |
+| **ADMIN** | Required — required segments panel (only visible with `nameplatebuilder.admin` permission) |
+| | Disabled — disabled segments panel |
+| | Settings — server name configuration |
 
 ### Editor Tabs (NPCs / Players)
 
@@ -339,13 +345,18 @@ Each editor tab lets players customize nameplates for a specific entity type:
 
 - **Enable Nameplates** — master toggle to show/hide all nameplates
 - **Only Show When Looking** — view-cone filter toggle
+- **Show Welcome Message** — toggle the coloured join message on/off
 - **Offset** — vertical nameplate offset (accepts both `,` and `.` as decimal separators, clamped to -5.0 to 5.0)
 
-### Admin Tab (Required Segments)
+### Admin Tab
 
-Visible only to players with the `nameplatebuilder.admin` permission. Uses a two-column layout with a vertical divider:
+Visible only to players with the `nameplatebuilder.admin` permission. Contains three sub-tabs:
 
-- **Left column ("Available")** — segments that are not required. Each row shows the segment block with a `>` button to move it to the required column
+#### Required Sub-Tab
+
+Two-column layout with a vertical divider. Available blocks are shown with a green tint and the "REQUIRED SEGMENTS" title is orange:
+
+- **Left column ("Available")** — segments that are not required (excludes disabled segments). Each row shows the segment block with a `>` button to move it to the required column
 - **Right column ("Required")** — segments that are forced on all players. Each row shows a `<` button to move it back, with a yellow-tinted background (`#3d3820`)
 
 Required segments are:
@@ -354,8 +365,30 @@ Required segments are:
 - Shown with a yellow-tinted background in the editor
 - Always included in the aggregated nameplate output, even if a player disabled them
 - Still reorderable by players (move left/right still works)
+- Cannot simultaneously be disabled (setting one clears the other)
 
-Each column has independent pagination (8 rows per page). The admin panel has Save and Reset buttons. Reset clears all required segments. Admin configuration is persisted separately in `admin_config.txt`.
+Each column has independent pagination (7 rows per page). The panel has Save and Reset buttons. Reset clears all required segments.
+
+#### Disabled Sub-Tab
+
+Same two-column layout, using red-tinted blocks and headers:
+
+- **Left column ("Available")** — segments that are not disabled (excludes required segments). Each row has a `>` button to move it to the disabled column
+- **Right column ("Disabled")** — segments hidden from all players. Red-tinted backgrounds (`#3d2020`)
+
+When all registered segments are disabled, the aggregator blanks all nameplates globally and the join message switches to the red "disabled" variant.
+
+Each column has independent pagination (7 rows per page) with Save and Reset buttons.
+
+#### Settings Sub-Tab
+
+- **Server Name** — text field for the server display name shown in the join welcome message. Defaults to "NameplateBuilder" if left blank. Has Save and Reset buttons.
+
+Admin configuration is persisted in `admin_config.txt` with `R|pluginId|segmentId` for required, `D|pluginId|segmentId` for disabled, and `S|serverName` for the server name.
+
+### Disabled Tab (Player View)
+
+Visible to all players in the NAMEPLATES sidebar section. Shows a read-only 4×4 grid of all admin-disabled segments so players can see what has been turned off by the server. Red-tinted backgrounds, no action buttons, with pagination (16 per page).
 
 When a player has no blocks enabled, entities managed by NameplateBuilder show "Type /npb to customize" as a hint instead of the raw entity ID.
 
@@ -384,8 +417,20 @@ Preferences are saved per player and persist across sessions.
 <!-- SCREENSHOT: General tab showing the Enable Nameplates toggle, Only Show When Looking toggle, Offset field, and Save button -->
 
 #### Admin required segments panel
-![Admin panel](docs/screenshots/admin-panel.png)
-<!-- SCREENSHOT: Admin tab showing the two-column layout — left "AVAILABLE" column with segment blocks and ">" buttons, 5px vertical divider in the center, right "REQUIRED" column (yellow-tinted) with "<" buttons and segment blocks, pagination under each column, and Save/Reset buttons at the bottom -->
+![Admin panel](docs/screenshots/admin-required.png)
+<!-- SCREENSHOT: Admin Required sub-tab showing the two-column layout — left "AVAILABLE" column (green-tinted blocks) with ">" buttons, orange "REQUIRED SEGMENTS" title, 5px vertical divider in the center, right "REQUIRED" column (yellow-tinted) with "<" buttons and segment blocks, pagination under each column, and Save/Reset buttons at the bottom -->
+
+#### Admin disabled segments panel
+![Admin disabled](docs/screenshots/admin-disabled.png)
+<!-- SCREENSHOT: Admin Disabled sub-tab showing two-column layout — left "AVAILABLE" column (green-tinted) with ">" buttons, right "DISABLED" column (red-tinted #3d2020 backgrounds) with "<" buttons, pagination under each column, Save/Reset buttons -->
+
+#### Admin settings panel
+![Admin settings](docs/screenshots/admin-settings.png)
+<!-- SCREENSHOT: Admin Settings sub-tab showing the Server Name text field with label, description text explaining what it does, and Save/Reset buttons with feedback label -->
+
+#### Player disabled segments tab
+![Player disabled](docs/screenshots/player-disabled.png)
+<!-- SCREENSHOT: The Disabled tab in NAMEPLATES section showing a read-only 4×4 grid of admin-disabled segments with red-tinted backgrounds, no action buttons, title "DISABLED SEGMENTS", and pagination -->
 
 #### Required segment with yellow outline
 ![Required segment](docs/screenshots/required-segment.png)
@@ -435,31 +480,43 @@ Preferences are saved per player and persist across sessions.
 ![Anonymized name](docs/screenshots/nameplate-anonymized.png)
 <!-- SCREENSHOT: A player entity showing "Player" instead of their real name, demonstrating the anonymize variant -->
 
+#### Welcome message (nameplates enabled)
+![Welcome enabled](docs/screenshots/welcome-enabled.png)
+<!-- SCREENSHOT: Chat showing the green welcome message: "[ServerName] - Use /npb to customize your nameplates." in #55FF55 color -->
+
+#### Welcome message (nameplates disabled)
+![Welcome disabled](docs/screenshots/welcome-disabled.png)
+<!-- SCREENSHOT: Chat showing the red welcome message: "[ServerName] - Nameplates are disabled on this server." in #FF5555 color -->
+
 ## How It Works
 
 1. **Registration** — Mods call `NameplateAPI.describe()` during `setup()` to register UI metadata (display name, target hint, example text), and `NameplateAPI.register()` at runtime to set per-entity text via the `NameplateData` ECS component.
 
 2. **NPC initialization** — An `EntityTickingSystem` checks for newly spawned NPCs that don't yet have `NameplateData`. On their first tick, the system seeds default segments by adding a `NameplateData` component via the `CommandBuffer`. The aggregator picks up any visible entity that has `NameplateData` — no native `Nameplate` component is needed. Subsequent ticks skip already-initialized entities.
 
-3. **Aggregation** — The `NameplateAggregatorSystem` ticks every frame. For each visible entity with a `NameplateData` component, it resolves segment keys from the component (skipping hidden `_`-prefixed keys), applies the viewer's preferences (ordering, enabled/disabled, format variants, prefix/suffix wrapping, bar fill replacement, per-block separators), enforces admin-required segments, composites the text, and queues a nameplate update to each viewer. If all segments are disabled, it shows a hint message instead of the raw entity ID.
+3. **Aggregation** — The `NameplateAggregatorSystem` ticks every frame. For each visible entity with a `NameplateData` component, it resolves segment keys from the component (skipping hidden `_`-prefixed keys and admin-disabled segments), applies the viewer's preferences (ordering, enabled/disabled, format variants, prefix/suffix wrapping, bar fill replacement, per-block separators), enforces admin-required segments, composites the text, and queues a nameplate update to each viewer. If all segments are disabled, it shows a hint message instead of the raw entity ID.
 
 4. **Required segment enforcement** — Segments moved to the "Required" column by an admin always display in the aggregated output, regardless of the viewer's personal preferences. In the editor, required segments appear with a yellow-tinted background and cannot be removed from the chain (but can still be reordered).
 
-5. **Death cleanup** — When an entity receives a `DeathComponent`, the aggregator sends an empty nameplate update to all viewers (clearing the displayed text immediately) and removes the `NameplateData` component so no further updates are produced. Without this, nameplates would linger through the death animation until the entity model despawns.
+5. **Disabled segment enforcement** — Segments moved to the "Disabled" column by an admin are hidden globally: they are excluded from all player chains, filtered from available-block lists, and skipped by the aggregator. A segment cannot be both required and disabled simultaneously. When all registered segments are disabled, the aggregator blanks all nameplates and the join message switches to the red "disabled" variant.
 
-6. **View-cone filtering** — When enabled, the aggregator uses dot-product math to check if the viewer is looking at the entity (within a ~25 degree half-angle cone at up to 30 blocks range). Entities outside the cone receive an empty nameplate update to prevent the default ID from bleeding through.
+6. **Death cleanup** — When an entity receives a `DeathComponent`, the aggregator sends an empty nameplate update to all viewers (clearing the displayed text immediately) and removes the `NameplateData` component so no further updates are produced. Without this, nameplates would linger through the death animation until the entity model despawns.
 
-7. **Anchor entities** — When a player configures a vertical offset, an invisible "anchor" entity (a bare `ProjectileComponent` with `Intangible` and `NetworkId`) is spawned above the real entity. The aggregator routes nameplate text to the anchor instead of the real entity, creating a hologram-style offset effect. Anchors follow the real entity every tick and are automatically cleaned up on death or when the offset returns to zero.
+7. **View-cone filtering** — When enabled, the aggregator uses dot-product math to check if the viewer is looking at the entity (within a ~25 degree half-angle cone at up to 30 blocks range). Entities outside the cone receive an empty nameplate update to prevent the default ID from bleeding through.
 
-8. **Preferences** — Each player's segment chain, ordering, per-block separators, format variant selections, prefix/suffix text, bar empty-fill character, offset, and settings are stored by `NameplatePreferenceStore` and persisted to disk. Admin required-segment configuration is stored separately by `AdminConfigStore`.
+8. **Anchor entities** — When a player configures a vertical offset, an invisible "anchor" entity (a bare `ProjectileComponent` with `Intangible` and `NetworkId`) is spawned above the real entity. The aggregator routes nameplate text to the anchor instead of the real entity, creating a hologram-style offset effect. Anchors follow the real entity every tick and are automatically cleaned up on death or when the offset returns to zero.
 
-9. **Format variant resolution** — When a viewer has selected a non-default variant (index > 0) for a segment, the aggregator looks up the suffixed key (e.g. `"health.2"` for variant 2). If found, that text is used; otherwise it falls back to the base key. After variant resolution, bar placeholder characters are replaced with the viewer's custom empty fill, and prefix/suffix wrapping is applied.
+9. **Preferences** — Each player's segment chain, ordering, per-block separators, format variant selections, prefix/suffix text, bar empty-fill character, offset, welcome message toggle, and settings are stored by `NameplatePreferenceStore` and persisted to disk. Admin configuration (required segments, disabled segments, server name) is stored separately by `AdminConfigStore`.
+
+10. **Format variant resolution** — When a viewer has selected a non-default variant (index > 0) for a segment, the aggregator looks up the suffixed key (e.g. `"health.2"` for variant 2). If found, that text is used; otherwise it falls back to the base key. After variant resolution, bar placeholder characters are replaced with the viewer's custom empty fill, and prefix/suffix wrapping is applied.
+
+11. **Welcome message** — When a player joins (via `PlayerReadyEvent`), a coloured message is sent: green if any segments are available, red if all segments are admin-disabled. The message includes the configured server name (or "NameplateBuilder" as default). Players can disable the message via the General settings tab.
 
 ## Permissions
 
 | Permission | Description |
 |------------|-------------|
-| `nameplatebuilder.admin` | Grants access to the admin "Required Segments" tab in the UI. Without this permission, the ADMIN section is hidden from the sidebar. |
+| `nameplatebuilder.admin` | Grants access to the admin tabs (Required, Disabled, Settings) in the UI. Without this permission, the ADMIN section is hidden from the sidebar. |
 
 ## Building
 
@@ -500,12 +557,12 @@ NameplateBuilder/
     src/main/java/.../server/
       NameplateBuilderPlugin.java         Server plugin entry point
       NameplateAggregatorSystem.java      Per-tick nameplate compositor + death cleanup
-      DefaultSegmentSystem.java           Built-in segments (Player Name, Health)
+      DefaultSegmentSystem.java           Built-in segments (Player Name, Health, Stamina, Mana)
       NameplateRegistry.java              Segment metadata store (with variant support)
       NameplateBuilderPage.java           Player UI page (sidebar, editor, format popup)
       NameplateBuilderCommand.java        /npb command with admin permission check
       NameplatePreferenceStore.java       Per-player preference persistence
-      AdminConfigStore.java               Server-wide required-segment config
+      AdminConfigStore.java               Server-wide admin config (required, disabled, server name)
       AnchorEntityManager.java            Invisible anchor entity lifecycle
       SegmentKey.java                     record(pluginId, segmentId)
     src/main/resources/
