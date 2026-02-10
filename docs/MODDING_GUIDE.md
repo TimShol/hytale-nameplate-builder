@@ -1,29 +1,31 @@
 # Modding Guide
 
-API reference, code examples, and integration guide for mod developers building on NameplateBuilder.
+Step-by-step guide for mod developers who want to add their own nameplate blocks to NameplateBuilder.
 
 > **Looking for the main README?** See [README.md](../README.md) for an overview, features, and screenshots.
 > **Looking for internals?** See [Project Structure](PROJECT_STRUCTURE.md) for architecture and file details.
 
-## Architecture
+---
 
-```
-nameplate-api/            Public API jar — compile against this
-nameplate-server/         Server plugin — runs the aggregator, UI, and preferences
-nameplate-example-mod/    Example mod demonstrating the API
-```
+## How NameplateBuilder Works (30-Second Version)
 
-**nameplate-api** exposes `NameplateAPI`, `NameplateData`, `SegmentTarget`, and the exception types. Mods depend on this at compile time.
+NameplateBuilder is a **central nameplate aggregator**. Instead of each mod fighting over the single `Nameplate` component, mods register named **segments** (like `"health"`, `"guild"`, `"tier"`), and NameplateBuilder composites them into one nameplate string per entity, per viewer, every tick.
 
-**nameplate-server** registers the `NameplateData` ECS component, runs the `DefaultSegmentSystem` (built-in Player Name, Health, Stamina, Mana segments with NPC auto-attach) and `NameplateAggregatorSystem` tick system (including death cleanup, required/disabled segment enforcement, and global blanking), manages the player UI page, sends coloured welcome messages on join, and persists per-player preferences and admin configuration.
+Players get a UI (`/npb`) to pick which segments they see, reorder them, choose display formats, and set separators. Server admins can force or disable segments globally.
 
-**nameplate-example-mod** shows the full modder workflow: describing segments with example text, attaching nameplates to NPCs on spawn, and updating segments every tick.
+**Your job as a modder** is simple:
+1. Tell NameplateBuilder about your segments (names, targets, examples, variants)
+2. Push text values onto entities at runtime
 
-## Quick Start
+That's it. NameplateBuilder handles the rest — compositing, per-player preferences, the UI, persistence, death cleanup, everything.
 
-### 1. Add the dependency
+---
 
-In your mod's `manifest.json`:
+## Step 1 — Set Up Your Project
+
+### 1a. Add the manifest dependency
+
+In your mod's `manifest.json`, add NameplateBuilder as a dependency so it loads before your mod:
 
 ```json
 {
@@ -33,107 +35,196 @@ In your mod's `manifest.json`:
 }
 ```
 
-In your `build.gradle`:
+This is **required**. Without it, calling the API will throw `NameplateNotInitializedException` because NameplateBuilder hasn't loaded yet.
+
+### 1b. Add the API jar to your build
+
+In your `build.gradle`, add the API jar as a `compileOnly` dependency:
 
 ```groovy
 dependencies {
-    compileOnly files('path/to/NameplateBuilder-API-1.0.0.jar')
+    // Point this to wherever you placed the NameplateBuilder API jar
+    compileOnly files('libs/NameplateBuilder-API-1.0.0.jar')
 }
 ```
 
-### 2. Describe your segments (optional)
+You only need the lightweight API jar (`nameplate-api`), not the full server plugin. The API jar contains just the classes you interact with:
 
-In your plugin's `setup()`, give segments a human-readable name for the player UI:
+| Class | What it does |
+|-------|-------------|
+| `NameplateAPI` | Main entry point — all your calls go through here |
+| `NameplateData` | The ECS component that holds segment text on entities |
+| `SegmentTarget` | Enum: `ALL`, `PLAYERS`, or `NPCS` — UI hint for which entities a segment applies to |
+| `NameplateException` | Base exception class |
+| `NameplateNotInitializedException` | Thrown if NameplateBuilder hasn't loaded yet |
+| `NameplateArgumentException` | Thrown if you pass null/blank arguments |
+
+### 1c. Import the API
+
+```java
+import com.frotty27.nameplatebuilder.api.NameplateAPI;
+import com.frotty27.nameplatebuilder.api.NameplateData;
+import com.frotty27.nameplatebuilder.api.SegmentTarget;
+```
+
+---
+
+## Step 2 — Describe Your Segments
+
+In your plugin's `setup()` method, call `NameplateAPI.describe()` to tell the UI about each segment you plan to use. This is **optional but highly recommended** — without it, the UI shows the raw segment ID instead of a nice display name.
+
+### What `describe()` does
+
+It registers **UI metadata only**. It does NOT create any ECS components or affect entities. It just tells the Nameplate Builder UI: "Hey, my mod has a segment called `health`, show it as `Health Bar`, it's for all entities, and it looks like `67/67`."
+
+### The `describe()` overloads
+
+There are three overloads, from simplest to most complete:
 
 ```java
 @Override
 protected void setup() {
-    // Basic — display name only (defaults to SegmentTarget.ALL, no example)
-    NameplateAPI.describe(this, "health", "Health Bar");
 
-    // With target hint — shown as a tag in the UI (e.g. [NPCs])
-    NameplateAPI.describe(this, "tier", "Elite Tier", SegmentTarget.NPCS);
+    // ─── Overload 1: Just a name ───
+    // Shows up in the UI as "Custom Tag" with target [All] and no example preview.
+    // Good for segments where the value is unpredictable.
+    NameplateAPI.describe(this, "custom-tag", "Custom Tag");
 
-    // With target and example text — shown as a preview bar in the UI
-    NameplateAPI.describe(this, "guild",  "Guild Tag",  SegmentTarget.PLAYERS, "[Warriors]");
-    NameplateAPI.describe(this, "level",  "Level",      SegmentTarget.ALL,     "Lv. 42");
-}
-```
 
-The `SegmentTarget` enum tells the UI which entity types a segment is intended for. The UI shows this as a tag next to the author (e.g. `by Frotty27 [NPCs]`), so players know at a glance which segments are relevant. Available targets:
+    // ─── Overload 2: Name + target ───
+    // The SegmentTarget tells the UI which entity types this segment is meant for.
+    // It shows as a tag next to the author, e.g. "by YourMod [NPCs]".
+    // This is purely a UI hint — it does NOT restrict which entities you can
+    // actually register the segment on at runtime.
+    NameplateAPI.describe(this, "faction", "Faction", SegmentTarget.NPCS);
 
-| Target | Tag | Meaning |
-|--------|-----|---------|
-| `SegmentTarget.ALL` | `[All]` | Applies to all entities |
-| `SegmentTarget.PLAYERS` | `[Players]` | Intended for player entities |
-| `SegmentTarget.NPCS` | `[NPCs]` | Intended for NPC entities |
 
-This is purely a UI hint — it does not enforce restrictions at runtime. The no-target overload `describe(plugin, id, name)` defaults to `ALL`.
-
-The optional `example` parameter provides preview text shown in the UI so players can see what the segment looks like before enabling it (e.g. `"67/67"` for health, `"[Warriors]"` for guild tag). Pass `null` or omit the parameter for no example.
-
-This step is optional. Undescribed segments still work — they just show the raw segment ID in the UI instead of a display name.
-
-### 3. Define format variants (optional)
-
-If your segment supports multiple display formats, register variant names after describing the segment. Players can then pick their preferred format via the editor's Format popup:
-
-```java
-@Override
-protected void setup() {
+    // ─── Overload 3: Name + target + example (RECOMMENDED) ───
+    // The example text is shown as a preview in the UI so players can see
+    // what the segment looks like before enabling it.
+    // This is the most informative overload — use it whenever possible.
+    NameplateAPI.describe(this, "health", "Health Bar", SegmentTarget.ALL, "67/67");
+    NameplateAPI.describe(this, "guild", "Guild Tag", SegmentTarget.PLAYERS, "[Warriors]");
+    NameplateAPI.describe(this, "tier", "Elite Tier", SegmentTarget.NPCS, "[Elite]");
     NameplateAPI.describe(this, "level", "Level", SegmentTarget.ALL, "Lv. 42");
+}
+```
 
-    // Register 3 format variants for level — index 0 is the default
+### `SegmentTarget` values
+
+| Target | UI Tag | Use when... |
+|--------|--------|-------------|
+| `SegmentTarget.ALL` | `[All]` | The segment applies to any entity (players, NPCs, etc.) |
+| `SegmentTarget.PLAYERS` | `[Players]` | The segment only makes sense on players (e.g. guild tag, rank) |
+| `SegmentTarget.NPCS` | `[NPCs]` | The segment only makes sense on NPCs (e.g. faction, mood, bounty) |
+
+The target is **only a UI hint**. You can still register a `PLAYERS`-targeted segment on an NPC at runtime if you want to. The UI just uses it to help players understand what each segment is for.
+
+---
+
+## Step 3 — Define Format Variants (Optional)
+
+If your segment supports multiple display formats, register variant names so players can pick their preferred format via the UI:
+
+```java
+@Override
+protected void setup() {
+    // First, describe the segment
+    NameplateAPI.describe(this, "health", "Health Bar", SegmentTarget.ALL, "67/67");
+
+    // Then register format variants for it.
+    // Index 0 is always the default format.
+    NameplateAPI.describeVariants(this, "health", List.of(
+        "Current/Max",       // variant 0 (default): "42/67"
+        "Percentage",        // variant 1:           "63%"
+        "Bar"                // variant 2:           "||||||------"
+    ));
+
+    // Another example — a level segment with 3 display styles
+    NameplateAPI.describe(this, "level", "Level", SegmentTarget.ALL, "Lv. 42");
     NameplateAPI.describeVariants(this, "level", List.of(
-        "Compact",         // variant 0: "Lv. 42"
-        "Full",            // variant 1: "Level 42"
-        "Number Only"      // variant 2: "42"
+        "Compact",           // variant 0 (default): "Lv. 42"
+        "Full",              // variant 1:           "Level 42"
+        "Number Only"        // variant 2:           "42"
     ));
 }
 ```
 
-At runtime, push text for each variant using suffixed segment keys:
+At runtime, you push text for **each variant** using suffixed keys:
 
 ```java
-// Variant 0 (default) uses the base key
-data.setText("level", "Lv. " + level);
-// Variant 1 uses ".1" suffix
-data.setText("level.1", "Level " + level);
-// Variant 2 uses ".2" suffix
-data.setText("level.2", String.valueOf(level));
+// Variant 0 (default) — uses the base key
+data.setText("health", currentHp + "/" + maxHp);
+
+// Variant 1 — uses ".1" suffix
+data.setText("health.1", percent + "%");
+
+// Variant 2 — uses ".2" suffix
+data.setText("health.2", barString);
 ```
 
-The aggregator automatically reads the viewer's selected variant index and looks up the corresponding suffixed key. If the suffixed key is not found, it falls back to the base key.
+The aggregator automatically reads the viewer's selected variant and picks the right suffixed key. If a suffixed key doesn't exist, it falls back to the base key. So at minimum, always set the base key.
 
-Variant names can include parenthesized examples (e.g. `"Percentage (69%)"`) — the editor extracts the value inside parentheses to show as a preview in the chain block.
+> **Tip:** Variant names can include parenthesized examples, e.g. `"Percentage (63%)"`. The UI extracts the value inside parentheses to show as a preview.
 
-### 4. Register text on entities
+---
 
-At runtime, set nameplate text on any entity:
+## Step 4 — Register Text on Entities
+
+This is the core of the API. At runtime, you push text to entities so it shows up in their nameplate.
+
+### Basic usage — register, update, remove
 
 ```java
-// Set text (creates the component automatically if needed)
+// ─── Register a segment on an entity ───
+// If the entity doesn't have a NameplateData component yet, one is
+// created and attached automatically.
 NameplateAPI.register(store, entityRef, "health", "67/67");
 NameplateAPI.register(store, entityRef, "guild", "[Warriors]");
+NameplateAPI.register(store, entityRef, "tier", "[Elite]");
 
-// Update — just call register() again, no remove needed
+// ─── Update a segment ───
+// Just call register() again. It overwrites the old value in-place.
+// No need to remove first. No flashing. Efficient.
 NameplateAPI.register(store, entityRef, "health", "23/67");
 
-// Remove a single segment
+// ─── Remove a single segment ───
+// The entity keeps its other segments. If this was the last segment,
+// the NameplateData component is automatically removed from the entity.
 NameplateAPI.remove(store, entityRef, "health");
 
-// Remove all nameplate data from an entity
+// ─── Remove ALL nameplate data from an entity ───
+// Wipes every segment at once. Use this when an entity should have
+// no nameplate at all (e.g. going invisible, despawning).
 store.tryRemoveComponent(entityRef, NameplateAPI.getComponentType());
 ```
 
-### 5. Attach nameplates to NPCs on spawn
+### Where you can call `register()` and `remove()`
 
-The recommended way to initialize nameplates on NPCs is with an `EntityTickingSystem` that detects newly spawned entities. The system queries for entities that have the NPC component, checks the role name, and seeds nameplate data on the first tick:
+These methods work **anywhere you have access to the `Store` and a `Ref`**: event handlers, command handlers, custom systems, etc.
+
+**One exception:** if you're inside an `EntityTickingSystem` and the entity does NOT already have a `NameplateData` component, `register()` will try to call `store.addComponent()`, which throws `IllegalStateException` because the store is locked during tick processing. See [Step 5](#step-5--attach-nameplates-to-npcs-on-spawn) for the correct pattern.
+
+If the entity **already has** the component, `register()` just mutates the internal map — which is safe from tick systems.
+
+---
+
+## Step 5 — Attach Nameplates to NPCs on Spawn
+
+The recommended pattern for giving NPCs nameplate data when they spawn is an `EntityTickingSystem`. Here's a complete, working example:
 
 ```java
+import com.frotty27.nameplatebuilder.api.NameplateData;
+import com.hypixel.hytale.component.*;
+import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
+import com.hypixel.hytale.server.core.modules.entity.tracker.EntityTrackerSystems;
+import com.hypixel.hytale.server.npc.entities.NPCEntity;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
 final class MyNpcNameplateSystem extends EntityTickingSystem<EntityStore> {
 
-    private static final String ROLE_NAME = "Archaeopteryx"; // or any NPC role
+    // Change this to match the NPC role you want to target
+    private static final String ROLE_NAME = "Kweebec";
 
     private final ComponentType<EntityStore, NPCEntity> npcType;
     private final ComponentType<EntityStore, NameplateData> nameplateDataType;
@@ -145,6 +236,7 @@ final class MyNpcNameplateSystem extends EntityTickingSystem<EntityStore> {
 
     @Override
     public Archetype<EntityStore> getQuery() {
+        // Query all entities that have the NPCEntity component
         return Archetype.of(npcType);
     }
 
@@ -157,6 +249,7 @@ final class MyNpcNameplateSystem extends EntityTickingSystem<EntityStore> {
     public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk,
                      Store<EntityStore> store, CommandBuffer<EntityStore> commandBuffer) {
 
+        // Filter by NPC role name
         NPCEntity npc = chunk.getComponent(index, npcType);
         if (npc == null || !ROLE_NAME.equals(npc.getRoleName())) {
             return;
@@ -164,87 +257,243 @@ final class MyNpcNameplateSystem extends EntityTickingSystem<EntityStore> {
 
         Ref<EntityStore> entityRef = chunk.getReferenceTo(index);
 
-        // Skip if already initialized (reads are safe from tick systems)
+        // Skip if this entity already has nameplate data (already initialized)
         if (store.getComponent(entityRef, nameplateDataType) != null) {
             return;
         }
 
-        // Build the component and add it via the CommandBuffer.
-        // store.addComponent() would throw — the store is locked during tick.
+        // ── First time seeing this NPC — seed its nameplate data ──
         NameplateData data = new NameplateData();
-        data.setText("health", "67/67");
-        data.setText("title", "The Brave");
+        data.setText("health", "100/100");
+        data.setText("level", "Lv. 10");
+        data.setText("faction", "<Forest>");
+
+        // IMPORTANT: Use commandBuffer.putComponent(), NOT store.addComponent().
+        // The store is locked during tick processing — direct writes throw.
+        // putComponent() is an upsert (add-or-replace), so it's safe even if
+        // another system adds the component between our read and the buffer executing.
         commandBuffer.putComponent(entityRef, nameplateDataType, data);
     }
 }
 ```
-
-> **Why `putComponent`?** Multiple mods or systems may race to initialize the same entity. `addComponent()` throws `IllegalArgumentException` if the component already exists, while `putComponent()` is an upsert (add-or-replace), making it safe against race conditions between systems sharing the same `CommandBuffer` tick.
 
 Register the system in your plugin's `setup()`:
 
 ```java
 @Override
 protected void setup() {
-    NameplateAPI.describe(this, "health", "Health Bar");
-    NameplateAPI.describe(this, "title", "Player Title");
+    // Describe your segments first
+    NameplateAPI.describe(this, "health", "Health Bar", SegmentTarget.ALL, "100/100");
+    NameplateAPI.describe(this, "level", "Level", SegmentTarget.ALL, "Lv. 10");
+    NameplateAPI.describe(this, "faction", "Faction", SegmentTarget.NPCS, "<Forest>");
 
-    ComponentType<EntityStore, NameplateData> type = NameplateAPI.getComponentType();
-    getEntityStoreRegistry().registerSystem(new MyNpcNameplateSystem(type));
+    // Get the NameplateData component type (needed by the system constructor)
+    ComponentType<EntityStore, NameplateData> nameplateDataType = NameplateAPI.getComponentType();
+
+    // Register your tick system
+    getEntityStoreRegistry().registerSystem(new MyNpcNameplateSystem(nameplateDataType));
 }
 ```
 
-**How it works:** The system queries all entities with an `NPCEntity` component. On each tick, it checks the role name and whether the entity already has `NameplateData`. If not, it builds a `NameplateData` component with the default segment values and adds it via `commandBuffer.putComponent()`, which defers the write until after the system finishes. On subsequent ticks the entity already has data, so the check returns early — making this a one-shot initializer.
+### Why `CommandBuffer` instead of `store.addComponent()`?
 
-> **Why CommandBuffer?** Inside an `EntityTickingSystem`, the `Store` is locked for writes. Calling `store.addComponent()` (or `NameplateAPI.register()` on an entity without data) throws `IllegalStateException`. All structural changes must go through the `CommandBuffer`. Reading via `store.getComponent()` is safe. Mutating an existing component in place (e.g. `data.setText()`) is also safe.
+Inside an `EntityTickingSystem`, the `Store` is **locked for structural changes** (adding/removing components). If you call `store.addComponent()` directly, it throws:
 
-See `ArchaeopteryxNameplateSystem` in the example mod for the full working implementation.
+```
+IllegalStateException: Store is currently processing
+```
 
-### 6. Tick-based updates
+The `CommandBuffer` queues changes and executes them after the system finishes its tick. Reading (`store.getComponent()`) and mutating existing component data in-place (`data.setText()`) are safe.
 
-The `NameplateData` component persists on the entity. Calling `register()` every tick is safe — it updates the internal map value in place without adding/removing the component, so there is no flashing.
+### Why `putComponent()` instead of `addComponent()`?
+
+`addComponent()` throws if the component already exists. `putComponent()` is an **upsert** (add or replace) — safe against race conditions when multiple systems or mods might initialize the same entity.
+
+---
+
+## Step 6 — Update Segments Every Tick
+
+Once an entity has a `NameplateData` component, you can update its text every tick safely. This is how you keep dynamic values (like health, lifetime timers, buff durations) up to date.
 
 ```java
-// Inside an EntityTickingSystem — runs every tick
-NameplateData data = chunk.getComponent(index, nameplateDataType);
-if (data != null) {
-    int seconds = tickCounter / 20;
-    data.setText("lifetime", seconds + "s");
+final class MyTickUpdater extends EntityTickingSystem<EntityStore> {
+
+    private final ComponentType<EntityStore, NameplateData> nameplateDataType;
+
+    MyTickUpdater(ComponentType<EntityStore, NameplateData> nameplateDataType) {
+        this.nameplateDataType = nameplateDataType;
+    }
+
+    @Override
+    public Archetype<EntityStore> getQuery() {
+        // Query all entities that have NameplateData
+        return Archetype.of(nameplateDataType);
+    }
+
+    @Override
+    public SystemGroup<EntityStore> getGroup() {
+        return EntityTrackerSystems.QUEUE_UPDATE_GROUP;
+    }
+
+    @Override
+    public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk,
+                     Store<EntityStore> store, CommandBuffer<EntityStore> commandBuffer) {
+
+        NameplateData data = chunk.getComponent(index, nameplateDataType);
+        if (data == null) {
+            return;
+        }
+
+        // Calling setText() every tick is safe — it updates the internal map
+        // value in place. No component is added or removed, so there's no
+        // flashing. The aggregator reads the latest value on the next nameplate tick.
+        data.setText("health", computeHealthText(store, chunk, index));
+    }
+
+    private String computeHealthText(Store<EntityStore> store,
+                                     ArchetypeChunk<EntityStore> chunk, int index) {
+        // Your health computation logic here
+        return "42/67";
+    }
 }
 ```
 
-See `LifetimeNameplateSystem` in the example mod for a full working implementation.
+Calling `data.setText()` every tick is **cheap** — it's just a `HashMap.put()`. The aggregator reads the latest values when it composites the nameplate string, so updates are reflected immediately.
 
-### 7. Hidden metadata keys
+---
 
-Keys prefixed with `_` are treated as hidden metadata and are **never** shown in the nameplate output or the player UI. Use them to store per-entity internal state alongside visible segments:
+## Step 7 — Hidden Metadata Keys
+
+Keys that start with `_` (underscore) are **hidden metadata**. They are stored in the `NameplateData` component but are **never shown** in the nameplate output or the player UI. Use them to store per-entity internal state alongside visible segments.
 
 ```java
-// Store a spawn tick for computing per-entity lifetime
+// Store a spawn tick so you can compute per-entity lifetime
 data.setText("_spawn_tick", String.valueOf(globalTick));
 
-// Read it back — not visible to players
+// Read it back later — this key is invisible to players
 String spawnTick = data.getText("_spawn_tick");
+
+// Store any internal state you want alongside the visible segments
+data.setText("_last_hit_by", attackerName);
+data.setText("_phase", "enraged");
 ```
 
-See `LifetimeNameplateSystem` for an example that uses `_lifetime_tick` to track per-entity lifetime independently.
+This is useful when you need per-entity state inside a tick system but don't want to register a separate ECS component for it. The `_` prefix convention is enforced by the aggregator — it skips any key starting with underscore.
+
+---
+
+## Step 8 — Unregistering and Cleanup
+
+### You do NOT need to clean up on death
+
+NameplateBuilder **automatically clears nameplates when an entity dies**. When an entity receives a `DeathComponent`, the aggregator sends an empty nameplate to all viewers and removes the `NameplateData` component. You don't need to handle this yourself.
+
+### You do NOT need to undescribe on shutdown
+
+When your plugin unloads, NameplateBuilder **automatically removes all segment descriptions** registered by your plugin. You don't need to call `undescribe()` in a shutdown hook.
+
+### `undescribe()` is for runtime removal only
+
+The `undescribe()` method exists for edge cases where you want to dynamically remove a segment from the UI **while the server is running** (e.g., a minigame mod that adds/removes segments based on game phase):
+
+```java
+// Remove the "bounty" segment from the UI (e.g. bounty system disabled mid-game)
+NameplateAPI.undescribe(this, "bounty");
+```
+
+After calling `undescribe()`:
+- The segment disappears from the Nameplate Builder UI
+- Existing `NameplateData` on entities is **not** affected — the text stays until you explicitly remove it or the entity dies
+- Players who had it in their chain will no longer see it rendered
+
+For the vast majority of mods, you will **never need to call `undescribe()`**.
+
+---
+
+## Complete Example — Putting It All Together
+
+Here's a full plugin that registers 3 segments with different targets, one with format variants, and a tick system that initializes NPC nameplates and keeps health updated:
+
+```java
+package com.example.mymod;
+
+import com.frotty27.nameplatebuilder.api.NameplateAPI;
+import com.frotty27.nameplatebuilder.api.NameplateData;
+import com.frotty27.nameplatebuilder.api.SegmentTarget;
+import com.hypixel.hytale.component.ComponentType;
+import com.hypixel.hytale.server.core.plugin.JavaPlugin;
+import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
+import java.util.List;
+
+public final class MyModPlugin extends JavaPlugin {
+
+    public MyModPlugin(JavaPluginInit init) {
+        super(init);
+    }
+
+    @Override
+    protected void setup() {
+
+        // ── Step 2: Describe segments for the UI ──
+
+        // Health — for all entities, with 3 format variants
+        NameplateAPI.describe(this, "health", "Health Bar", SegmentTarget.ALL, "100/100");
+        NameplateAPI.describeVariants(this, "health", List.of(
+            "Current/Max",    // variant 0 (default)
+            "Percentage",     // variant 1
+            "Bar"             // variant 2
+        ));
+
+        // Guild — for players only
+        NameplateAPI.describe(this, "guild", "Guild Tag", SegmentTarget.PLAYERS, "[Warriors]");
+
+        // Faction — for NPCs only
+        NameplateAPI.describe(this, "faction", "Faction", SegmentTarget.NPCS, "<Undead>");
+
+
+        // ── Step 5: Register a tick system for NPC spawn initialization ──
+
+        ComponentType<EntityStore, NameplateData> nameplateDataType =
+            NameplateAPI.getComponentType();
+
+        getEntityStoreRegistry().registerSystem(
+            new MyNpcNameplateSystem(nameplateDataType));
+    }
+}
+```
+
+With `MyNpcNameplateSystem` from [Step 5](#step-5--attach-nameplates-to-npcs-on-spawn) handling the spawn initialization, and the format variant text being pushed in a tick system from [Step 6](#step-6--update-segments-every-tick), your segments will show up in the Nameplate Builder UI for players to add to their chain, reorder, format, and customize.
+
+---
 
 ## API Reference
 
-### `NameplateAPI`
+### `NameplateAPI` — Static Methods
 
 | Method | Description |
 |--------|-------------|
-| `describe(plugin, segmentId, displayName)` | Register UI metadata (defaults to `SegmentTarget.ALL`, no example) |
-| `describe(plugin, segmentId, displayName, target)` | Register UI metadata with entity target hint |
-| `describe(plugin, segmentId, displayName, target, example)` | Register UI metadata with target hint and example text |
-| `describeVariants(plugin, segmentId, variantNames)` | Register format variant names for a segment (index 0 = default) |
-| `undescribe(plugin, segmentId)` | Remove a segment description from the UI |
-| `register(store, entityRef, segmentId, text)` | Set nameplate text on an entity |
-| `remove(store, entityRef, segmentId)` | Remove a segment's text from an entity |
-| `getComponentType()` | Get the `ComponentType` for advanced use cases |
+| `describe(plugin, segmentId, displayName)` | Register UI metadata. Defaults to `SegmentTarget.ALL`, no example. |
+| `describe(plugin, segmentId, displayName, target)` | Register UI metadata with an entity target hint. |
+| `describe(plugin, segmentId, displayName, target, example)` | Register UI metadata with target hint and example preview text. |
+| `describeVariants(plugin, segmentId, variantNames)` | Register format variant names for a segment. Index 0 is the default. |
+| `undescribe(plugin, segmentId)` | Remove a segment description from the UI at runtime. |
+| `register(store, entityRef, segmentId, text)` | Set or update nameplate text for a segment on an entity. |
+| `remove(store, entityRef, segmentId)` | Remove a segment's text from an entity. Auto-removes the component if empty. |
+| `getComponentType()` | Get the `ComponentType<EntityStore, NameplateData>` for advanced use cases. |
 
-### `SegmentTarget`
+### `NameplateData` — Instance Methods
+
+| Method | Description |
+|--------|-------------|
+| `setText(key, text)` | Set or update a segment's text. Pass `null` to remove. |
+| `getText(key)` | Get a segment's current text. Returns `null` if not set. |
+| `removeText(key)` | Remove a segment. |
+| `getEntries()` | Unmodifiable view of all key-value entries. |
+| `isEmpty()` | Returns `true` if no entries exist. |
+
+### `SegmentTarget` — Enum
 
 | Value | UI Tag | Description |
 |-------|--------|-------------|
@@ -254,23 +503,30 @@ See `LifetimeNameplateSystem` for an example that uses `_lifetime_tick` to track
 
 ### Exceptions
 
-| Exception | When |
-|-----------|------|
-| `NameplateNotInitializedException` | API used before NameplateBuilder has loaded |
-| `NameplateArgumentException` | Null or blank parameter passed to an API method |
+| Exception | When it's thrown |
+|-----------|-----------------|
+| `NameplateNotInitializedException` | You called the API before NameplateBuilder loaded. Check your `manifest.json` dependency. |
+| `NameplateArgumentException` | You passed `null` or blank to a required parameter. |
 
-Both extend `NameplateException` (a `RuntimeException`).
+Both extend `NameplateException`, which extends `RuntimeException`.
 
-### `NameplateData`
+---
 
-The ECS component attached to entities. Most mods should use `NameplateAPI.register()` and `NameplateAPI.remove()` rather than interacting with this directly.
+## Common Mistakes
 
-| Method | Description |
-|--------|-------------|
-| `setText(key, text)` | Set or update a segment's text |
-| `getText(key)` | Get a segment's current text |
-| `removeText(key)` | Remove a segment |
-| `getEntries()` | Unmodifiable view of all entries |
-| `isEmpty()` | Check if the component has no entries |
+| Mistake | Fix |
+|---------|-----|
+| Calling `store.addComponent()` inside a tick system | Use `commandBuffer.putComponent()` instead |
+| Calling `NameplateAPI.register()` inside a tick system on an entity without data | Build a `NameplateData` manually and use `commandBuffer.putComponent()` |
+| Forgetting to add the manifest dependency | Add `"Frotty27:NameplateBuilder": "*"` to your `manifest.json` Dependencies |
+| Calling `undescribe()` in a shutdown hook | Not needed — NameplateBuilder auto-cleans on plugin unload |
+| Removing nameplate data on entity death | Not needed — NameplateBuilder auto-cleans on death |
+| Pushing variant text without the base key | Always set the base key (`"health"`) — suffixed keys (`.1`, `.2`) are optional fallbacks |
 
-> **Convention:** Keys starting with `_` are hidden metadata — they are stored in the component but skipped by the aggregator and never displayed.
+---
+
+## Further Reading
+
+- **[Example Mod](../nameplate-example-mod/)** — Full working source code showing all patterns
+- **[Project Structure](PROJECT_STRUCTURE.md)** — Internal architecture for contributors
+- **[README](../README.md)** — Feature overview, screenshots, and admin documentation
