@@ -153,6 +153,21 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         }
 
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
+
+        // If every segment is admin-disabled, nameplates are effectively off globally —
+        // blank all viewers and skip the rest of the processing.
+        if (!segments.isEmpty() && segments.keySet().stream().allMatch(adminConfig::isDisabled)) {
+            Ref<EntityStore> disAnchorRef = anchorManager.getAnchorRef(entityRef);
+            ComponentUpdate emptyUpdate = nameplateUpdate("");
+            for (Map.Entry<Ref<EntityStore>, EntityTrackerSystems.EntityViewer> viewerEntry : visible.visibleTo.entrySet()) {
+                viewerEntry.getValue().queueUpdate(entityRef, emptyUpdate);
+                if (disAnchorRef != null) {
+                    safeAnchorUpdate(viewerEntry.getValue(), disAnchorRef, emptyUpdate);
+                }
+            }
+            return;
+        }
+
         List<SegmentKey> available = entityData.isEmpty()
                 ? List.of()
                 : resolveAvailableKeys(entityData, segments);
@@ -382,6 +397,9 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             }
             SegmentKey matched = findSegmentKey(entryKey, segments);
             if (matched != null) {
+                if (adminConfig.isDisabled(matched)) {
+                    continue;
+                }
                 if (!keys.contains(matched)) {
                     keys.add(matched);
                 }
@@ -452,6 +470,10 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         StringBuilder builder = new StringBuilder();
         SegmentKey prevKey = null;
         for (SegmentKey key : ordered) {
+            // Disabled segments are never shown regardless of other settings
+            if (adminConfig.isDisabled(key)) {
+                continue;
+            }
             // Required segments always display, even if the viewer disabled them
             if (!adminConfig.isRequired(key) && !preferences.isEnabled(viewerUuid, entityTypeId, key)) {
                 continue;

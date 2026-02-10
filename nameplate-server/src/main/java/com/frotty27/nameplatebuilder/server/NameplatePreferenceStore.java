@@ -25,7 +25,7 @@ import java.util.UUID;
  * the record type: {@code S} = segment, {@code U} = user settings, {@code D} = default
  * separator, {@code B} = per-block separator, {@code O} = offset, {@code E} = master toggle,
  * {@code V} = variant selection, {@code P} = prefix, {@code X} = suffix,
- * {@code F} = bar empty fill character.</p>
+ * {@code F} = bar empty fill character, {@code W} = welcome message preference.</p>
  *
  * @see NameplateBuilderPage
  * @see NameplateAggregatorSystem
@@ -88,6 +88,11 @@ final class NameplatePreferenceStore {
                         if (parts.length < 3) continue;
                         PreferenceSet set = getSet(UUID.fromString(parts[1]), "*", true);
                         set.nameplatesEnabled = Boolean.parseBoolean(parts[2]);
+                    }
+                    case "W" -> {
+                        if (parts.length < 3) continue;
+                        PreferenceSet set = getSet(UUID.fromString(parts[1]), "*", true);
+                        set.showWelcomeMessage = Boolean.parseBoolean(parts[2]);
                     }
                     case "V" -> {
                         if (parts.length < 6) continue;
@@ -157,6 +162,8 @@ final class NameplatePreferenceStore {
             writer.newLine();
             writer.write("# F|viewerUuid|entityType|pluginId|segmentId|barEmptyChar");
             writer.newLine();
+            writer.write("# W|viewerUuid|showWelcomeMessage");
+            writer.newLine();
             for (Map.Entry<UUID, Map<String, PreferenceSet>> viewerEntry : data.entrySet()) {
                 UUID viewer = viewerEntry.getKey();
                 for (Map.Entry<String, PreferenceSet> entityEntry : viewerEntry.getValue().entrySet()) {
@@ -215,6 +222,10 @@ final class NameplatePreferenceStore {
                         writer.write("E|" + viewer + "|" + set.nameplatesEnabled);
                         writer.newLine();
                     }
+                    if (!set.showWelcomeMessage) {
+                        writer.write("W|" + viewer + "|" + set.showWelcomeMessage);
+                        writer.newLine();
+                    }
                 }
             }
         } catch (IOException _) {
@@ -250,6 +261,16 @@ final class NameplatePreferenceStore {
     void setNameplatesEnabled(UUID viewer, boolean enabled) {
         PreferenceSet set = getSet(viewer, "*", true);
         set.nameplatesEnabled = enabled;
+    }
+
+    boolean isShowWelcomeMessage(UUID viewer) {
+        PreferenceSet set = getSet(viewer, "*", false);
+        return set == null || set.showWelcomeMessage;
+    }
+
+    void setShowWelcomeMessage(UUID viewer, boolean show) {
+        PreferenceSet set = getSet(viewer, "*", true);
+        set.showWelcomeMessage = show;
     }
 
     boolean isOnlyShowWhenLooking(UUID viewer, String entityType) {
@@ -521,6 +542,7 @@ final class NameplatePreferenceStore {
         private boolean useGlobal = false;
         private boolean onlyShowWhenLooking = false;
         private boolean nameplatesEnabled = true;
+        private boolean showWelcomeMessage = true;
         private String separator = " - ";
         private double offset = 0.0;
     }

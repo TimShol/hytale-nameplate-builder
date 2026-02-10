@@ -5,11 +5,14 @@ import com.frotty27.nameplatebuilder.api.NameplateData;
 import com.frotty27.nameplatebuilder.api.SegmentTarget;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Server-side entry point for the NameplateBuilder mod.
@@ -18,10 +21,11 @@ import java.util.List;
  * <ul>
  *   <li>{@link NameplateRegistry} — segment UI metadata store</li>
  *   <li>{@link NameplatePreferenceStore} — per-player preference persistence</li>
- *   <li>{@link AdminConfigStore} — server-wide required-segment configuration</li>
+ *   <li>{@link AdminConfigStore} — server-wide required/disabled segment and server name configuration</li>
  *   <li>{@link AnchorEntityManager} — invisible anchor entities for vertical offset</li>
  *   <li>{@link NameplateAggregatorSystem} — per-tick nameplate compositor</li>
  *   <li>{@link NameplateBuilderCommand} — {@code /npb} player command</li>
+ *   <li>{@link PlayerReadyEvent} listener — sends a coloured welcome message on join</li>
  * </ul>
  *
  * <p>On shutdown, all persistent stores are saved to disk.</p>
@@ -66,11 +70,46 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
         registry.describeVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_HEALTH,
                 List.of("Current/Max (67/69)", "Percentage (69%)", "Bar (||||||-----)"));
         registry.setSupportsPrefixSuffix(pluginId, DefaultSegmentSystem.SEGMENT_HEALTH);
+        registry.describeBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_STAMINA,
+                "Stamina", SegmentTarget.ALL, "42/100");
+        registry.describeVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_STAMINA,
+                List.of("Current/Max (42/100)", "Percentage (42%)", "Bar (||||||||-----)"));
+        registry.setSupportsPrefixSuffix(pluginId, DefaultSegmentSystem.SEGMENT_STAMINA);
+        registry.describeBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_MANA,
+                "Mana", SegmentTarget.ALL, "30/50");
+        registry.describeVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_MANA,
+                List.of("Current/Max (30/50)", "Percentage (60%)", "Bar (||||||||||||-----)"));
+        registry.setSupportsPrefixSuffix(pluginId, DefaultSegmentSystem.SEGMENT_MANA);
 
         // Register tick systems
         getEntityStoreRegistry().registerSystem(new DefaultSegmentSystem(nameplateDataType));
         getEntityStoreRegistry().registerSystem(new NameplateAggregatorSystem(registry, preferences, adminConfig, nameplateDataType, anchorManager));
         getCommandRegistry().registerCommand(new NameplateBuilderCommand(registry, preferences, adminConfig));
+
+        // Send welcome message when a player joins
+        getEventRegistry().registerGlobal(PlayerReadyEvent.class, event -> {
+            try {
+                var player = event.getPlayer();
+                UUID playerUuid = player.getUuid();
+                if (playerUuid == null) return;
+
+                if (!preferences.isShowWelcomeMessage(playerUuid)) return;
+
+                boolean allDisabled = !registry.getSegments().isEmpty()
+                        && registry.getSegments().keySet().stream().allMatch(adminConfig::isDisabled);
+
+                String serverName = adminConfig.getDisplayServerName();
+                if (allDisabled) {
+                    player.sendMessage(Message.raw("[" + serverName + "] - Nameplates are disabled on this server.")
+                            .color("#FF5555"));
+                } else {
+                    player.sendMessage(Message.raw("[" + serverName + "] - Use /npb to customize your nameplates.")
+                            .color("#55FF55"));
+                }
+            } catch (RuntimeException _) {
+                // Best-effort — don't crash if message sending fails
+            }
+        });
 
         LOGGER.atInfo().log("NameplateBuilder loaded. Registry ready for mod integrations.");
     }
