@@ -10,6 +10,8 @@ import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
+import java.util.List;
+
 /**
  * Example mod demonstrating the NameplateBuilder API.
  *
@@ -60,28 +62,28 @@ public final class NameplateExamplePlugin extends JavaPlugin {
         // which entity types the segment applies to (shown as a tag in the UI).
         // This is optional — undescribed segments still work but show the raw ID.
 
-        // Segments applicable to all entities
-        NameplateAPI.describe(this, "health", "Health Bar", SegmentTarget.ALL);
-        NameplateAPI.describe(this, "level", "Level", SegmentTarget.ALL);
-        NameplateAPI.describe(this, "guild", "Guild Tag", SegmentTarget.ALL);
-        NameplateAPI.describe(this, "title", "Title", SegmentTarget.ALL);
-        NameplateAPI.describe(this, "lifetime", "Lifetime", SegmentTarget.ALL);
-        NameplateAPI.describe(this, "custom-tag", "Custom Tag", SegmentTarget.ALL);
+        // Segments applicable to all entities (shown in both NPC and Player tabs)
+        // Note: "health" and "player-name" are built-in segments provided by NameplateBuilder
+        // and do not need to be described here. They appear automatically in the UI.
+        NameplateAPI.describe(this, "level", "Level", SegmentTarget.ALL, "Lv. 42");
+        NameplateAPI.describeVariants(this, "level", List.of("Compact", "Full", "Number Only"));
+        NameplateAPI.describe(this, "title", "Title", SegmentTarget.ALL, "The Brave");
+        NameplateAPI.describe(this, "custom-tag", "Custom Tag", SegmentTarget.ALL, "[Custom]");
 
         // NPC-only segments
-        NameplateAPI.describe(this, "tier", "Elite Tier", SegmentTarget.NPCS);
-        NameplateAPI.describe(this, "buff", "Active Buff", SegmentTarget.NPCS);
-        NameplateAPI.describe(this, "faction", "Faction", SegmentTarget.NPCS);
-        NameplateAPI.describe(this, "mood", "Mood", SegmentTarget.NPCS);
-        NameplateAPI.describe(this, "quest", "Active Quest", SegmentTarget.NPCS);
-        NameplateAPI.describe(this, "bounty", "Bounty", SegmentTarget.NPCS);
+        NameplateAPI.describe(this, "buff", "Active Buff", SegmentTarget.NPCS, "Burning");
+        NameplateAPI.describe(this, "faction", "Faction", SegmentTarget.NPCS, "<Undead>");
+        NameplateAPI.describe(this, "mood", "Mood", SegmentTarget.NPCS, "Aggressive");
+        NameplateAPI.describe(this, "quest", "Active Quest", SegmentTarget.NPCS, "[!!] Slay 10");
+        NameplateAPI.describe(this, "bounty", "Bounty", SegmentTarget.NPCS, "500g");
+        NameplateAPI.describe(this, "lifetime", "Lifetime", SegmentTarget.NPCS, "3m 24s");
 
         // Player-only segments
-        NameplateAPI.describe(this, "score", "Score", SegmentTarget.PLAYERS);
-        NameplateAPI.describe(this, "rank", "Server Rank", SegmentTarget.PLAYERS);
-        NameplateAPI.describe(this, "clan", "Clan", SegmentTarget.PLAYERS);
-        NameplateAPI.describe(this, "status", "Online Status", SegmentTarget.PLAYERS);
-        NameplateAPI.describe(this, "vip-label", "VIP Label", SegmentTarget.PLAYERS);
+        NameplateAPI.describe(this, "guild", "Guild Tag", SegmentTarget.PLAYERS, "[Warriors]");
+        NameplateAPI.describe(this, "score", "Score", SegmentTarget.PLAYERS, "1,250");
+        NameplateAPI.describe(this, "rank", "Server Rank", SegmentTarget.PLAYERS, "VIP+");
+        NameplateAPI.describe(this, "clan", "Clan", SegmentTarget.PLAYERS, "<Phoenix>");
+        NameplateAPI.describe(this, "vip-label", "VIP Label", SegmentTarget.PLAYERS, "VIP");
 
         // ── Register tick-based systems ──
         ComponentType<EntityStore, NameplateData> nameplateDataType = NameplateAPI.getComponentType();
@@ -115,7 +117,6 @@ public final class NameplateExamplePlugin extends JavaPlugin {
         NameplateAPI.register(store, entityRef, "guild", "[Warriors]");
         NameplateAPI.register(store, entityRef, "title", "The Brave");
         NameplateAPI.register(store, entityRef, "rank", "VIP");
-        NameplateAPI.register(store, entityRef, "status", "Online");
         NameplateAPI.register(store, entityRef, "lifetime", "0s");
     }
 

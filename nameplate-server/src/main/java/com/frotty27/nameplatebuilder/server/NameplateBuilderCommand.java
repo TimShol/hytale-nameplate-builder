@@ -13,16 +13,37 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.UUID;
 
+/**
+ * Command handler for {@code /nameplatebuilder} (aliases: {@code /npb}, {@code /nameplateui}).
+ *
+ * <p>Opens the {@link NameplateBuilderPage} UI for the executing player.
+ * The command checks the {@value #PERMISSION_ADMIN} permission node to
+ * determine whether the player sees the admin settings tab.</p>
+ */
 final class NameplateBuilderCommand extends AbstractPlayerCommand {
+
+    /** Permission node that grants access to the admin "Required Segments" tab. */
+    static final String PERMISSION_ADMIN = "nameplatebuilder.admin";
 
     private final NameplateRegistry registry;
     private final NameplatePreferenceStore preferences;
+    private final AdminConfigStore adminConfig;
 
-    NameplateBuilderCommand(NameplateRegistry registry, NameplatePreferenceStore preferences) {
+    NameplateBuilderCommand(NameplateRegistry registry, NameplatePreferenceStore preferences, AdminConfigStore adminConfig) {
         super("nameplatebuilder", "Open the Nameplate Builder UI");
         addAliases("npb", "nameplateui");
         this.registry = registry;
         this.preferences = preferences;
+        this.adminConfig = adminConfig;
+    }
+
+    /**
+     * Disable auto-generated permission so all players can use the command.
+     * Admin features are gated at runtime via {@link #PERMISSION_ADMIN} instead.
+     */
+    @Override
+    protected boolean canGeneratePermission() {
+        return false;
     }
 
     @Override
@@ -41,7 +62,8 @@ final class NameplateBuilderCommand extends AbstractPlayerCommand {
         }
 
         UUID viewerUuid = playerRef.getUuid();
-        NameplateBuilderPage page = new NameplateBuilderPage(playerRef, viewerUuid, registry, preferences);
+        boolean isAdmin = context.sender().hasPermission(PERMISSION_ADMIN);
+        NameplateBuilderPage page = new NameplateBuilderPage(playerRef, viewerUuid, registry, preferences, adminConfig, isAdmin);
         player.getPageManager().openCustomPage(ref, store, page);
     }
 }
