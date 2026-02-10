@@ -280,15 +280,17 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
             String text;
             if (available.isEmpty()) {
-                // No mod has set any segment data on this entity — show hint
-                text = NO_DATA_HINT;
+                // No mod has set any segment data on this entity, or every
+                // registered segment is admin-disabled — show blank so the
+                // default entity ID doesn't bleed through.
+                text = ALL_HIDDEN_HINT;
             } else {
                 List<SegmentKey> chain = preferences.getChain(viewerUuid, preferenceEntityType, available, defaultComparator);
                 text = buildText(chain, entityData, viewerUuid, preferenceEntityType);
                 if (text.isEmpty()) {
-                    // All segments exist but are hidden by user preferences — show blank
-                    // rather than the misleading "Type /npb" hint
-                    text = ALL_HIDDEN_HINT;
+                    // Segments exist but the player's chain is empty (all blocks
+                    // removed) — show hint so they know how to add them back.
+                    text = NO_DATA_HINT;
                 }
             }
 

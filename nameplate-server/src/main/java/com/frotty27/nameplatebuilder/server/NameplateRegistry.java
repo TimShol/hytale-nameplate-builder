@@ -110,14 +110,17 @@ final class NameplateRegistry implements INameplateRegistry {
         segments.keySet().removeIf(key -> key.pluginId().equals(pluginId));
     }
 
+    /** Removes all described segments. Called during plugin shutdown. */
     void clear() {
         segments.clear();
     }
 
+    /** Returns the live segment map. Used by the aggregator and UI page. */
     Map<SegmentKey, Segment> getSegments() {
         return segments;
     }
 
+    /** Converts a {@link JavaPlugin} reference to its canonical {@code "Group:Name"} identifier. */
     static String toPluginId(JavaPlugin plugin) {
         var id = plugin.getIdentifier();
         return id.getGroup() + ":" + id.getName();

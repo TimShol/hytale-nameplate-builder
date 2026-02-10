@@ -40,10 +40,21 @@ final class AdminConfigStore {
     private final Set<SegmentKey> disabledSegments = ConcurrentHashMap.newKeySet();
     private volatile String serverName = "";
 
+    /**
+     * Creates a new admin config store backed by the given file.
+     *
+     * @param filePath path to the {@code admin_config.txt} file
+     */
     AdminConfigStore(Path filePath) {
         this.filePath = filePath;
     }
 
+    /**
+     * Loads admin configuration from disk, replacing any in-memory state.
+     *
+     * <p>If the file does not exist or is corrupt, all collections are left
+     * empty and the server name defaults to blank.</p>
+     */
     void load() {
         requiredSegments.clear();
         disabledSegments.clear();
@@ -75,6 +86,12 @@ final class AdminConfigStore {
         }
     }
 
+    /**
+     * Persists the current admin configuration to disk.
+     *
+     * <p>Writes the server name, required segments, and disabled segments
+     * in a human-readable pipe-delimited format with comments.</p>
+     */
     void save() {
         try {
             Files.createDirectories(filePath.getParent());
@@ -112,10 +129,25 @@ final class AdminConfigStore {
 
     // ── Required ──
 
+    /**
+     * Returns {@code true} if the given segment is marked as required.
+     *
+     * @param key the segment key to check
+     * @return whether the segment is required for all players
+     */
     boolean isRequired(SegmentKey key) {
         return requiredSegments.contains(key);
     }
 
+    /**
+     * Marks or unmarks a segment as required.
+     *
+     * <p>Setting a segment as required automatically removes it from the
+     * disabled set to enforce mutual exclusion.</p>
+     *
+     * @param key      the segment key
+     * @param required {@code true} to require, {@code false} to un-require
+     */
     void setRequired(SegmentKey key, boolean required) {
         if (required) {
             requiredSegments.add(key);
@@ -125,20 +157,41 @@ final class AdminConfigStore {
         }
     }
 
+    /** Removes all required segment entries. */
     void clearAllRequired() {
         requiredSegments.clear();
     }
 
+    /**
+     * Returns an unmodifiable view of all required segment keys.
+     *
+     * @return immutable set of required segments
+     */
     Set<SegmentKey> getRequiredSegments() {
         return Collections.unmodifiableSet(requiredSegments);
     }
 
     // ── Disabled ──
 
+    /**
+     * Returns {@code true} if the given segment is globally disabled.
+     *
+     * @param key the segment key to check
+     * @return whether the segment is hidden from all players
+     */
     boolean isDisabled(SegmentKey key) {
         return disabledSegments.contains(key);
     }
 
+    /**
+     * Marks or unmarks a segment as globally disabled.
+     *
+     * <p>Setting a segment as disabled automatically removes it from the
+     * required set to enforce mutual exclusion.</p>
+     *
+     * @param key      the segment key
+     * @param disabled {@code true} to disable, {@code false} to re-enable
+     */
     void setDisabled(SegmentKey key, boolean disabled) {
         if (disabled) {
             disabledSegments.add(key);
@@ -148,25 +201,46 @@ final class AdminConfigStore {
         }
     }
 
+    /** Removes all disabled segment entries. */
     void clearAllDisabled() {
         disabledSegments.clear();
     }
 
+    /**
+     * Returns an unmodifiable view of all disabled segment keys.
+     *
+     * @return immutable set of disabled segments
+     */
     Set<SegmentKey> getDisabledSegments() {
         return Collections.unmodifiableSet(disabledSegments);
     }
 
     // ── Server Name ──
 
+    /**
+     * Returns the raw server name string (may be empty).
+     *
+     * @return the configured server name, or an empty string if unset
+     */
     String getServerName() {
         return serverName;
     }
 
+    /**
+     * Sets the server display name for the welcome message.
+     *
+     * @param name the server name, or {@code null} to clear
+     */
     void setServerName(String name) {
         this.serverName = name != null ? name : "";
     }
 
-    /** Returns the display name for messages — defaults to "NameplateBuilder" if blank. */
+    /**
+     * Returns the display name for messages, defaulting to
+     * {@code "NameplateBuilder"} if no custom name is configured.
+     *
+     * @return the server display name (never blank)
+     */
     String getDisplayServerName() {
         return serverName.isBlank() ? "NameplateBuilder" : serverName;
     }

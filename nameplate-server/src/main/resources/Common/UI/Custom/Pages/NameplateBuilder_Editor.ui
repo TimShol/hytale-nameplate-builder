@@ -439,6 +439,12 @@ $C.@PageOverlay {
                 TextButton #ChainBlock3Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
               }
             }
+
+            $C.@SmallSecondaryTextButton #ChainSep3 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
           }
 
           Group #ChainPagination {

@@ -26,23 +26,45 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Interactive custom UI page for the Nameplate Builder editor.
  *
- * <p>This page drives the entire player-facing UI: the sidebar navigation
- * (General, NPCs, Players, Admin), the segment chain editor, the available
- * blocks browser, the admin "Required Segments" panel, and the format variant
- * popup (with prefix/suffix text fields and bar empty-fill customization).</p>
+ * <p>This page drives the entire player-facing UI:</p>
+ * <ul>
+ *   <li><b>Sidebar</b> — General, NPCs, Players, Disabled, and Admin
+ *       (admin section visible only with the {@code nameplatebuilder.admin}
+ *       permission)</li>
+ *   <li><b>General tab</b> — master enable/disable, look-at toggle, vertical
+ *       offset, welcome message toggle</li>
+ *   <li><b>NPC/Player editor tabs</b> — segment chain editor, available blocks
+ *       browser with search/filter and pagination, per-block separators,
+ *       live preview, and the format variant popup (with prefix/suffix text
+ *       fields and bar empty-fill customization)</li>
+ *   <li><b>Disabled tab</b> — read-only 4×4 grid showing all admin-disabled
+ *       segments with pagination</li>
+ *   <li><b>Admin tab</b> — three sub-tabs: Required (force segments on all
+ *       players), Disabled (hide segments globally), and Settings (server
+ *       name configuration)</li>
+ * </ul>
  *
  * <p>The format popup uses a confirm/cancel workflow: selecting a variant only
  * updates the in-progress {@link #pendingVariant} state without persisting.
  * Prefix, suffix, and bar empty char edits are saved live via ValueChanged
  * events but reverted on Cancel using snapshotted originals.</p>
  *
+ * <p>UI state (active tab, filter text, pagination positions, admin sub-tab)
+ * is persisted in memory across page reopens via a static
+ * {@link UiState} map keyed by player UUID.</p>
+ *
  * <p>Opened via the {@link NameplateBuilderCommand} ({@code /npb}).</p>
  *
  * @see NameplateBuilderCommand
  * @see AdminConfigStore
  * @see NameplatePreferenceStore
+ * @see ActiveTab
+ * @see AdminSubTab
+ * @see UiState
+ * @see SettingsData
+ * @see SegmentView
  */
-final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilderPage.SettingsData> {
+final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
@@ -76,8 +98,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
     /** Number of disabled blocks per page in the player Disabled tab (4x4 grid). */
     private static final int DISABLED_PAGE_SIZE = 16;
 
-    private enum ActiveTab { GENERAL, NPCS, PLAYERS, ADMIN, DISABLED }
-    private enum AdminSubTab { REQUIRED, DISABLED, SETTINGS }
+    // ActiveTab and AdminSubTab are top-level enums (see ActiveTab.java, AdminSubTab.java)
 
     private final NameplateRegistry registry;
     private final NameplatePreferenceStore preferences;
@@ -116,7 +137,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
 
     /**
      * Index of the separator currently being edited (-1 = popup closed).
-     * This is the chain-page-relative index (0-2), corresponding to ChainSep0/1/2.
+     * This is the chain-page-relative index (0-3), corresponding to
+     * ChainSep0/1/2 (between blocks) and ChainSep3 (trailing, after last block).
      */
     private int editingSepIndex = -1;
     private String sepText = "";
@@ -187,20 +209,20 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
 
         UiState state = UI_STATE.get(viewerUuid);
         if (state != null) {
-            this.activeTab = state.activeTab;
+            this.activeTab = state.activeTab();
             // Don't restore ADMIN tab for non-admins
             if (this.activeTab == ActiveTab.ADMIN && !isAdmin) {
                 this.activeTab = ActiveTab.NPCS;
             }
-            this.filter = state.filter;
-            this.availPage = state.availPage;
-            this.chainPage = state.chainPage;
-            this.adminLeftPage = state.adminLeftPage;
-            this.adminRightPage = state.adminRightPage;
-            this.adminSubTab = state.adminSubTab != null ? state.adminSubTab : AdminSubTab.REQUIRED;
-            this.adminDisLeftPage = state.adminDisLeftPage;
-            this.adminDisRightPage = state.adminDisRightPage;
-            this.disabledPage = state.disabledPage;
+            this.filter = state.filter();
+            this.availPage = state.availPage();
+            this.chainPage = state.chainPage();
+            this.adminLeftPage = state.adminLeftPage();
+            this.adminRightPage = state.adminRightPage();
+            this.adminSubTab = state.adminSubTab() != null ? state.adminSubTab() : AdminSubTab.REQUIRED;
+            this.adminDisLeftPage = state.adminDisLeftPage();
+            this.adminDisRightPage = state.adminDisRightPage();
+            this.disabledPage = state.disabledPage();
         }
     }
 
@@ -260,8 +282,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             bindAction(events, "#ChainBlock" + i + "Remove", "Remove_" + i);
         }
 
-        // Chain separator indicators — still clickable for visual feedback but no editing
-        for (int i = 0; i < CHAIN_PAGE_SIZE - 1; i++) {
+        // Chain separator indicators — clickable to open the separator editor popup.
+        // Indices 0–2 sit between blocks, index 3 sits after the last block
+        // (visible when the next page has more blocks).
+        for (int i = 0; i < CHAIN_PAGE_SIZE; i++) {
             bindAction(events, "#ChainSep" + i, "EditSep_" + i);
         }
 
@@ -730,11 +754,24 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
                 int absoluteIndex = chainPage * CHAIN_PAGE_SIZE + editingSepIndex;
                 if (absoluteIndex >= 0 && absoluteIndex < chain.size()) {
                     SegmentKey blockKey = chain.get(absoluteIndex).key();
-                    // Save exactly what the user typed — empty string is valid
-                    preferences.setSeparatorAfter(viewerUuid, tabEntityType(), blockKey, sepText);
-                    // Also update the global default separator so newly added blocks
-                    // use the last confirmed separator text
-                    preferences.setSeparator(viewerUuid, tabEntityType(), sepText);
+                    String entityType = tabEntityType();
+                    // Freeze every other block's current separator as an explicit
+                    // per-block value before we change the global default. Without
+                    // this, blocks relying on the fallback would silently change.
+                    String oldDefault = preferences.getSeparator(viewerUuid, entityType);
+                    for (SegmentView cv : chain) {
+                        if (!cv.key().equals(blockKey)) {
+                            String existing = preferences.getSeparatorAfter(viewerUuid, entityType, cv.key());
+                            if (existing.equals(oldDefault)) {
+                                // Block was using the fallback — pin it explicitly
+                                preferences.setSeparatorAfter(viewerUuid, entityType, cv.key(), existing);
+                            }
+                        }
+                    }
+                    // Save the edited block's separator
+                    preferences.setSeparatorAfter(viewerUuid, entityType, blockKey, sepText);
+                    // Update the global default so newly added blocks use this value
+                    preferences.setSeparator(viewerUuid, entityType, sepText);
                 }
             }
             editingSepIndex = -1;
@@ -1321,7 +1358,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
                 commands.set(prefix + "Format.Visible", false);
             }
 
-            // Separator indicator between blocks — shows the auto-managed separator
+            // Separator indicator between blocks (indices 0–2)
             if (i < CHAIN_PAGE_SIZE - 1) {
                 boolean sepVisible = visible && (start + i + 1) < end;
                 String sepId = "#ChainSep" + i;
@@ -1332,6 +1369,20 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
                     String displaySep = sep.isEmpty() ? "." : sep;
                     commands.set(sepId + ".Text", displaySep);
                 }
+            }
+        }
+
+        // Trailing separator (ChainSep3) — shown after the last block on this page
+        // when there are more blocks continuing on the next page.
+        {
+            int lastOnPage = start + CHAIN_PAGE_SIZE - 1;
+            boolean trailingSepVisible = lastOnPage < chain.size() && (lastOnPage + 1) < chain.size();
+            commands.set("#ChainSep3.Visible", trailingSepVisible);
+            if (trailingSepVisible) {
+                SegmentKey blockKey = chain.get(lastOnPage).key();
+                String sep = preferences.getSeparatorAfter(viewerUuid, tabEntityType(), blockKey);
+                String displaySep = sep.isEmpty() ? "." : sep;
+                commands.set("#ChainSep3.Text", displaySep);
             }
         }
 
@@ -1680,8 +1731,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
             return;
         }
         // Enable the segment in this tab's chain.
-        // New blocks automatically use the global default separator
-        // (set by the last SepConfirm action) via getSeparatorAfter fallback.
+        // New blocks inherit the global default separator (set by the last
+        // SepConfirm action) via getSeparatorAfter fallback.
         preferences.enable(viewerUuid, tabEntityType(), view.key());
     }
 
@@ -2056,70 +2107,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<NameplateBuilde
         }
     }
 
-    // ── Records ──
-
-    private record SegmentView(SegmentKey key, String displayName, String modName, String author, String targetLabel, String example) {
-    }
-
-    private record UiState(ActiveTab activeTab, String filter, int availPage, int chainPage,
-                               int adminLeftPage, int adminRightPage, AdminSubTab adminSubTab,
-                               int adminDisLeftPage, int adminDisRightPage, int disabledPage) {
-    }
-
-    static final class SettingsData {
-        public static final BuilderCodec<SettingsData> CODEC = BuilderCodec
-                .builder(SettingsData.class, SettingsData::new)
-                .append(new KeyedCodec<>("@Filter", Codec.STRING),
-                        (SettingsData data, String value) -> data.filter = value,
-                        (SettingsData data) -> data.filter)
-                .add()
-                .append(new KeyedCodec<>("Action", Codec.STRING),
-                        (SettingsData data, String value) -> data.action = value,
-                        (SettingsData data) -> data.action)
-                .add()
-                .append(new KeyedCodec<>("@Offset", Codec.STRING),
-                        (SettingsData data, String value) -> data.offset = value,
-                        (SettingsData data) -> data.offset)
-                .add()
-                .append(new KeyedCodec<>("@AdminFilter", Codec.STRING),
-                        (SettingsData data, String value) -> data.adminFilter = value,
-                        (SettingsData data) -> data.adminFilter)
-                .add()
-                .append(new KeyedCodec<>("@SepText", Codec.STRING),
-                        (SettingsData data, String value) -> data.sepText = value,
-                        (SettingsData data) -> data.sepText)
-                .add()
-                .append(new KeyedCodec<>("@PrefixText", Codec.STRING),
-                        (SettingsData data, String value) -> data.prefixText = value,
-                        (SettingsData data) -> data.prefixText)
-                .add()
-                .append(new KeyedCodec<>("@SuffixText", Codec.STRING),
-                        (SettingsData data, String value) -> data.suffixText = value,
-                        (SettingsData data) -> data.suffixText)
-                .add()
-                .append(new KeyedCodec<>("@BarEmptyText", Codec.STRING),
-                        (SettingsData data, String value) -> data.barEmptyText = value,
-                        (SettingsData data) -> data.barEmptyText)
-                .add()
-                .append(new KeyedCodec<>("@AdminDisFilter", Codec.STRING),
-                        (SettingsData data, String value) -> data.adminDisFilter = value,
-                        (SettingsData data) -> data.adminDisFilter)
-                .add()
-                .append(new KeyedCodec<>("@AdminServerName", Codec.STRING),
-                        (SettingsData data, String value) -> data.adminServerName = value,
-                        (SettingsData data) -> data.adminServerName)
-                .add()
-                .build();
-
-        String filter;
-        String action;
-        String offset;
-        String adminFilter;
-        String adminDisFilter;
-        String adminServerName;
-        String sepText;
-        String prefixText;
-        String suffixText;
-        String barEmptyText;
-    }
+    // UiState, SettingsData, SegmentView are top-level types
+    // (see UiState.java, SettingsData.java, SegmentView.java)
 }
