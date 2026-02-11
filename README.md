@@ -1,6 +1,6 @@
 # NameplateBuilder
 
-A server-side nameplate aggregator for Hytale that lets multiple mods contribute text segments to entity nameplates, with a built-in player UI for customization.
+A server-side nameplate manager for Hytale that lets other mods contribute text segments to it with a fully built-in player UI for customization.
 
 ## Downloads
 
