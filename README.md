@@ -2,6 +2,8 @@
 
 A server-side nameplate manager for Hytale that lets other mods contribute text segments to it with a fully built-in player UI for customization.
 
+![Editor UI overview](docs/screenshots/editor-overview.png)
+
 ## Downloads
 
 <table>
@@ -35,15 +37,7 @@ You can find all the documentation, modding guides, and API references on the do
 
 [![Docs](https://img.shields.io/badge/Documentation-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white)](https://docs.nameplatebuilder.frotty27.com/)
 
-| | |
-|---|---|
-| **[Modding Guide](docs/MODDING_GUIDE.md)** | API reference, code examples, and integration guide for mod developers |
-| **[Project Structure](docs/PROJECT_STRUCTURE.md)** | Architecture, file tree, and internal systems overview for contributors |
-
 ---
-
-![Editor UI overview](docs/screenshots/editor-overview.png)
-<!-- SCREENSHOT: Full editor window with several blocks in the chain, some in available, and preview visible -->
 
 ## Overview
 
