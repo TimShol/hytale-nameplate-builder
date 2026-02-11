@@ -3,6 +3,7 @@
 Architecture, file tree, and internal systems overview for contributors.
 
 > **Looking for the main README?** See [README.md](../README.md) for an overview, features, and screenshots.
+
 > **Looking for the modding API?** See [Modding Guide](MODDING_GUIDE.md) for code examples and API reference.
 
 ## File Tree
