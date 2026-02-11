@@ -25,7 +25,7 @@ A server-side nameplate manager for Hytale that lets other mods contribute text 
 </tr>
 </table>
 
-You can download the example mod by going to <a href="https://github.com/TimShol/hytale-nameplate-builder/releases/tag/v1.0.0"> Releases
+You can find the example mod in <a href="https://github.com/TimShol/hytale-nameplate-builder/releases/tag/v1.0.0"> releases
 
 <!-- [![GitHub Example Mod](https://img.shields.io/badge/Example_Mod-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/TimShol/hytale-nameplate-builder/releases/tag/v1.0.0) -->
 
