@@ -2,15 +2,34 @@
 
 A server-side nameplate aggregator for Hytale that lets multiple mods contribute text segments to entity nameplates, with a built-in player UI for customization.
 
-### Downloads
+## Downloads
 
-[![CurseForge Server Plugin](https://img.shields.io/badge/Server_Plugin-F16436?style=for-the-badge&logo=curseforge&logoColor=white)](https://www.curseforge.com/hytale/mods/PLACEHOLDER_SERVER_SLUG)
-[![CurseForge API](https://img.shields.io/badge/API_(for_mod_devs)-F16436?style=for-the-badge&logo=curseforge&logoColor=white)](https://www.curseforge.com/hytale/mods/PLACEHOLDER_API_SLUG)
-[![GitHub Example Mod](https://img.shields.io/badge/Example_Mod-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/TimShol/hytale-nameplate-builder/releases/tag/v1.0.0)
+<table>
+<tr>
+<td align="center" width="50%">
+<img src="icons/NPB-Server-256.png" alt="Server Plugin" width="256"/><br/>
+<strong>Server Plugin</strong><br/>
+<a href="https://www.curseforge.com/hytale/mods/PLACEHOLDER_SERVER_SLUG">
+<img src="https://img.shields.io/badge/Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white" alt="Download Server Plugin"/>
+</a>
+</td>
+<td align="center" width="50%">
+<img src="icons/NPB-API-256.png" alt="API" width="256"/><br/>
+<strong>API (for mod devs)</strong><br/>
+<a href="https://www.curseforge.com/hytale/mods/PLACEHOLDER_API_SLUG">
+<img src="https://img.shields.io/badge/Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white" alt="Download API"/>
+</a>
+</td>
+</tr>
+</table>
+
+You can download the example mod by going to <a href="https://github.com/TimShol/hytale-nameplate-builder/releases/tag/v1.0.0"> Releases
+
+<!-- [![GitHub Example Mod](https://img.shields.io/badge/Example_Mod-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/TimShol/hytale-nameplate-builder/releases/tag/v1.0.0) -->
 
 <!-- TODO: Replace PLACEHOLDER_SERVER_SLUG, PLACEHOLDER_API_SLUG, and PLACEHOLDER_USER with actual values -->
 
-### Documentation
+## Documentation
 
 | | |
 |---|---|
