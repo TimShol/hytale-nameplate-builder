@@ -1,0 +1,63 @@
+---
+title: Installation
+description: Get NameplateBuilder running on your Hytale server.
+---
+
+## Requirements
+
+* Java 25
+* Hytale Server build-7 or later
+* Gradle 9.2+ (only if building from source)
+
+## Installing the Server Plugin
+
+1. Download the NameplateBuilder server plugin JAR from [CurseForge](https://www.curseforge.com/hytale/mods)
+2. Place the JAR in your server's `UserData/Mods` folder
+3. Start the server — NameplateBuilder will generate its config files automatically
+4. Players can now use `/npb` to open the customization UI
+
+That's it. Built-in segments (Player Name, Health, Stamina, Mana) are available immediately.
+
+## For Mod Developers
+
+If you're building a mod that integrates with NameplateBuilder, you also need the **API jar**:
+
+1. Download the NameplateBuilder API jar
+2. Place it in your mod project's `libs/` folder
+3. Add it as a `compileOnly` dependency in your `build.gradle`:
+
+```groovy
+dependencies {
+    compileOnly files('libs/NameplateBuilder-API-1.0.0.jar')
+}
+```
+
+4. Add the manifest dependency so NameplateBuilder loads first:
+
+```json
+{
+  "Dependencies": {
+    "Frotty27:NameplateBuilder": "*"
+  }
+}
+```
+
+See the [Modding Quick Start](/modding/quick-start) for a complete integration walkthrough.
+
+## Building from Source
+
+```bash
+git clone https://github.com/TimShol/hytale-nameplate-builder.git
+cd hytale-nameplate-builder
+./gradlew build
+```
+
+This compiles all three modules (`nameplate-api`, `nameplate-server`, `nameplate-example-mod`), packages shadow JARs, and deploys them to your Hytale `UserData/Mods` folder.
+
+To build individual modules:
+
+```bash
+./gradlew :nameplate-api:build
+./gradlew :nameplate-server:build
+./gradlew :nameplate-example-mod:build
+```

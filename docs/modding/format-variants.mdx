@@ -1,0 +1,91 @@
+---
+title: Format Variants
+description: Let players choose between multiple display formats for a segment.
+---
+
+If your segment supports multiple display formats, register variant names so players can pick their preferred format via the UI.
+
+## Registering Variants
+
+```java
+@Override
+protected void setup() {
+    // Describe the segment first
+    NameplateAPI.describe(this, "health", "Health Bar",
+            SegmentTarget.ALL, "67/67");
+
+    // Register format variants. Index 0 is always the default.
+    NameplateAPI.describeVariants(this, "health", List.of(
+        "Current/Max",       // variant 0 (default): "42/67"
+        "Percentage",        // variant 1:           "63%"
+        "Bar"                // variant 2:           "||||||------"
+    ));
+}
+```
+
+Another example with a level segment:
+
+```java
+NameplateAPI.describe(this, "level", "Level",
+        SegmentTarget.ALL, "Lv. 42");
+
+NameplateAPI.describeVariants(this, "level", List.of(
+    "Compact",           // variant 0 (default): "Lv. 42"
+    "Full",              // variant 1:           "Level 42"
+    "Number Only"        // variant 2:           "42"
+));
+```
+
+## Pushing Variant Text at Runtime
+
+At runtime, push text for **each variant** using suffixed keys:
+
+```java
+// Variant 0 (default) — uses the base key
+data.setText("health", currentHp + "/" + maxHp);
+
+// Variant 1 — uses ".1" suffix
+data.setText("health.1", percent + "%");
+
+// Variant 2 — uses ".2" suffix
+data.setText("health.2", barString);
+```
+
+## How Variant Resolution Works
+
+When the aggregator composites the nameplate for a viewer:
+
+1. It checks which variant index the viewer selected for this segment
+2. If the viewer selected variant 2, it looks for the key `"health.2"`
+3. If that key exists, it uses that text
+4. If that key is **missing**, it falls back to the base key `"health"`
+
+**Always set the base key** — suffixed keys are optional. If you don't set a suffixed key, the viewer sees the base format regardless of their selection.
+
+## Variant Name Tips
+
+Variant names can include parenthesized examples:
+
+```java
+NameplateAPI.describeVariants(this, "health", List.of(
+    "Current/Max (42/67)",
+    "Percentage (63%)",
+    "Bar (||||||------)"
+));
+```
+
+The UI extracts the value inside parentheses to show as a preview in the format popup.
+
+## Prefix, Suffix, and Bar Customization
+
+When a player selects a variant, the format popup also lets them configure:
+
+* **Prefix** — text prepended to the value (e.g. `HP: [`)
+* **Suffix** — text appended to the value (e.g. `]`)
+* **Bar empty fill** — the character used for unfilled bar positions (only shown for Bar variants)
+
+These wrapping and fill options are handled entirely by NameplateBuilder — you don't need to do anything special in your mod. Just push the raw variant text and NameplateBuilder wraps it.
+
+## Segments Without Variants
+
+If your segment only has one display format, don't call `describeVariants()`. The format button won't appear on the chain block, and the segment will always display its base key text.

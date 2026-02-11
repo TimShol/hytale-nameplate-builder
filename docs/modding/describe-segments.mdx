@@ -1,0 +1,78 @@
+---
+title: Describe Segments
+description: Register UI metadata so players can see and manage your segments.
+---
+
+In your plugin's `setup()` method, call `NameplateAPI.describe()` to tell the UI about each segment you plan to use.
+
+## What `describe()` Does
+
+It registers **UI metadata only**. It does NOT create any ECS components or affect entities. It tells the NameplateBuilder UI:
+
+> "My mod has a segment called `health`, show it as `Health Bar`, it's for all entities, and it looks like `67/67`."
+
+Describing is **optional but highly recommended**. Without it, the UI shows the raw segment ID instead of a display name.
+
+## The Three Overloads
+
+### 1. Name Only
+
+```java
+// Shows up as "Custom Tag" with target [All] and no example preview.
+// Good for segments where the value is unpredictable.
+NameplateAPI.describe(this, "custom-tag", "Custom Tag");
+```
+
+### 2. Name + Target
+
+```java
+// The SegmentTarget shows as a tag in the UI, e.g. "by YourMod [NPCs]".
+// This is purely a UI hint — it does NOT restrict which entities you
+// can register the segment on at runtime.
+NameplateAPI.describe(this, "faction", "Faction", SegmentTarget.NPCS);
+```
+
+### 3. Name + Target + Example (Recommended)
+
+```java
+// The example text is shown as a preview in the UI so players can see
+// what the segment looks like before enabling it.
+NameplateAPI.describe(this, "health", "Health Bar",
+        SegmentTarget.ALL, "67/67");
+
+NameplateAPI.describe(this, "guild", "Guild Tag",
+        SegmentTarget.PLAYERS, "[Warriors]");
+
+NameplateAPI.describe(this, "tier", "Elite Tier",
+        SegmentTarget.NPCS, "[Elite]");
+
+NameplateAPI.describe(this, "level", "Level",
+        SegmentTarget.ALL, "Lv. 42");
+```
+
+## SegmentTarget Values
+
+| Target | UI Tag | Use When |
+| :--- | :--- | :--- |
+| `SegmentTarget.ALL` | `[All]` | The segment applies to any entity (players, NPCs, etc.) |
+| `SegmentTarget.PLAYERS` | `[Players]` | The segment only makes sense on players (e.g. guild tag, rank) |
+| `SegmentTarget.NPCS` | `[NPCs]` | The segment only makes sense on NPCs (e.g. faction, mood, bounty) |
+
+The target is **only a UI hint**. You can still register a `PLAYERS`-targeted segment on an NPC at runtime. The UI just uses it to help players understand what each segment is for.
+
+## When to Call `describe()`
+
+Always call `describe()` in your plugin's `setup()` method, **before** registering any tick systems. This ensures the UI metadata is available as soon as players open `/npb`.
+
+```java
+@Override
+protected void setup() {
+    // Describe first
+    NameplateAPI.describe(this, "health", "Health Bar",
+            SegmentTarget.ALL, "67/67");
+
+    // Then register systems
+    getEntityStoreRegistry().registerSystem(
+        new MySystem(NameplateAPI.getComponentType()));
+}
+```

@@ -1,0 +1,94 @@
+---
+title: FAQ
+description: Frequently asked questions and troubleshooting.
+---
+
+## Players
+
+### How do I open the nameplate editor?
+
+Type `/npb` in chat (aliases: `/nameplatebuilder`, `/nameplateui`).
+
+### Why does an entity show "Type /npb to customize"?
+
+You have no segments enabled. Open `/npb`, go to the NPCs or Players tab, and add segments from the Available Blocks section.
+
+### Why can't I remove a segment from my chain?
+
+That segment has been marked as **required** by a server admin. Required segments appear with a yellow-tinted background and are always displayed. You can still reorder them.
+
+### Why don't I see some segments in Available Blocks?
+
+A server admin may have **disabled** those segments. Check the Disabled tab under NAMEPLATES to see what's been turned off.
+
+### How do I change the health display format?
+
+Click the **Format** button on the Health segment in your chain. Select a variant (Current/Max, Percentage, or Bar), optionally set prefix/suffix text, then click **Confirm** and **Save**.
+
+### How do I hide nameplates entirely?
+
+Open `/npb`, go to the General tab, and toggle **Enable Nameplates** off.
+
+### What does the offset setting do?
+
+It moves the nameplate vertically above (or below) the entity. A value of `1.0` moves it one block higher. Uses invisible anchor entities for the floating effect.
+
+## Server Admins
+
+### How do I force a segment to always show?
+
+Open `/npb`, go to the **Required** tab under ADMIN, and move the segment from the Available column to the Required column using the `>` button. Click **Save**.
+
+### How do I disable a segment globally?
+
+Open `/npb`, go to the **Disabled** tab under ADMIN, and move the segment to the Disabled column. Click **Save**.
+
+### Can I both require and disable a segment?
+
+No. A segment cannot be both required and disabled. Marking one automatically removes the other.
+
+### How do I change the server name in the welcome message?
+
+Open `/npb`, go to the **Settings** tab under ADMIN, type the name, and click **Save**.
+
+### Where is the config stored?
+
+In your save folder: `%APPDATA%/Hytale/UserData/Saves/<save>/mods/NameplateBuilder/`. See [Persistence](/reference/persistence) for file format details.
+
+## Mod Developers
+
+### Why am I getting `NameplateNotInitializedException`?
+
+Your mod is calling the API before NameplateBuilder has loaded. Add the manifest dependency:
+
+```json
+{
+  "Dependencies": {
+    "Frotty27:NameplateBuilder": "*"
+  }
+}
+```
+
+### Why does `store.addComponent()` throw inside my tick system?
+
+The store is locked for structural changes during tick processing. Use `commandBuffer.putComponent()` instead. See [Tick Systems](/modding/tick-systems) for the correct pattern.
+
+### Do I need to clean up nameplates when entities die?
+
+No. NameplateBuilder automatically clears nameplates on death. See [Advanced](/modding/advanced#cleanup-and-unregistering).
+
+### Do I need to call `undescribe()` when my plugin shuts down?
+
+No. NameplateBuilder automatically removes all segment descriptions when your plugin unloads.
+
+### Can two mods use the same segment ID?
+
+Yes. Segment IDs are scoped to your plugin. Two mods can both register a `"health"` segment without conflict — they are tracked as separate entries internally using `pluginId:segmentId`.
+
+### How do I update segment text efficiently?
+
+Call `data.setText()` — it's a `HashMap.put()` internally. Calling it every tick is safe and cheap. The aggregator reads the latest value when it composites the nameplate.
+
+### Can I register a PLAYERS-targeted segment on an NPC?
+
+Yes. The `SegmentTarget` is a UI hint only. You can register any segment on any entity at runtime regardless of the target.

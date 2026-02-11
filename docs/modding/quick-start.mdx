@@ -1,0 +1,123 @@
+---
+title: Quick Start
+description: Add your own nameplate segment in under 5 minutes.
+---
+
+This page walks you through adding a custom segment to NameplateBuilder from scratch. By the end, your segment will appear in the player UI and show text above entities.
+
+## How It Works (30-Second Version)
+
+NameplateBuilder is a **central nameplate aggregator**. Instead of each mod fighting over the single `Nameplate` component, mods register named **segments** (like `"health"`, `"guild"`, `"tier"`), and NameplateBuilder composites them into one nameplate string per entity, per viewer, every tick.
+
+**Your job as a modder:**
+
+1. Tell NameplateBuilder about your segments (names, targets, examples, variants)
+2. Push text values onto entities at runtime
+
+That's it. NameplateBuilder handles compositing, per-player preferences, the UI, persistence, death cleanup, and everything else.
+
+## Step 1 — Add the Manifest Dependency
+
+In your mod's `manifest.json`, add NameplateBuilder as a dependency so it loads first:
+
+```json
+{
+  "Dependencies": {
+    "Frotty27:NameplateBuilder": "*"
+  }
+}
+```
+
+Without this, calling the API throws `NameplateNotInitializedException`.
+
+## Step 2 — Add the API Jar
+
+In your `build.gradle`:
+
+```groovy
+dependencies {
+    compileOnly files('libs/NameplateBuilder-API-1.0.0.jar')
+}
+```
+
+You only need the lightweight API jar, not the full server plugin. It contains:
+
+| Class | Purpose |
+| :--- | :--- |
+| `NameplateAPI` | Main entry point — all calls go through here |
+| `NameplateData` | ECS component that holds segment text on entities |
+| `SegmentTarget` | Enum: `ALL`, `PLAYERS`, or `NPCS` |
+| `NameplateException` | Base exception class |
+| `NameplateNotInitializedException` | Thrown if NameplateBuilder hasn't loaded yet |
+| `NameplateArgumentException` | Thrown for null/blank arguments |
+
+## Step 3 — Describe and Register
+
+```java
+import com.frotty27.nameplatebuilder.api.NameplateAPI;
+import com.frotty27.nameplatebuilder.api.SegmentTarget;
+
+public final class MyModPlugin extends JavaPlugin {
+
+    public MyModPlugin(JavaPluginInit init) {
+        super(init);
+    }
+
+    @Override
+    protected void setup() {
+        // Tell the UI about your segment
+        NameplateAPI.describe(this, "bounty", "Bounty",
+                SegmentTarget.NPCS, "$500");
+
+        // Register a tick system that pushes text to entities
+        getEntityStoreRegistry().registerSystem(
+            new MyNpcNameplateSystem(NameplateAPI.getComponentType()));
+    }
+}
+```
+
+## Step 4 — Push Text to Entities
+
+```java
+import com.frotty27.nameplatebuilder.api.NameplateData;
+
+final class MyNpcNameplateSystem extends EntityTickingSystem<EntityStore> {
+
+    private final ComponentType<EntityStore, NameplateData> nameplateDataType;
+
+    MyNpcNameplateSystem(ComponentType<EntityStore, NameplateData> type) {
+        this.nameplateDataType = type;
+    }
+
+    @Override
+    public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk,
+                     Store<EntityStore> store, CommandBuffer<EntityStore> cb) {
+
+        Ref<EntityStore> ref = chunk.getReferenceTo(index);
+
+        // First time? Seed the component via CommandBuffer
+        if (store.getComponent(ref, nameplateDataType) == null) {
+            NameplateData data = new NameplateData();
+            data.setText("bounty", "$500");
+            cb.putComponent(ref, nameplateDataType, data);
+            return;
+        }
+
+        // Already initialized? Update in place (safe during tick)
+        NameplateData data = chunk.getComponent(index, nameplateDataType);
+        if (data != null) {
+            data.setText("bounty", "$" + computeBounty());
+        }
+    }
+}
+```
+
+Your segment now appears in the `/npb` UI. Players can add it to their chain, reorder it, and see the bounty value above NPCs.
+
+## Next Steps
+
+* **[Describe Segments](/modding/describe-segments)** — All three `describe()` overloads explained
+* **[Format Variants](/modding/format-variants)** — Let players pick between display formats
+* **[Register Text](/modding/register-text)** — `register()`, `remove()`, and `NameplateData` methods
+* **[Tick Systems](/modding/tick-systems)** — NPC spawn initialization and live tick updates
+* **[Advanced](/modding/advanced)** — Hidden metadata keys, cleanup, and edge cases

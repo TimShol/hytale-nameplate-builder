@@ -1,0 +1,52 @@
+---
+title: Segment Editor
+description: Add, remove, reorder, and customize nameplate segments.
+---
+
+The **NPCs** and **Players** tabs are the main editor views. Each one lets you build a segment chain for a specific entity type.
+
+## Chain Section
+
+The top of the editor shows your active **segment chain** — the ordered list of segments that will be composited into the nameplate. Each block in the chain shows:
+
+* **Segment name** and author mod
+* **Preview bar** — example output text for that segment
+* **Move left/right buttons** — reorder the segment in the chain
+* **Remove button** — take the segment out of the chain (not available for admin-required segments)
+* **Format button** — opens the [format popup](/player-guide/format-popup) when the segment has multiple display variants. Shows "Formatted" in green when a non-default variant is selected
+
+### Required Segments
+
+Segments marked as required by a server admin appear with a **yellow-tinted** background. They are always included in the nameplate output and cannot be removed from the chain. You can still reorder them.
+
+## Separators
+
+Each segment in the chain has its own separator to the next segment. Click the separator text between two blocks to edit it. Common separators include ` - `, ` | `, and ` `. An empty separator means the segments run together without spacing.
+
+## Preview
+
+Below the chain, a **live preview** bar shows the composited nameplate text using your current chain, separators, format selections, and prefix/suffix wrapping. The preview updates in real time as you make changes. Long text is truncated with an ellipsis.
+
+## Available Blocks
+
+Below the preview, all registered segments that are **not** in your chain are displayed as a grid. Each block shows:
+
+* **Segment name** and author mod
+* **Target tag** — `[All]`, `[Players]`, or `[NPCs]` indicating which entity types the segment is designed for
+* **Example preview** — sample output text (if the mod provided one)
+* **Add button** — adds the segment to the end of your chain
+
+Built-in segments (Health, Player Name, Stamina, Mana) appear with a warm-purple tint to distinguish them from mod-provided segments.
+
+### Search & Pagination
+
+A search field at the top of the Available Blocks section lets you filter by name. Pagination buttons appear when there are more blocks than fit on one page.
+
+## Clear All & Save
+
+* **Clear All** — removes all segments from the chain (except admin-required ones)
+* **Save** — persists your current chain, separators, and format selections to disk
+
+## Disabled Tab
+
+Under the NAMEPLATES section, the **Disabled** tab shows a read-only 4x4 grid of all admin-disabled segments. These segments are hidden from all players and cannot be added to chains. The blocks appear with red-tinted backgrounds and no action buttons. Pagination is available when there are more than 16 disabled segments.

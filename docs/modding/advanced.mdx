@@ -1,0 +1,117 @@
+---
+title: Advanced
+description: Hidden keys, cleanup behaviour, undescribe, and common mistakes.
+---
+
+## Hidden Metadata Keys
+
+Keys that start with `_` (underscore) are **hidden metadata**. They are stored in the `NameplateData` component but are **never shown** in the nameplate output or the player UI.
+
+```java
+// Store a spawn tick so you can compute per-entity lifetime
+data.setText("_spawn_tick", String.valueOf(globalTick));
+
+// Read it back later — invisible to players
+String spawnTick = data.getText("_spawn_tick");
+
+// Store any internal state alongside visible segments
+data.setText("_last_hit_by", attackerName);
+data.setText("_phase", "enraged");
+```
+
+This is useful when you need per-entity state inside a tick system but don't want to register a separate ECS component for it. The `_` prefix convention is enforced by the aggregator — it skips any key starting with underscore.
+
+## Cleanup and Unregistering
+
+### Death Cleanup — Automatic
+
+NameplateBuilder **automatically clears nameplates when an entity dies**. When an entity receives a `DeathComponent`, the aggregator sends an empty nameplate to all viewers and removes the `NameplateData` component. You don't need to handle this yourself.
+
+### Plugin Unload — Automatic
+
+When your plugin unloads, NameplateBuilder **automatically removes all segment descriptions** registered by your plugin. No shutdown hook needed.
+
+### Runtime Removal — `undescribe()`
+
+The `undescribe()` method exists for edge cases where you want to dynamically remove a segment from the UI **while the server is running** (e.g. a minigame mod that adds/removes segments based on game phase):
+
+```java
+// Remove the "bounty" segment from the UI mid-game
+NameplateAPI.undescribe(this, "bounty");
+```
+
+After calling `undescribe()`:
+
+* The segment disappears from the NameplateBuilder UI
+* Existing `NameplateData` on entities is **not** affected — the text stays until you explicitly remove it or the entity dies
+* Players who had it in their chain will no longer see it rendered
+
+For the vast majority of mods, you will **never need to call `undescribe()`**.
+
+## Common Mistakes
+
+| Mistake | Fix |
+| :--- | :--- |
+| Calling `store.addComponent()` inside a tick system | Use `commandBuffer.putComponent()` instead |
+| Calling `NameplateAPI.register()` inside a tick system on an entity without data | Build a `NameplateData` manually and use `commandBuffer.putComponent()` |
+| Forgetting the manifest dependency | Add `"Frotty27:NameplateBuilder": "*"` to your `manifest.json` |
+| Calling `undescribe()` in a shutdown hook | Not needed — auto-cleaned on plugin unload |
+| Removing nameplate data on entity death | Not needed — auto-cleaned on death |
+| Pushing variant text without the base key | Always set the base key (`"health"`) — suffixed keys (`.1`, `.2`) are optional fallbacks |
+
+## Complete Plugin Example
+
+Here's a full plugin that registers 3 segments with different targets, one with format variants, and a tick system for NPC initialization:
+
+```java
+package com.example.mymod;
+
+import com.frotty27.nameplatebuilder.api.NameplateAPI;
+import com.frotty27.nameplatebuilder.api.NameplateData;
+import com.frotty27.nameplatebuilder.api.SegmentTarget;
+import com.hypixel.hytale.component.ComponentType;
+import com.hypixel.hytale.server.core.plugin.JavaPlugin;
+import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
+import java.util.List;
+
+public final class MyModPlugin extends JavaPlugin {
+
+    public MyModPlugin(JavaPluginInit init) {
+        super(init);
+    }
+
+    @Override
+    protected void setup() {
+        // Health — for all entities, with 3 format variants
+        NameplateAPI.describe(this, "health", "Health Bar",
+                SegmentTarget.ALL, "100/100");
+        NameplateAPI.describeVariants(this, "health", List.of(
+            "Current/Max",
+            "Percentage",
+            "Bar"
+        ));
+
+        // Guild — for players only
+        NameplateAPI.describe(this, "guild", "Guild Tag",
+                SegmentTarget.PLAYERS, "[Warriors]");
+
+        // Faction — for NPCs only
+        NameplateAPI.describe(this, "faction", "Faction",
+                SegmentTarget.NPCS, "<Undead>");
+
+        // Register tick systems
+        ComponentType<EntityStore, NameplateData> type =
+            NameplateAPI.getComponentType();
+        getEntityStoreRegistry().registerSystem(
+            new MyNpcNameplateSystem(type));
+    }
+}
+```
+
+## Further Reading
+
+* **[API Reference](/reference/api)** — Full method tables and exception docs
+* **[Architecture](/reference/architecture)** — Internal systems and data flow
+* **[Example Mod](https://github.com/TimShol/hytale-nameplate-builder)** — Full working source code

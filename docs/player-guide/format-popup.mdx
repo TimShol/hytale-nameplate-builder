@@ -1,0 +1,41 @@
+---
+title: Format Popup
+description: Choose display formats, prefix/suffix wrapping, and bar styles.
+---
+
+When a segment has multiple display formats (variants), clicking the **Format** button on a chain block opens the format popup.
+
+## Variant Selection
+
+The top of the popup lists all available display variants for that segment. For example, Health might offer:
+
+| Variant | Example Output |
+| :--- | :--- |
+| **Current/Max** (default) | `42/67` |
+| **Percentage** | `63%` |
+| **Bar** | `\|\|\|\|\|\|------` |
+
+Click a variant to select it. The selected variant is highlighted in green. The chain preview updates in real time to show the new format.
+
+## Prefix & Suffix
+
+Below the variant list, two text fields let you wrap the segment output:
+
+* **Before** (prefix) — text prepended to the segment value, e.g. `HP: [`
+* **After** (suffix) — text appended to the segment value, e.g. `]`
+
+With the above settings and the Current/Max variant, the output would be: `HP: [42/67]`
+
+## Bar Style
+
+This section is only visible when the selected variant is a **Bar** type. It contains:
+
+* **Empty** — the character used for unfilled segments of the bar. Defaults to `-`
+
+For example, with `Empty: .` the bar would render as `||||||......` instead of `||||||------`.
+
+## Confirm / Cancel
+
+Format changes are previewed live in the chain but are **not saved** until you click **Confirm**. Click **Cancel** to discard changes and revert to the previous format settings.
+
+After confirming, remember to click **Save** in the main editor to persist your changes to disk.

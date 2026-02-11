@@ -1,0 +1,82 @@
+---
+title: Persistence
+description: File formats for player preferences and admin configuration.
+---
+
+NameplateBuilder persists all player settings and admin configuration to disk so they survive server restarts.
+
+## Player Preferences
+
+**File:** `preferences.txt`
+
+One line per record, pipe-delimited. Each line starts with a single-character prefix indicating the record type.
+
+| Prefix | Format | Description |
+| :--- | :--- | :--- |
+| `N` | `N\|uuid\|pluginId:segmentId,...` | NPC segment chain order |
+| `P` | `P\|uuid\|pluginId:segmentId,...` | Player segment chain order |
+| `E` | `E\|uuid\|true/false` | Master enable toggle |
+| `L` | `L\|uuid\|true/false` | Look-at (view-cone) toggle |
+| `O` | `O\|uuid\|0.5` | Vertical offset value |
+| `S` | `S\|uuid\|pluginId:segmentId\|separator` | Per-block separator |
+| `V` | `V\|uuid\|pluginId:segmentId\|variantIndex` | Selected format variant |
+| `X` | `X\|uuid\|pluginId:segmentId\|prefix` | Prefix text |
+| `U` | `U\|uuid\|pluginId:segmentId\|suffix` | Suffix text |
+| `B` | `B\|uuid\|pluginId:segmentId\|char` | Bar empty-fill character |
+| `W` | `W\|uuid\|true/false` | Welcome message toggle |
+
+### Example
+
+```
+N|550e8400-e29b-41d4-a716-446655440000|EliteMobs:health,EliteMobs:tier
+P|550e8400-e29b-41d4-a716-446655440000|NameplateBuilder:player_name,MyMod:guild
+E|550e8400-e29b-41d4-a716-446655440000|true
+L|550e8400-e29b-41d4-a716-446655440000|false
+O|550e8400-e29b-41d4-a716-446655440000|0.5
+S|550e8400-e29b-41d4-a716-446655440000|EliteMobs:health| -
+V|550e8400-e29b-41d4-a716-446655440000|EliteMobs:health|2
+X|550e8400-e29b-41d4-a716-446655440000|EliteMobs:health|HP: [
+U|550e8400-e29b-41d4-a716-446655440000|EliteMobs:health|]
+B|550e8400-e29b-41d4-a716-446655440000|EliteMobs:health|.
+W|550e8400-e29b-41d4-a716-446655440000|true
+```
+
+## Admin Configuration
+
+**File:** `admin_config.txt`
+
+| Prefix | Format | Description |
+| :--- | :--- | :--- |
+| `S` | `S\|serverName` | Server display name for welcome message |
+| `R` | `R\|pluginId\|segmentId` | Required segment |
+| `D` | `D\|pluginId\|segmentId` | Disabled segment |
+
+Lines starting with `#` are comments. Blank lines are ignored.
+
+### Example
+
+```
+# Server display name
+S|My Awesome Server
+
+# Required segments — always shown for all players
+R|NameplateBuilder|player_name
+R|EliteMobs|health
+
+# Disabled segments — hidden from all players
+D|MyMod|debug_info
+```
+
+### Mutual Exclusion
+
+A segment cannot be both required and disabled. If an admin marks a required segment as disabled, it is automatically removed from the required set (and vice versa). This is enforced both in the UI and in the persistence layer.
+
+## File Location
+
+Both files are stored in the mod's data directory:
+
+```
+%APPDATA%/Hytale/UserData/Saves/<save>/mods/NameplateBuilder/
+  preferences.txt
+  admin_config.txt
+```

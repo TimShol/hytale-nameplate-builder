@@ -1,0 +1,87 @@
+---
+title: API Reference
+description: Complete method tables for NameplateAPI, NameplateData, and related types.
+---
+
+## NameplateAPI — Static Methods
+
+| Method | Description |
+| :--- | :--- |
+| `describe(plugin, segmentId, displayName)` | Register UI metadata. Defaults to `SegmentTarget.ALL`, no example. |
+| `describe(plugin, segmentId, displayName, target)` | Register UI metadata with an entity target hint. |
+| `describe(plugin, segmentId, displayName, target, example)` | Register UI metadata with target hint and example preview text. |
+| `describeVariants(plugin, segmentId, variantNames)` | Register format variant names for a segment. Index 0 is the default. |
+| `undescribe(plugin, segmentId)` | Remove a segment description from the UI at runtime. |
+| `register(store, entityRef, segmentId, text)` | Set or update nameplate text for a segment on an entity. |
+| `remove(store, entityRef, segmentId)` | Remove a segment's text from an entity. Auto-removes the component if empty. |
+| `getComponentType()` | Get the `ComponentType<EntityStore, NameplateData>` for direct ECS access. |
+
+### Parameter Details
+
+**`describe()` parameters:**
+
+| Parameter | Type | Description |
+| :--- | :--- | :--- |
+| `plugin` | `JavaPlugin` | Your plugin instance (pass `this` from `setup()`) |
+| `segmentId` | `String` | Unique key for this segment within your plugin (e.g. `"health"`, `"guild"`) |
+| `displayName` | `String` | Human-readable name shown in the UI (e.g. `"Health Bar"`) |
+| `target` | `SegmentTarget` | UI hint for which entity types this applies to |
+| `example` | `String` | Preview text shown in the UI (e.g. `"67/67"`) |
+
+**`register()` parameters:**
+
+| Parameter | Type | Description |
+| :--- | :--- | :--- |
+| `store` | `Store<EntityStore>` | The entity store |
+| `entityRef` | `Ref<EntityStore>` | Reference to the target entity |
+| `segmentId` | `String` | The segment key (must match what you passed to `describe()`) |
+| `text` | `String` | The text value to display |
+
+## NameplateData — Instance Methods
+
+| Method | Return | Description |
+| :--- | :--- | :--- |
+| `setText(key, text)` | `void` | Set or update a segment's text. Pass `null` to remove. |
+| `getText(key)` | `String` | Get a segment's current text. Returns `null` if not set. |
+| `removeText(key)` | `void` | Remove a segment. |
+| `getEntries()` | `Set<Map.Entry>` | Unmodifiable view of all key-value entries. |
+| `isEmpty()` | `boolean` | Returns `true` if no entries exist. |
+
+## SegmentTarget — Enum
+
+| Value | UI Tag | Description |
+| :--- | :--- | :--- |
+| `ALL` | `[All]` | Applies to all entity types |
+| `PLAYERS` | `[Players]` | Intended for player entities |
+| `NPCS` | `[NPCs]` | Intended for NPC entities |
+
+The target is a **UI hint only**. It does not restrict which entity types you can register the segment on.
+
+## Exceptions
+
+| Exception | Parent | When It's Thrown |
+| :--- | :--- | :--- |
+| `NameplateException` | `RuntimeException` | Base class — not thrown directly |
+| `NameplateNotInitializedException` | `NameplateException` | API called before NameplateBuilder loaded. Check `manifest.json` dependency. |
+| `NameplateArgumentException` | `NameplateException` | `null` or blank passed to a required parameter. |
+
+## Key Conventions
+
+### Segment IDs
+
+* Must be non-null and non-blank
+* Scoped to your plugin — two mods can both use `"health"` without conflict
+* Used as the key in `NameplateData.setText()` and `NameplateData.getText()`
+
+### Variant Key Suffixes
+
+* Variant 0 (default) uses the base key: `"health"`
+* Variant 1 uses `.1` suffix: `"health.1"`
+* Variant 2 uses `.2` suffix: `"health.2"`
+* The aggregator falls back to the base key if a suffixed key is missing
+
+### Hidden Keys
+
+* Keys starting with `_` (underscore) are hidden metadata
+* Stored in `NameplateData` but never shown in output or UI
+* Example: `"_spawn_tick"`, `"_phase"`
