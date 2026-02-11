@@ -3,6 +3,7 @@
 Step-by-step guide for mod developers who want to add their own nameplate blocks to NameplateBuilder.
 
 > **Looking for the main README?** See [README.md](../README.md) for an overview, features, and screenshots.
+
 > **Looking for internals?** See [Project Structure](PROJECT_STRUCTURE.md) for architecture and file details.
 
 ---
