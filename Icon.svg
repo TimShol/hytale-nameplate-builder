@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="NameplateBuilder icon">
+  <defs>
+    <linearGradient id="g" x1="120" y1="160" x2="392" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#68F7C8"/>
+      <stop offset="1" stop-color="#38A3FF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect x="64" y="64" width="384" height="384" rx="96" fill="#0B1020"/>
+
+  <!-- Square brackets (clean, non-overlapping) -->
+  <path d="M150 190 
+           H120 V322 H150"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-opacity="0.25"
+        stroke-width="16"
+        stroke-linecap="square"/>
+
+  <path d="M362 190 
+           H392 V322 H362"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-opacity="0.25"
+        stroke-width="16"
+        stroke-linecap="square"/>
+
+  <!-- Nameplate -->
+  <rect x="170" y="210" width="172" height="92" rx="28" fill="url(#g)"/>
+
+  <!-- Nameplate lines -->
+  <rect x="200" y="238" width="112" height="14" rx="7" fill="#0B1020" opacity="0.5"/>
+  <rect x="200" y="262" width="80" height="14" rx="7" fill="#0B1020" opacity="0.35"/>
+
+  <!-- NPB Text -->
+  <text x="256" y="360"
+        text-anchor="middle"
+        font-family="Poppins, Montserrat, Arial, sans-serif"
+        font-size="64"
+        font-weight="600"
+        fill="#FFFFFF"
+        letter-spacing="4"
+        opacity="0.9">
+    NPB
+  </text>
+
+  <!-- Subtle frame -->
+  <rect x="64" y="64" width="384" height="384" rx="96"
+        fill="none"
+        stroke="#FFFFFF"
+        opacity="0.08"
+        stroke-width="6"/>
+</svg>
