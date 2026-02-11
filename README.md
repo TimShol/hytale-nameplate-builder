@@ -31,6 +31,10 @@ You can download the example mod by going to <a href="https://github.com/TimShol
 
 ## Documentation
 
+You can find all the documentation, modding guides, and API references on the docs site:
+
+[![Docs](https://img.shields.io/badge/Documentation-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white)](https://docs.nameplatebuilder.frotty27.com/)
+
 | | |
 |---|---|
 | **[Modding Guide](docs/MODDING_GUIDE.md)** | API reference, code examples, and integration guide for mod developers |
