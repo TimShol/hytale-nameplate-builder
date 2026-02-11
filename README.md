@@ -9,14 +9,14 @@ A server-side nameplate manager for Hytale that lets other mods contribute text 
 <table>
 <tr>
 <td align="center" width="50%">
-<img src="icons/NPB-Server-256.png" alt="Server Plugin" width="256"/><br/><br/>
+<img src="icons/NPB-Server-128.png" alt="Server Plugin" width="150"/><br/><br/>
 <strong>Server Plugin</strong><br/><br/>
 <a href="https://www.curseforge.com/hytale/mods/PLACEHOLDER_SERVER_SLUG">
 <img src="https://img.shields.io/badge/Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white" alt="Download Server Plugin"/>
 </a>
 </td>
 <td align="center" width="50%">
-<img src="icons/NPB-API-128.png" alt="API" width="128"/><br/><br/>
+<img src="icons/NPB-API-128.png" alt="API" width="150"/><br/><br/>
 <strong>API (for mod devs)</strong><br/><br/>
 <a href="https://www.curseforge.com/hytale/mods/PLACEHOLDER_API_SLUG">
 <img src="https://img.shields.io/badge/Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white" alt="Download API"/>
