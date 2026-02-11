@@ -1,0 +1,35 @@
+---
+title: General Settings
+description: Master toggles, offset, and welcome message settings.
+---
+
+The **General** tab is the first tab in the sidebar, under the GENERAL section.
+
+## Settings
+
+### Enable Nameplates
+
+Master toggle to show or hide all nameplates. When disabled, entities display no nameplate text at all.
+
+### Only Show When Looking
+
+When enabled, nameplates are only visible for entities you're currently looking at. Uses a ~25 degree half-angle view cone with a maximum range of 30 blocks.
+
+Entities outside the cone receive an empty nameplate update to prevent the default entity ID from showing through.
+
+### Show Welcome Message
+
+Toggle the coloured join message on or off. When enabled, you see a message every time you join the server:
+
+* **Green** — `[ServerName] - Use /npb to customize your nameplates.`
+* **Red** (when all segments are disabled) — `[ServerName] - Nameplates are disabled on this server.`
+
+### Offset
+
+Vertical nameplate offset in blocks. Accepts both `,` and `.` as decimal separators, clamped to the range **-5.0** to **5.0**.
+
+When a non-zero offset is set, an invisible anchor entity is spawned above the real entity and the nameplate text is routed to the anchor, creating a hologram-style floating effect. The anchor follows the real entity every tick and is automatically cleaned up on death or when the offset returns to zero.
+
+## Saving
+
+Click **Save** to persist your settings. All settings are saved per-player and survive server restarts.

@@ -1,0 +1,53 @@
+---
+title: UI Overview
+description: Navigate the NameplateBuilder player interface.
+---
+
+Open the editor with `/npb` (aliases: `/nameplatebuilder`, `/nameplateui`). The UI features a sidebar on the left with three sections.
+
+## Sidebar Layout
+
+| Section | Tab | Description |
+| :--- | :--- | :--- |
+| **GENERAL** | Settings | Master enable/disable, look-at toggle, vertical offset, welcome message toggle |
+| **NAMEPLATES** | NPCs | Segment chain editor for NPC nameplates |
+| | Players | Segment chain editor for player nameplates |
+| | Disabled | Read-only view of all admin-disabled segments |
+| **ADMIN** | Required | Required segments panel (admin only) |
+| | Disabled | Disabled segments panel (admin only) |
+| | Settings | Server name configuration (admin only) |
+
+The **ADMIN** section is only visible to players with the `nameplatebuilder.admin` permission.
+
+## How Nameplates Work
+
+Each player has their own **segment chain** — an ordered list of segments that get composited into the nameplate string. The chain determines what appears above entities and in what order.
+
+For example, if a player's NPC chain is `[Health Bar, Guild Tag, Elite Tier]` with ` - ` separators, entities would show:
+
+```
+42/67 - [Warriors] - [Elite]
+```
+
+Every installed mod can contribute segments. Players pick the ones they want, order them however they like, and choose display formats per segment.
+
+## Built-in Segments
+
+NameplateBuilder ships with four built-in segments, shown with a warm-purple tint in the UI:
+
+| Segment | Variants | Target |
+| :--- | :--- | :--- |
+| **Player Name** | Name, Anonymized | Players |
+| **Health** | Current/Max, Percentage, Bar | All |
+| **Stamina** | Current/Max, Percentage, Bar | All |
+| **Mana** | Current/Max, Percentage, Bar | All |
+
+## Empty State
+
+When no segments are enabled, entities display the hint text:
+
+```
+Type /npb to customize
+```
+
+This hint appears instead of the raw entity ID, letting new players know the system exists.

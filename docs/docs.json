@@ -1,0 +1,57 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "NameplateBuilder",
+  "theme": "willow",
+  "logo": {
+    "dark": "/images/logo-dark.svg",
+    "light": "/images/logo-light.svg"
+  },
+  "favicon": "/images/favicon.svg",
+  "colors": {
+    "primary": "#3B2D5C",
+    "light": "#A78BFA",
+    "dark": "#1A1128"
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting Started",
+        "pages": [
+          "index",
+          "getting-started/overview",
+          "getting-started/installation"
+        ]
+      },
+      {
+        "group": "Player Guide",
+        "pages": [
+          "player-guide/ui-overview",
+          "player-guide/general-settings",
+          "player-guide/editor",
+          "player-guide/format-popup",
+          "player-guide/admin"
+        ]
+      },
+      {
+        "group": "Modding Guide",
+        "pages": [
+          "modding/quick-start",
+          "modding/describe-segments",
+          "modding/format-variants",
+          "modding/register-text",
+          "modding/tick-systems",
+          "modding/advanced"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "reference/api",
+          "reference/persistence",
+          "reference/architecture",
+          "reference/faq"
+        ]
+      }
+    ]
+  }
+}

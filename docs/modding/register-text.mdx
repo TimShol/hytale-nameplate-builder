@@ -1,0 +1,90 @@
+---
+title: Register Text
+description: Push, update, and remove segment text on entities.
+---
+
+This is the core of the API. At runtime, you push text to entities so it shows up in their nameplate.
+
+## Basic Usage
+
+### Register (Add or Update)
+
+```java
+// Register a segment on an entity.
+// If the entity doesn't have a NameplateData component yet,
+// one is created and attached automatically.
+NameplateAPI.register(store, entityRef, "health", "67/67");
+NameplateAPI.register(store, entityRef, "guild", "[Warriors]");
+NameplateAPI.register(store, entityRef, "tier", "[Elite]");
+```
+
+### Update
+
+```java
+// Just call register() again. It overwrites the old value in place.
+// No need to remove first. No flashing. Efficient.
+NameplateAPI.register(store, entityRef, "health", "23/67");
+```
+
+### Remove a Single Segment
+
+```java
+// The entity keeps its other segments.
+// If this was the last segment, the NameplateData component
+// is automatically removed from the entity.
+NameplateAPI.remove(store, entityRef, "health");
+```
+
+### Remove All Nameplate Data
+
+```java
+// Wipes every segment at once. Use when an entity should have
+// no nameplate at all (e.g. going invisible, despawning).
+store.tryRemoveComponent(entityRef, NameplateAPI.getComponentType());
+```
+
+## Where You Can Call These Methods
+
+`register()` and `remove()` work **anywhere you have access to the `Store` and a `Ref`**: event handlers, command handlers, custom systems, etc.
+
+### The Tick System Exception
+
+If you're inside an `EntityTickingSystem` and the entity does **NOT** already have a `NameplateData` component, `register()` will try to call `store.addComponent()`, which throws:
+
+```
+IllegalStateException: Store is currently processing
+```
+
+This happens because the store is locked for structural changes during tick processing. Use the `CommandBuffer` pattern from the [Tick Systems](/modding/tick-systems) page instead.
+
+If the entity **already has** the component, `register()` just mutates the internal map — which is safe from tick systems.
+
+## NameplateData Direct Access
+
+For advanced use cases, you can work with `NameplateData` directly:
+
+```java
+// Get the component from the store
+ComponentType<EntityStore, NameplateData> type = NameplateAPI.getComponentType();
+NameplateData data = store.getComponent(entityRef, type);
+
+if (data != null) {
+    // Set or update text
+    data.setText("health", "42/67");
+
+    // Read current text
+    String current = data.getText("health"); // "42/67"
+
+    // Remove a key
+    data.removeText("health");
+
+    // Check if any entries exist
+    boolean empty = data.isEmpty();
+
+    // Iterate all entries
+    for (var entry : data.getEntries()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+    }
+}
+```

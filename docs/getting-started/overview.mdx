@@ -1,0 +1,52 @@
+---
+title: Overview
+description: Features, permissions, and how NameplateBuilder works.
+---
+
+## The Problem
+
+Hytale gives each entity a single `Nameplate` component. When multiple mods try to set it, they overwrite each other. NameplateBuilder fixes this by acting as a central aggregator — mods register named **segments**, and the system composites them into one nameplate string per entity, per viewer, every tick.
+
+## Core Features
+
+* **Multi-mod aggregation** — Any number of mods contribute segments. NameplateBuilder handles compositing, ordering, and per-viewer preferences
+* **Built-in segments** — Player Name (with anonymize variant), Health, Stamina, and Mana (each with Current/Max, Percentage, and Bar variants). Built-in segments are shown with a distinct warm-purple tint in the UI
+* **Death cleanup** — Nameplates are automatically cleared when an entity dies, instead of lingering through the death animation
+* **Persistent preferences** — All player settings and admin config are saved to disk and survive server restarts
+
+## Welcome Message
+
+When a player joins, a coloured message is displayed:
+
+* **Green** when nameplates are available — `[ServerName] - Use /npb to customize your nameplates.`
+* **Red** when all segments are admin-disabled — `[ServerName] - Nameplates are disabled on this server.`
+
+Players can toggle this off via General settings.
+
+## Player Customization
+
+Players open `/npb` (aliases: `/nameplatebuilder`, `/nameplateui`) to access a full UI with:
+
+* **Per-player segment chains** — Add, remove, and reorder segments from all installed mods
+* **Per-block separators** — Each segment can have its own separator to the next
+* **Format variants** — Mods can register multiple display formats (e.g. health as `42/67`, `63%`, or `||||||------`)
+* **Prefix/suffix wrapping** — Custom text to wrap segment output (e.g. `HP: [` and `]`)
+* **Bar customization** — Change the empty-fill character in bar variants
+* **Confirm/cancel workflow** — Format changes are previewed live but only saved on Confirm
+* **Nameplate offset** — Configurable vertical offset using invisible anchor entities
+* **View-cone filtering** — Optional "only show when looking at" mode (~25 degree cone, up to 30 blocks)
+* **Live preview** — Real-time composited text preview in the editor
+
+## Admin Controls
+
+Admins with the `nameplatebuilder.admin` permission can:
+
+* **Require segments** — Force specific segments to always display for all players. Required segments appear with a yellow tint and cannot be removed from chains
+* **Disable segments** — Hide specific segments from all players entirely. A segment cannot be both required and disabled. When every segment is disabled, nameplates are blanked globally
+* **Server name** — Set a custom display name for the join welcome message (defaults to "NameplateBuilder")
+
+## Permissions
+
+| Permission | Description |
+| :--- | :--- |
+| `nameplatebuilder.admin` | Grants access to the admin tabs (Required, Disabled, Settings) in the UI. Without this permission, the ADMIN section is hidden from the sidebar. |

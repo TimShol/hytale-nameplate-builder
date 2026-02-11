@@ -1,0 +1,131 @@
+---
+title: Architecture
+description: Internal systems, data flow, and project structure.
+---
+
+## Project Modules
+
+NameplateBuilder is split into three Gradle modules:
+
+| Module | Purpose |
+| :--- | :--- |
+| `nameplate-api` | Lightweight API jar for mod developers. Contains `NameplateAPI`, `NameplateData`, `SegmentTarget`, and exception classes. |
+| `nameplate-server` | The server plugin. Contains the aggregator, UI, persistence, admin config, and all internal systems. |
+| `nameplate-example-mod` | Working example mod demonstrating all API patterns. |
+
+## File Tree
+
+```
+NameplateBuilder/
+  nameplate-api/
+    src/main/java/.../api/
+      NameplateAPI.java                    Static entry point
+      NameplateData.java                   ECS component (Map<String, String>)
+      SegmentTarget.java                   Entity target enum
+      INameplateRegistry.java              Internal registry interface
+      NameplateException.java              Base exception
+      NameplateNotInitializedException.java
+      NameplateArgumentException.java
+
+  nameplate-server/
+    src/main/java/.../server/
+      NameplateBuilderPlugin.java          Server plugin entry point
+      NameplateAggregatorSystem.java       Per-tick compositor + death cleanup
+      DefaultSegmentSystem.java            Built-in segments
+      NameplateRegistry.java               Segment metadata store
+      NameplateBuilderPage.java            Player UI page
+      NameplateBuilderCommand.java         /npb command
+      NameplatePreferenceStore.java        Per-player persistence
+      AdminConfigStore.java                Admin config persistence
+      AnchorEntityManager.java             Anchor entity lifecycle
+      SegmentKey.java                      record(pluginId, segmentId)
+      ActiveTab.java                       Sidebar tab enum
+      AdminSubTab.java                     Admin sub-tab enum
+      UiState.java                         UI state snapshot
+      SettingsData.java                    Client/server UI events
+      SegmentView.java                     Segment metadata view
+    src/main/resources/
+      Common/UI/Custom/Pages/
+        NameplateBuilder_Editor.ui         UI layout definition
+
+  nameplate-example-mod/
+    src/main/java/.../example/
+      NameplateExamplePlugin.java          Describe + register systems
+      ArchaeopteryxNameplateSystem.java    NPC spawn + live health
+      LifetimeNameplateSystem.java         Per-entity tick updates
+```
+
+## Data Flow
+
+### Registration Flow
+
+1. Mods call `NameplateAPI.describe()` during `setup()` to register UI metadata
+2. `NameplateRegistry` stores display names, targets, examples, and variant lists
+3. The UI reads from `NameplateRegistry` to populate Available Blocks
+
+### Runtime Flow
+
+1. Mods call `NameplateAPI.register()` or write to `NameplateData` directly
+2. `NameplateData` stores segment text as `Map<String, String>` on the entity
+3. `NameplateAggregatorSystem` ticks every frame
+
+### Aggregation Flow (Per Frame)
+
+For each visible entity with `NameplateData`:
+
+1. Resolve segment keys from the component (skip `_`-prefixed and admin-disabled keys)
+2. Apply viewer preferences: ordering, enabled/disabled, format variants
+3. Resolve variant text: check suffixed key, fall back to base key
+4. Apply prefix/suffix wrapping and bar fill replacement
+5. Enforce admin-required segments
+6. Composite all segments with per-block separators
+7. Queue nameplate update to each viewer
+
+### Death Cleanup
+
+When an entity receives a `DeathComponent`:
+
+1. Aggregator sends empty nameplate to all viewers
+2. `NameplateData` component is removed from the entity
+3. If anchor entities exist for this entity, they are cleaned up
+
+### Anchor Entities
+
+When a player configures a vertical offset:
+
+1. An invisible "anchor" entity (`ProjectileComponent` + `Intangible` + `NetworkId`) is spawned above the real entity
+2. Nameplate text is routed to the anchor instead of the real entity
+3. Anchor follows the real entity every tick
+4. Cleaned up on death or when offset returns to zero
+
+### View-Cone Filtering
+
+When enabled per-viewer:
+
+1. Dot-product math checks if the viewer is looking at the entity
+2. ~25 degree half-angle cone, up to 30 blocks range
+3. Entities outside the cone receive an empty nameplate update
+
+## Key Design Decisions
+
+### Why ECS Components?
+
+`NameplateData` is a standard Hytale ECS component. This means:
+
+* It participates in archetype queries — the aggregator only ticks entities that have nameplate data
+* It's automatically cleaned up when entities are destroyed
+* Multiple mods can read/write to it without coordination
+* The `CommandBuffer` pattern handles structural changes safely
+
+### Why Per-Viewer?
+
+Each player sees their own customized view of every nameplate. This enables:
+
+* Personal segment ordering and selection
+* Format variant choices per segment per player
+* Admin-required segments overlaid on personal preferences
+* View-cone filtering based on the viewer's camera direction
+
+### Why Tick-Based?
+
+The aggregator runs every frame to ensure nameplate text always reflects the latest data. Since `setText()` is just a `HashMap.put()`, the cost of frequent updates is minimal.

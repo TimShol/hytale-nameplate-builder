@@ -1,0 +1,24 @@
+---
+title: Welcome
+description: NameplateBuilder — a server-side nameplate aggregator for Hytale.
+---
+
+**NameplateBuilder** solves a core problem for Hytale modders and players: when multiple mods want to display information above entities, they conflict over the single `Nameplate` component. NameplateBuilder acts as a central aggregator — each mod registers named segments, and the system composites them into one nameplate per entity, per viewer, every tick.
+
+Players get a full UI to customize what they see. Admins get server-wide controls. Modders get a simple API.
+
+## What It Does
+
+* **Multi-mod aggregation** — Any number of mods register segments (health, guild tag, tier, title) and NameplateBuilder composites them into a single nameplate per entity
+* **Player customization** — Players open `/npb` to pick segments, reorder them, choose display formats, set separators, and configure prefix/suffix wrapping
+* **Admin controls** — Force segments on all players, disable segments globally, set a server display name
+* **Built-in segments** — Ships with Player Name, Health, Stamina, and Mana out of the box
+* **Zero-conflict** — Death cleanup, persistent preferences, view-cone filtering, and hologram offset rendering are all handled automatically
+
+## Quick Navigation
+
+* **[Overview](/getting-started/overview)** — Features, permissions, and how it all fits together
+* **[Installation](/getting-started/installation)** — Get the mod running on your server
+* **[Player Guide](/player-guide/ui-overview)** — Learn the UI as a player
+* **[Modding Guide](/modding/quick-start)** — Add your own segments in under 5 minutes
+* **[API Reference](/reference/api)** — Full method tables and exception docs

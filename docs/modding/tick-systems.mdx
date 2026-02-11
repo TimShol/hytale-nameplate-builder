@@ -1,0 +1,148 @@
+---
+title: Tick Systems
+description: Initialize NPC nameplates on spawn and update them every tick.
+---
+
+The two most common patterns for tick-based nameplate updates are:
+
+1. **NPC spawn initialization** — Detect newly spawned NPCs and seed their nameplate data
+2. **Live tick updates** — Update dynamic values (health, timers, buffs) every tick
+
+## NPC Spawn Initialization
+
+The recommended pattern for giving NPCs nameplate data when they first spawn:
+
+```java
+import com.frotty27.nameplatebuilder.api.NameplateData;
+import com.hypixel.hytale.component.*;
+import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
+import com.hypixel.hytale.server.core.modules.entity.tracker.EntityTrackerSystems;
+import com.hypixel.hytale.server.npc.entities.NPCEntity;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
+final class MyNpcNameplateSystem extends EntityTickingSystem<EntityStore> {
+
+    private static final String ROLE_NAME = "Kweebec";
+
+    private final ComponentType<EntityStore, NPCEntity> npcType;
+    private final ComponentType<EntityStore, NameplateData> nameplateDataType;
+
+    MyNpcNameplateSystem(ComponentType<EntityStore, NameplateData> nameplateDataType) {
+        this.npcType = NPCEntity.getComponentType();
+        this.nameplateDataType = nameplateDataType;
+    }
+
+    @Override
+    public Archetype<EntityStore> getQuery() {
+        return Archetype.of(npcType);
+    }
+
+    @Override
+    public SystemGroup<EntityStore> getGroup() {
+        return EntityTrackerSystems.QUEUE_UPDATE_GROUP;
+    }
+
+    @Override
+    public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk,
+                     Store<EntityStore> store, CommandBuffer<EntityStore> cb) {
+
+        // Filter by NPC role name
+        NPCEntity npc = chunk.getComponent(index, npcType);
+        if (npc == null || !ROLE_NAME.equals(npc.getRoleName())) {
+            return;
+        }
+
+        Ref<EntityStore> ref = chunk.getReferenceTo(index);
+
+        // Skip if already initialized
+        if (store.getComponent(ref, nameplateDataType) != null) {
+            return;
+        }
+
+        // First time — seed nameplate data
+        NameplateData data = new NameplateData();
+        data.setText("health", "100/100");
+        data.setText("level", "Lv. 10");
+        data.setText("faction", "<Forest>");
+
+        // Use putComponent via CommandBuffer (NOT store.addComponent)
+        cb.putComponent(ref, nameplateDataType, data);
+    }
+}
+```
+
+### Why `CommandBuffer`?
+
+Inside an `EntityTickingSystem`, the `Store` is **locked for structural changes** (adding/removing components). Calling `store.addComponent()` directly throws:
+
+```
+IllegalStateException: Store is currently processing
+```
+
+The `CommandBuffer` queues changes and executes them after the system finishes its tick. Reading (`store.getComponent()`) and mutating existing component data in place (`data.setText()`) are safe.
+
+### Why `putComponent()`?
+
+`addComponent()` throws if the component already exists. `putComponent()` is an **upsert** (add or replace) — safe against race conditions when multiple systems or mods might initialize the same entity.
+
+## Live Tick Updates
+
+Once an entity has a `NameplateData` component, update it every tick to keep dynamic values current:
+
+```java
+final class MyTickUpdater extends EntityTickingSystem<EntityStore> {
+
+    private final ComponentType<EntityStore, NameplateData> nameplateDataType;
+
+    MyTickUpdater(ComponentType<EntityStore, NameplateData> nameplateDataType) {
+        this.nameplateDataType = nameplateDataType;
+    }
+
+    @Override
+    public Archetype<EntityStore> getQuery() {
+        return Archetype.of(nameplateDataType);
+    }
+
+    @Override
+    public SystemGroup<EntityStore> getGroup() {
+        return EntityTrackerSystems.QUEUE_UPDATE_GROUP;
+    }
+
+    @Override
+    public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk,
+                     Store<EntityStore> store, CommandBuffer<EntityStore> cb) {
+
+        NameplateData data = chunk.getComponent(index, nameplateDataType);
+        if (data == null) return;
+
+        // setText() every tick is safe — it's just a HashMap.put().
+        // No component is added or removed, so there's no flashing.
+        // The aggregator reads the latest value on the next nameplate tick.
+        data.setText("health", computeHealthText(store, chunk, index));
+    }
+}
+```
+
+Calling `data.setText()` every tick is **cheap** — it's just a `HashMap.put()`. The aggregator reads the latest values when it composites the nameplate, so updates are reflected immediately.
+
+## Registering Systems
+
+Register both systems in your plugin's `setup()`:
+
+```java
+@Override
+protected void setup() {
+    NameplateAPI.describe(this, "health", "Health Bar",
+            SegmentTarget.ALL, "100/100");
+    NameplateAPI.describe(this, "level", "Level",
+            SegmentTarget.ALL, "Lv. 10");
+    NameplateAPI.describe(this, "faction", "Faction",
+            SegmentTarget.NPCS, "<Forest>");
+
+    ComponentType<EntityStore, NameplateData> type =
+        NameplateAPI.getComponentType();
+
+    getEntityStoreRegistry().registerSystem(new MyNpcNameplateSystem(type));
+    getEntityStoreRegistry().registerSystem(new MyTickUpdater(type));
+}
+```

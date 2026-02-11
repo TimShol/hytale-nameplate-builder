@@ -1,0 +1,72 @@
+---
+title: Admin Panel
+description: Server-wide segment controls and configuration.
+---
+
+The **ADMIN** section in the sidebar is only visible to players with the `nameplatebuilder.admin` permission. It contains three sub-tabs: **Required**, **Disabled**, and **Settings**.
+
+## Required Sub-Tab
+
+Force specific segments to always display for all players.
+
+The panel uses a **two-column layout** with a vertical divider:
+
+| Column | Description |
+| :--- | :--- |
+| **Available** (left) | Segments not currently required. Green-tinted blocks with a `>` button to move to Required. Excludes disabled segments. |
+| **Required** (right) | Segments forced on all players. Yellow-tinted blocks with a `<` button to move back to Available. |
+
+### How Required Segments Work
+
+* Required segments are **always displayed** in the nameplate output for all players
+* They are **always included** in every player's chain
+* Players can still **reorder** required segments within their chain
+* Players **cannot remove** required segments from their chain
+* A segment **cannot be both** required and disabled — marking one removes the other
+
+Each column has independent pagination (7 rows per page). Use **Save** to persist changes and **Reset** to revert.
+
+## Disabled Sub-Tab
+
+Hide specific segments from all players entirely.
+
+Same two-column layout, using red-tinted blocks and headers:
+
+| Column | Description |
+| :--- | :--- |
+| **Available** (left) | Segments not currently disabled. Green-tinted blocks with a `>` button to move to Disabled. Excludes required segments. |
+| **Disabled** (right) | Segments hidden from all players. Red-tinted blocks with a `<` button to move back. |
+
+### How Disabled Segments Work
+
+* Disabled segments are **excluded** from all player chains
+* They are **filtered out** of available-block lists in the editor
+* They are **skipped** by the aggregator — never shown in nameplates
+* Players can see which segments are disabled via the [Disabled tab](/player-guide/editor#disabled-tab) under NAMEPLATES
+* When **all segments are disabled**, nameplates are blanked globally and the join message switches to the red "disabled" variant
+
+Each column has independent pagination (7 rows per page). Use **Save** to persist changes and **Reset** to revert.
+
+## Settings Sub-Tab
+
+### Server Name
+
+A text field for the display name shown in the join welcome message. The name appears inside brackets:
+
+```
+[YourServerName] - Use /npb to customize your nameplates.
+```
+
+Defaults to "NameplateBuilder" if left blank. Use **Save** to persist and **Reset** to revert.
+
+## Persistence
+
+All admin configuration is stored in `admin_config.txt` in the mod's data folder. The format uses pipe-delimited lines:
+
+| Prefix | Format | Description |
+| :--- | :--- | :--- |
+| `S` | `S\|serverName` | Server display name |
+| `R` | `R\|pluginId\|segmentId` | Required segment |
+| `D` | `D\|pluginId\|segmentId` | Disabled segment |
+
+Lines starting with `#` are comments. Blank lines are ignored.
