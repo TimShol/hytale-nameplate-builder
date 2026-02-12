@@ -49,6 +49,8 @@ dependencies {
 }
 ```
 
+The `-javadoc.jar` and `-sources.jar` are available as additional downloads. Place all three in your `libs/` folder for full IDE support (autocomplete, inline docs, click-to-source).
+
 You only need the lightweight API jar (`nameplate-api`), not the full server plugin. The API jar contains just the classes you interact with:
 
 | Class | What it does |
