@@ -10,26 +10,24 @@ A server-side nameplate manager for Hytale that lets other mods contribute text 
 <tr>
 <td align="center" width="50%">
 <img src="icons/NPB-Server-128.png" alt="Server Plugin" width="150"/><br/><br/>
-<strong>Server Plugin</strong><br/><br/>
+<strong>Plugin</strong><br/><br/>
 <a href="https://www.curseforge.com/hytale/mods/PLACEHOLDER_SERVER_SLUG">
-<img src="https://img.shields.io/badge/Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white" alt="Download Server Plugin"/>
+<img src="https://img.shields.io/badge/Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white" alt="Download NameplateBuilder Plugin"/>
 </a>
 </td>
 <td align="center" width="50%">
 <img src="icons/NPB-API-128.png" alt="API" width="150"/><br/><br/>
 <strong>API (for mod devs)</strong><br/><br/>
 <a href="https://www.curseforge.com/hytale/mods/PLACEHOLDER_API_SLUG">
-<img src="https://img.shields.io/badge/Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white" alt="Download API"/>
+<img src="https://img.shields.io/badge/Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white" alt="Download NameplateBuilder API"/>
 </a>
 </td>
 </tr>
 </table>
 
-You can find the example mod in <a href="https://github.com/TimShol/hytale-nameplate-builder/releases/tag/v1.0.0"> releases
+You can find the example mod in <a href="https://github.com/TimShol/hytale-nameplate-builder/releases/tag/v1.0.0"> Releases</a>.
 
 <!-- [![GitHub Example Mod](https://img.shields.io/badge/Example_Mod-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/TimShol/hytale-nameplate-builder/releases/tag/v1.0.0) -->
-
-<!-- TODO: Replace PLACEHOLDER_SERVER_SLUG, PLACEHOLDER_API_SLUG, and PLACEHOLDER_USER with actual values -->
 
 ## Documentation
 
