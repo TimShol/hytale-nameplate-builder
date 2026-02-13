@@ -50,11 +50,16 @@ final class AnchorEntityManager {
         volatile Ref<EntityStore> anchorRef;
         volatile boolean spawnPending;
         double currentOffset;
+        // Velocity tracking for predictive positioning
+        Vector3d lastPosition;
+        Vector3d velocity;
 
         AnchorState(double offset) {
             this.anchorRef = null;
             this.spawnPending = true;
             this.currentOffset = offset;
+            this.lastPosition = null;
+            this.velocity = null;
         }
     }
 
@@ -67,7 +72,11 @@ final class AnchorEntityManager {
         if (state == null || state.spawnPending) {
             return null;
         }
-        return state.anchorRef;
+        Ref<EntityStore> ref = state.anchorRef;
+        if (ref == null || !ref.isValid()) {
+            return null;
+        }
+        return ref;
     }
 
     /**
@@ -94,22 +103,25 @@ final class AnchorEntityManager {
      *   <li>If no anchor exists: queues a spawn via {@code world.execute()}.</li>
      *   <li>If spawn is pending: updates the desired offset for when it lands.</li>
      *   <li>If anchor is ready: repositions it to match the real entity's
-     *       position plus the Y offset.</li>
+     *       position plus the Y offset, with velocity-based prediction for
+     *       fast-moving entities.</li>
      * </ul>
      *
      * @param realEntityRef the real entity's reference
      * @param realPosition  the real entity's current world position
      * @param offset        the Y offset (max across all viewers needing an anchor)
      * @param world         the World for spawning (via {@code world.execute()})
-     * @param store         the entity store for reading/mutating components
+     * @param store         the entity store for reading components
      * @param transformType the TransformComponent type for position access
+     * @param commandBuffer the command buffer for component replacement
      */
     void ensureAnchor(Ref<EntityStore> realEntityRef,
                       Vector3d realPosition,
                       double offset,
                       World world,
                       Store<EntityStore> store,
-                      ComponentType<EntityStore, TransformComponent> transformType) {
+                      ComponentType<EntityStore, TransformComponent> transformType,
+                      CommandBuffer<EntityStore> commandBuffer) {
 
         AnchorState state = anchors.get(realEntityRef);
 
@@ -127,39 +139,43 @@ final class AnchorEntityManager {
             return;
         }
 
-        // Anchor exists and is ready — reposition it
+        // Anchor ref went stale (engine removed the entity) — re-spawn
+        if (state.anchorRef == null || !state.anchorRef.isValid()) {
+            state.anchorRef = null;
+            state.spawnPending = true;
+            state.currentOffset = offset;
+            state.lastPosition = null;
+            state.velocity = null;
+            queueSpawn(realPosition, offset, world, state);
+            return;
+        }
+
+        // Anchor exists and is ready — reposition it with prediction
         state.currentOffset = offset;
-        repositionAnchor(state.anchorRef, realPosition, offset, store, transformType);
+        repositionAnchor(state.anchorRef, realPosition, offset, state, store, transformType, commandBuffer);
     }
 
     /**
-     * Remove the anchor for a real entity. If the anchor is ready, it is
-     * removed via the command buffer. If spawn is still pending, the state
-     * is added to {@link #pendingRemovals} for cleanup when the spawn
-     * completes.
+     * Remove the anchor for a real entity. Schedules the anchor for removal
+     * on the next tick to avoid chunk serialization race conditions.
      *
      * @param realEntityRef the real entity whose anchor should be removed
-     * @param commandBuffer the command buffer for deferred entity removal
+     * @param commandBuffer the command buffer (unused, kept for API compatibility)
      */
     void removeAnchor(Ref<EntityStore> realEntityRef,
                       CommandBuffer<EntityStore> commandBuffer) {
         AnchorState state = anchors.remove(realEntityRef);
-        if (state == null) {
-            return;
-        }
-
-        if (state.spawnPending || state.anchorRef == null) {
-            // Spawn hasn't completed yet — defer removal
+        if (state != null && !state.spawnPending && state.anchorRef != null && state.anchorRef.isValid()) {
+            // Schedule for removal on next tick
             pendingRemovals.add(state);
-            return;
         }
-
-        commandBuffer.removeEntity(state.anchorRef, RemoveReason.REMOVE);
     }
 
     /**
-     * Clean up anchors that were scheduled for removal while their spawn
-     * was still pending. Call once per tick from the aggregator.
+     * Clean up anchors that were scheduled for removal. This runs at the
+     * very start of the tick, before chunk saving, to avoid serialization races.
+     *
+     * <p>Call once per tick from the aggregator, before processing entities.</p>
      */
     void cleanupPendingRemovals(CommandBuffer<EntityStore> commandBuffer) {
         if (pendingRemovals.isEmpty()) {
@@ -168,11 +184,14 @@ final class AnchorEntityManager {
         Iterator<AnchorState> it = pendingRemovals.iterator();
         while (it.hasNext()) {
             AnchorState state = it.next();
-            if (!state.spawnPending && state.anchorRef != null) {
-                commandBuffer.removeEntity(state.anchorRef, RemoveReason.REMOVE);
-                it.remove();
+            if (state.anchorRef != null && state.anchorRef.isValid()) {
+                try {
+                    commandBuffer.removeEntity(state.anchorRef, RemoveReason.REMOVE);
+                } catch (IllegalStateException | IllegalArgumentException e) {
+                    // Ref became invalid or entity is locked — safe to ignore
+                }
             }
-            // If still pending, leave for the next tick
+            it.remove();
         }
     }
 
@@ -180,7 +199,7 @@ final class AnchorEntityManager {
      * Clean up anchors whose real entity has been removed from the store
      * (e.g. by {@code /npc clean}). The real entity's {@code Ref} becomes
      * invalid when the entity is removed, so we check {@code ref.isValid()}
-     * and despawn any orphaned anchors.
+     * and schedule anchor removal for the next tick.
      *
      * <p>Call once per tick from the aggregator, before processing entities.</p>
      */
@@ -195,11 +214,9 @@ final class AnchorEntityManager {
             if (!realRef.isValid()) {
                 AnchorState state = entry.getValue();
                 it.remove();
-                if (state.spawnPending || state.anchorRef == null) {
-                    // Anchor spawn hasn't completed — defer removal
+                // Schedule anchor for removal (will happen at start of next tick)
+                if (!state.spawnPending && state.anchorRef != null && state.anchorRef.isValid()) {
                     pendingRemovals.add(state);
-                } else {
-                    commandBuffer.removeEntity(state.anchorRef, RemoveReason.REMOVE);
                 }
             }
         }
@@ -215,7 +232,8 @@ final class AnchorEntityManager {
 
     /**
      * Queue an anchor entity spawn via {@code world.execute()}.
-     * The anchor materializes on the next tick.
+     * The anchor materializes on the next tick. Anchors are invisible entities
+     * with no model that exist solely to display nameplate text at an offset.
      */
     private void queueSpawn(Vector3d realPosition,
                             double offset,
@@ -235,9 +253,10 @@ final class AnchorEntityManager {
             Store<EntityStore> store = entityStore.getStore();
 
             Holder<EntityStore> holder = EntityStore.REGISTRY.newHolder();
+            // Use ProjectileComponent with empty model ID to avoid rendering
             holder.putComponent(
                     ProjectileComponent.getComponentType(),
-                    new ProjectileComponent("Projectile"));
+                    new ProjectileComponent(""));
             holder.putComponent(
                     Intangible.getComponentType(),
                     Intangible.INSTANCE);
@@ -250,7 +269,9 @@ final class AnchorEntityManager {
                     NetworkId.getComponentType(),
                     new NetworkId(entityStore.takeNextNetworkId()));
 
-            Ref<EntityStore> anchorRef = store.addEntity(holder, AddReason.SPAWN);
+            // Use AddReason.LOAD to indicate this is a runtime-only entity
+            // that shouldn't be persisted to disk during chunk saves
+            Ref<EntityStore> anchorRef = store.addEntity(holder, AddReason.LOAD);
             state.anchorRef = anchorRef;
             state.spawnPending = false;
         });
@@ -258,21 +279,68 @@ final class AnchorEntityManager {
 
     /**
      * Reposition an existing anchor to follow the real entity at the given
-     * Y offset. Mutates the {@code TransformComponent} position in-place,
-     * which is safe from within tick systems (no structural change).
+     * Y offset. Uses {@code CommandBuffer.replaceComponent()} for safe,
+     * deferred updates. Implements velocity-based prediction to compensate
+     * for the 1-tick delay and reduce visual lag on fast-moving entities.
+     *
+     * <p><b>Predictive positioning:</b> Tracks entity velocity and positions
+     * the anchor where the entity <i>will be</i> next tick, compensating for
+     * the CommandBuffer delay.</p>
      */
     private void repositionAnchor(Ref<EntityStore> anchorRef,
                                   Vector3d realPosition,
                                   double offset,
+                                  AnchorState state,
                                   Store<EntityStore> store,
-                                  ComponentType<EntityStore, TransformComponent> transformType) {
+                                  ComponentType<EntityStore, TransformComponent> transformType,
+                                  CommandBuffer<EntityStore> commandBuffer) {
         TransformComponent transform = store.getComponent(anchorRef, transformType);
         if (transform == null) {
             return;
         }
-        Vector3d pos = transform.getPosition();
-        pos.setX(realPosition.getX());
-        pos.setY(realPosition.getY() + offset);
-        pos.setZ(realPosition.getZ());
+
+        // ── Velocity calculation for predictive positioning ──
+        Vector3d targetPosition;
+
+        if (state.lastPosition != null) {
+            // Calculate velocity from position delta
+            double dx = realPosition.getX() - state.lastPosition.getX();
+            double dy = realPosition.getY() - state.lastPosition.getY();
+            double dz = realPosition.getZ() - state.lastPosition.getZ();
+
+            // Apply simple smoothing to avoid jitter from single-tick anomalies
+            if (state.velocity != null) {
+                // Exponential moving average: 70% current velocity + 30% new velocity
+                dx = state.velocity.getX() * 0.7 + dx * 0.3;
+                dy = state.velocity.getY() * 0.7 + dy * 0.3;
+                dz = state.velocity.getZ() * 0.7 + dz * 0.3;
+            }
+
+            state.velocity = new Vector3d(dx, dy, dz);
+
+            // Predict next position: current + velocity
+            // This compensates for the 1-tick CommandBuffer delay
+            targetPosition = new Vector3d(
+                    realPosition.getX() + dx,
+                    realPosition.getY() + dy + offset,
+                    realPosition.getZ() + dz
+            );
+        } else {
+            // First tick — no velocity data yet, use current position
+            targetPosition = new Vector3d(
+                    realPosition.getX(),
+                    realPosition.getY() + offset,
+                    realPosition.getZ()
+            );
+        }
+
+        // Store current position for next tick's velocity calculation
+        state.lastPosition = new Vector3d(realPosition.getX(), realPosition.getY(), realPosition.getZ());
+
+        // Create new TransformComponent with predicted position
+        TransformComponent newTransform = new TransformComponent(targetPosition, transform.getRotation());
+
+        // Queue component replacement via CommandBuffer (safe during tick processing)
+        commandBuffer.replaceComponent(anchorRef, transformType, newTransform);
     }
 }
