@@ -26,10 +26,10 @@ import java.util.Map;
  * Manages invisible "anchor" entities used to display nameplates at a
  * configurable vertical offset above real entities.
  *
- * <p>Each anchor is a bare {@code ProjectileComponent} entity with no model,
- * no collision ({@code Intangible}), and a {@code NetworkId} so it is visible
- * to clients. The anchor's {@code TransformComponent} position is updated
- * every tick to follow the real entity at the configured Y offset.</p>
+ * <p>Each anchor is a bare entity with just {@code TransformComponent},
+ * {@code Intangible} (no collision), and {@code NetworkId} (visible to clients).
+ * The anchor's position is updated every tick to follow the real entity at the
+ * configured Y offset.</p>
  *
  * <p>Anchor spawning is asynchronous — it is queued via {@code world.execute()}
  * and materializes on the next tick. During the one-frame delay, nameplate text
@@ -232,8 +232,9 @@ final class AnchorEntityManager {
 
     /**
      * Queue an anchor entity spawn via {@code world.execute()}.
-     * The anchor materializes on the next tick. Anchors are invisible entities
-     * with no model that exist solely to display nameplate text at an offset.
+     * The anchor materializes on the next tick. Anchors are bare invisible
+     * entities (Transform + Intangible + NetworkId) that exist solely to
+     * display nameplate text at an offset.
      */
     private void queueSpawn(Vector3d realPosition,
                             double offset,
@@ -253,10 +254,11 @@ final class AnchorEntityManager {
             Store<EntityStore> store = entityStore.getStore();
 
             Holder<EntityStore> holder = EntityStore.REGISTRY.newHolder();
-            // Use ProjectileComponent with empty model ID to avoid rendering
+            // Use ProjectileComponent with "Projectile" to satisfy legacy system
+            // but keep entity intangible and invisible
             holder.putComponent(
                     ProjectileComponent.getComponentType(),
-                    new ProjectileComponent(""));
+                    new ProjectileComponent("Projectile"));
             holder.putComponent(
                     Intangible.getComponentType(),
                     Intangible.INSTANCE);
