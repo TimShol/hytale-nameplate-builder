@@ -26,14 +26,19 @@ import java.util.Map;
  * Manages invisible "anchor" entities used to display nameplates at a
  * configurable vertical offset above real entities.
  *
- * <p>Each anchor is a bare entity with just {@code TransformComponent},
- * {@code Intangible} (no collision), and {@code NetworkId} (visible to clients).
- * The anchor's position is updated every tick to follow the real entity at the
- * configured Y offset.</p>
+ * <p>Each anchor is an invisible entity with {@code ProjectileComponent} (model "Projectile"),
+ * {@code Intangible} (no collision), {@code TransformComponent} (position), and
+ * {@code NetworkId} (visible to clients). The anchor's position is updated every tick
+ * to follow the real entity at the configured Y offset using velocity-based prediction.</p>
  *
  * <p>Anchor spawning is asynchronous — it is queued via {@code world.execute()}
  * and materializes on the next tick. During the one-frame delay, nameplate text
  * is shown on the real entity as a fallback.</p>
+ *
+ * <p><b>Lifecycle:</b> Anchors are spawned with {@code AddReason.LOAD} so they won't
+ * persist to disk. When entities die or are removed, anchors are simply untracked
+ * (removed from {@code anchors} map) and left in the world until chunk unload. They
+ * are never explicitly removed to avoid chunk serialization race conditions.</p>
  */
 final class AnchorEntityManager {
 
@@ -156,50 +161,38 @@ final class AnchorEntityManager {
     }
 
     /**
-     * Remove the anchor for a real entity. Schedules the anchor for removal
-     * on the next tick to avoid chunk serialization race conditions.
+     * Remove the anchor for a real entity. Simply removes tracking state.
+     * The anchor entity itself is left in the world (with blank nameplate)
+     * to avoid chunk serialization race conditions. Since anchors use
+     * AddReason.LOAD, they won't persist to disk and will disappear on
+     * chunk unload/reload.
      *
      * @param realEntityRef the real entity whose anchor should be removed
      * @param commandBuffer the command buffer (unused, kept for API compatibility)
      */
     void removeAnchor(Ref<EntityStore> realEntityRef,
                       CommandBuffer<EntityStore> commandBuffer) {
-        AnchorState state = anchors.remove(realEntityRef);
-        if (state != null && !state.spawnPending && state.anchorRef != null && state.anchorRef.isValid()) {
-            // Schedule for removal on next tick
-            pendingRemovals.add(state);
-        }
+        // Just remove from tracking - leave the anchor entity in the world
+        // It has AddReason.LOAD so it won't persist to disk
+        anchors.remove(realEntityRef);
     }
 
     /**
-     * Clean up anchors that were scheduled for removal. This runs at the
-     * very start of the tick, before chunk saving, to avoid serialization races.
+     * No-op - we no longer remove anchor entities to avoid chunk serialization
+     * race conditions. Anchors use AddReason.LOAD so they won't persist to disk.
      *
-     * <p>Call once per tick from the aggregator, before processing entities.</p>
+     * @deprecated No longer used - kept for API compatibility
      */
+    @Deprecated
     void cleanupPendingRemovals(CommandBuffer<EntityStore> commandBuffer) {
-        if (pendingRemovals.isEmpty()) {
-            return;
-        }
-        Iterator<AnchorState> it = pendingRemovals.iterator();
-        while (it.hasNext()) {
-            AnchorState state = it.next();
-            if (state.anchorRef != null && state.anchorRef.isValid()) {
-                try {
-                    commandBuffer.removeEntity(state.anchorRef, RemoveReason.REMOVE);
-                } catch (IllegalStateException | IllegalArgumentException e) {
-                    // Ref became invalid or entity is locked — safe to ignore
-                }
-            }
-            it.remove();
-        }
+        // No-op - we don't remove anchors anymore
+        pendingRemovals.clear();
     }
 
     /**
      * Clean up anchors whose real entity has been removed from the store
-     * (e.g. by {@code /npc clean}). The real entity's {@code Ref} becomes
-     * invalid when the entity is removed, so we check {@code ref.isValid()}
-     * and schedule anchor removal for the next tick.
+     * (e.g. by {@code /npc clean}). Simply removes tracking state - the
+     * anchor entity is left in the world to avoid serialization races.
      *
      * <p>Call once per tick from the aggregator, before processing entities.</p>
      */
@@ -212,12 +205,8 @@ final class AnchorEntityManager {
             Map.Entry<Ref<EntityStore>, AnchorState> entry = it.next();
             Ref<EntityStore> realRef = entry.getKey();
             if (!realRef.isValid()) {
-                AnchorState state = entry.getValue();
+                // Just remove from tracking - leave anchor in world
                 it.remove();
-                // Schedule anchor for removal (will happen at start of next tick)
-                if (!state.spawnPending && state.anchorRef != null && state.anchorRef.isValid()) {
-                    pendingRemovals.add(state);
-                }
             }
         }
     }
@@ -232,9 +221,10 @@ final class AnchorEntityManager {
 
     /**
      * Queue an anchor entity spawn via {@code world.execute()}.
-     * The anchor materializes on the next tick. Anchors are bare invisible
-     * entities (Transform + Intangible + NetworkId) that exist solely to
-     * display nameplate text at an offset.
+     * The anchor materializes on the next tick. Anchors are invisible entities
+     * (ProjectileComponent + Intangible + Transform + NetworkId) that exist
+     * solely to display nameplate text at an offset. They use {@code AddReason.LOAD}
+     * so they won't persist to disk.
      */
     private void queueSpawn(Vector3d realPosition,
                             double offset,

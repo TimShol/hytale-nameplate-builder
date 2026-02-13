@@ -13,7 +13,8 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 ### Changed
 - Player nameplates now always use vanilla client-side rendering (zero lag, no anchor entities)
 - NPC nameplates use invisible anchor entities with velocity prediction when vertical offset is configured
-- Improved anchor entity lifecycle management with deferred removal strategy
+- Anchor entities are no longer explicitly removed to avoid chunk serialization race conditions
+- Orphaned anchors persist with blank nameplates until chunk unload (not saved to disk due to `AddReason.LOAD`)
 
 ## [1.0.0] - 2025-02-11
 
