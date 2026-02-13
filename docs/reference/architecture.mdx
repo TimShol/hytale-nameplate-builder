@@ -91,12 +91,15 @@ When an entity receives a `DeathComponent`:
 
 ### Anchor Entities
 
-When a player configures a vertical offset:
+When a player configures a vertical offset for **NPC** entities:
 
-1. An invisible "anchor" entity (`ProjectileComponent` + `Intangible` + `NetworkId`) is spawned above the real entity
+1. An invisible "anchor" entity (`ProjectileComponent` + `Intangible` + `NetworkId`) is spawned above the real NPC
 2. Nameplate text is routed to the anchor instead of the real entity
-3. Anchor follows the real entity every tick
-4. Cleaned up on death or when offset returns to zero
+3. Anchor follows the real entity every tick using **velocity-based predictive positioning** to compensate for the 1-tick CommandBuffer delay
+4. Anchors use `AddReason.LOAD` to prevent disk persistence during chunk saves
+5. **Deferred removal**: anchors are scheduled for removal and cleaned up at the start of the next tick to avoid chunk serialization race conditions
+
+**Player entities** always use vanilla client-side nameplate rendering and never create anchor entities, regardless of offset configuration. This ensures zero lag for player nameplates.
 
 ### View-Cone Filtering
 

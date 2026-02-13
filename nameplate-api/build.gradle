@@ -4,7 +4,7 @@ plugins {
 }
 
 group = rootProject.property('group')
-version = rootProject.property('version')
+version = '1.0.0'  // API version - only bump on breaking changes
 base.archivesName.set(rootProject.property('name') + '-API')
 
 dependencies {

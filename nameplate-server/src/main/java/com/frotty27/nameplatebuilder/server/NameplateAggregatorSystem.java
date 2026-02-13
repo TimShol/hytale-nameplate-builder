@@ -122,7 +122,9 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
         // If the entity is dead, send an empty nameplate to all viewers so the
         // text disappears immediately rather than lingering through the death animation.
-        // We also remove the NameplateData component and despawn any anchor.
+        // We also remove the NameplateData component.
+        // NOTE: We don't remove anchors during death because it can cause race conditions
+        // with chunk serialization. Anchors are cleaned up by cleanupOrphanedAnchors().
         DeathComponent deathComponent = store.getComponent(entityRef, deathComponentType);
         if (deathComponent != null) {
             Ref<EntityStore> deadAnchorRef = anchorManager.getAnchorRef(entityRef);
@@ -133,7 +135,8 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                     safeAnchorUpdate(viewerEntry.getValue(), deadAnchorRef, emptyUpdate);
                 }
             }
-            anchorManager.removeAnchor(entityRef, commandBuffer);
+            // Don't remove anchor here — let cleanupOrphanedAnchors() handle it
+            // to avoid chunk serialization race conditions
             commandBuffer.removeComponent(entityRef, nameplateDataType);
             return;
         }
@@ -194,6 +197,11 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         // Player entities use "_players", NPC entities use "_npcs".
         String tabEntityType = resolveTabEntityType(store, entityRef);
 
+        // Check if this is a player entity — players never use anchors because
+        // vanilla client-side nameplate rendering is smoother (no server-side lag).
+        // NPCs can have varying sizes, so they benefit from offset anchors.
+        boolean isPlayer = store.getComponent(entityRef, playerType) != null;
+
         // ── Pass 1: Compute per-viewer offsets and determine max offset ──
 
         int viewerCount = visible.visibleTo.size();
@@ -219,8 +227,9 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             // This positions the nameplate above the entity's head, not its feet.
             double totalOffset = entityHeight + userOffset;
             viewerOffsets[vi] = totalOffset;
-            viewerWantsAnchor[vi] = userOffset != 0.0;
-            if (userOffset != 0.0) {
+            // Players never use anchors — skip even if offset is configured
+            viewerWantsAnchor[vi] = !isPlayer && userOffset != 0.0;
+            if (!isPlayer && userOffset != 0.0) {
                 anyViewerNeedsAnchor = true;
                 if (Math.abs(totalOffset) > Math.abs(maxOffset)) {
                     maxOffset = totalOffset;
@@ -230,15 +239,17 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         }
 
         // ── Anchor lifecycle management ──
+        // Players never spawn anchors — vanilla nameplate rendering is client-side
+        // and doesn't lag. Only NPCs use server-side anchor entities for offset.
 
-        if (anyViewerNeedsAnchor && realPosition != null) {
+        if (anyViewerNeedsAnchor && !isPlayer && realPosition != null) {
             World world = resolveWorld(store, entityRef);
             if (world != null) {
                 anchorManager.ensureAnchor(entityRef, realPosition, maxOffset,
-                        world, store, transformComponentType);
+                        world, store, transformComponentType, commandBuffer);
             }
-        } else if (!anyViewerNeedsAnchor && anchorManager.hasAnchor(entityRef)) {
-            // All viewers switched to offset=0 — despawn anchor
+        } else if (anchorManager.hasAnchor(entityRef)) {
+            // Entity became a player, or all viewers switched to offset=0 — despawn anchor
             anchorManager.removeAnchor(entityRef, commandBuffer);
         }
 
@@ -611,9 +622,12 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                                          Ref<EntityStore> anchorRef,
                                          ComponentUpdate update) {
         try {
+            if (anchorRef == null || !anchorRef.isValid()) {
+                return;
+            }
             viewer.queueUpdate(anchorRef, update);
-        } catch (IllegalArgumentException _) {
-            // Anchor not visible to this viewer — safe to skip
+        } catch (IllegalArgumentException | IllegalStateException _) {
+            // Anchor not visible to this viewer or ref invalidated mid-tick — safe to skip
         }
     }
 

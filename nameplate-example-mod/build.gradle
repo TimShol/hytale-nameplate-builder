@@ -4,7 +4,7 @@ plugins {
 }
 
 group = rootProject.property('group')
-version = rootProject.property('version')
+version = '1.0.0'  // Example mod version - unchanged reference implementation
 base.archivesName.set(rootProject.property('name') + '-Example-Mod')
 
 dependencies {
