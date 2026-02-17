@@ -13,16 +13,9 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.UUID;
 
-/**
- * Command handler for {@code /nameplatebuilder} (aliases: {@code /npb}, {@code /nameplateui}).
- *
- * <p>Opens the {@link NameplateBuilderPage} UI for the executing player.
- * The command checks the {@value #PERMISSION_ADMIN} permission node to
- * determine whether the player sees the admin settings tab.</p>
- */
 final class NameplateBuilderCommand extends AbstractPlayerCommand {
 
-    /** Permission node that grants access to the admin "Required Segments" tab. */
+
     static final String PERMISSION_ADMIN = "nameplatebuilder.admin";
 
     private final NameplateRegistry registry;
@@ -37,10 +30,7 @@ final class NameplateBuilderCommand extends AbstractPlayerCommand {
         this.adminConfig = adminConfig;
     }
 
-    /**
-     * Disable auto-generated permission so all players can use the command.
-     * Admin features are gated at runtime via {@link #PERMISSION_ADMIN} instead.
-     */
+
     @Override
     protected boolean canGeneratePermission() {
         return false;
