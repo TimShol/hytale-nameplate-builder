@@ -90,7 +90,7 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
         getEventRegistry().registerGlobal(PlayerReadyEvent.class, event -> {
             try {
                 var player = event.getPlayer();
-                UUID playerUuid = player.getUuid();
+                UUID playerUuid = player.getPlayerRef().getUuid();
                 if (playerUuid == null) return;
 
                 if (!preferences.isShowWelcomeMessage(playerUuid)) return;

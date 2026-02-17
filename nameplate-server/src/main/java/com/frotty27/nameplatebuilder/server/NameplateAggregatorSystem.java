@@ -11,7 +11,7 @@ import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.protocol.ComponentUpdate;
-import com.hypixel.hytale.protocol.ComponentUpdateType;
+import com.hypixel.hytale.protocol.NameplateUpdate;
 import com.hypixel.hytale.server.core.entity.Entity;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -107,11 +107,21 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
     @Override
     public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk, @NonNull Store<EntityStore> store, @NonNull CommandBuffer<EntityStore> commandBuffer) {
-        // Clean up any anchors whose spawn completed after removal was requested
-        anchorManager.cleanupPendingRemovals(commandBuffer);
         // Clean up anchors for entities that were removed from the store
-        // (e.g. /npc clean --confirm) — their Ref is no longer valid
-        anchorManager.cleanupOrphanedAnchors(commandBuffer);
+        // (e.g. /npc clean --confirm) — their Ref is no longer valid.
+        // Blank their nameplates so clients don't see floating text.
+        List<Ref<EntityStore>> orphanedAnchors = anchorManager.cleanupOrphanedAnchors(commandBuffer);
+        if (!orphanedAnchors.isEmpty()) {
+            ComponentUpdate blankUpdate = nameplateUpdate("");
+            for (Ref<EntityStore> orphanRef : orphanedAnchors) {
+                EntityTrackerSystems.Visible anchorVisible = store.getComponent(orphanRef, visibleComponentType);
+                if (anchorVisible != null && anchorVisible.visibleTo != null) {
+                    for (EntityTrackerSystems.EntityViewer viewer : anchorVisible.visibleTo.values()) {
+                        safeAnchorUpdate(viewer, orphanRef, blankUpdate);
+                    }
+                }
+            }
+        }
 
         EntityTrackerSystems.Visible visible = chunk.getComponent(index, visibleComponentType);
         if (visible == null || visible.visibleTo == null) {
@@ -602,12 +612,8 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
      * A single space is used instead of null or empty strings — the Hytale
      * client may not handle those gracefully (C# NullReferenceException).
      */
-    private static ComponentUpdate nameplateUpdate(String text) {
-        ComponentUpdate update = new ComponentUpdate();
-        update.type = ComponentUpdateType.Nameplate;
-        update.nameplate = new com.hypixel.hytale.protocol.Nameplate(
-                text == null || text.isEmpty() ? " " : text);
-        return update;
+    private static NameplateUpdate nameplateUpdate(String text) {
+        return new NameplateUpdate(text == null || text.isEmpty() ? " " : text);
     }
 
     /**

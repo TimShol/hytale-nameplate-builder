@@ -4,7 +4,7 @@ plugins {
 }
 
 group = rootProject.property('group')
-version = '1.0.0'  // Example mod version - unchanged reference implementation
+version = '1.0.1'  // Example mod version - unchanged reference implementation
 base.archivesName.set(rootProject.property('name') + '-Example-Mod')
 
 dependencies {
@@ -15,7 +15,7 @@ dependencies {
 tasks.processResources {
     def expandProps = [
             'name'          : rootProject.property('name') + ' Example Mod',
-            'version'       : rootProject.property('version'),
+            'version'       : version,
             'group'         : rootProject.property('group'),
             'description'   : 'Example mod that registers sample nameplate segments.',
             'website'       : rootProject.property('website'),
