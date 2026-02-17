@@ -23,47 +23,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Interactive custom UI page for the Nameplate Builder editor.
- *
- * <p>This page drives the entire player-facing UI:</p>
- * <ul>
- *   <li><b>Sidebar</b> — General, NPCs, Players, Disabled, and Admin
- *       (admin section visible only with the {@code nameplatebuilder.admin}
- *       permission)</li>
- *   <li><b>General tab</b> — master enable/disable, look-at toggle, vertical
- *       offset, welcome message toggle</li>
- *   <li><b>NPC/Player editor tabs</b> — segment chain editor, available blocks
- *       browser with search/filter and pagination, per-block separators,
- *       live preview, and the format variant popup (with prefix/suffix text
- *       fields and bar empty-fill customization)</li>
- *   <li><b>Disabled tab</b> — read-only 4×4 grid showing all admin-disabled
- *       segments with pagination</li>
- *   <li><b>Admin tab</b> — three sub-tabs: Required (force segments on all
- *       players), Disabled (hide segments globally), and Settings (server
- *       name configuration)</li>
- * </ul>
- *
- * <p>The format popup uses a confirm/cancel workflow: selecting a variant only
- * updates the in-progress {@link #pendingVariant} state without persisting.
- * Prefix, suffix, and bar empty char edits are saved live via ValueChanged
- * events but reverted on Cancel using snapshotted originals.</p>
- *
- * <p>UI state (active tab, filter text, pagination positions, admin sub-tab)
- * is persisted in memory across page reopens via a static
- * {@link UiState} map keyed by player UUID.</p>
- *
- * <p>Opened via the {@link NameplateBuilderCommand} ({@code /npb}).</p>
- *
- * @see NameplateBuilderCommand
- * @see AdminConfigStore
- * @see NameplatePreferenceStore
- * @see ActiveTab
- * @see AdminSubTab
- * @see UiState
- * @see SettingsData
- * @see SegmentView
- */
 final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
@@ -72,33 +31,33 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     private static final int AVAIL_PAGE_SIZE = 8;
     private static final int ADMIN_PAGE_SIZE = 7;
     private static final int MOD_NAME_MAX_LENGTH = 24;
-    /** Global preference entity type used for settings that apply regardless of tab. */
+
     private static final String ENTITY_TYPE_GLOBAL = "*";
-    /** Virtual entity type for NPC tab chain/separator preferences. */
+
     static final String ENTITY_TYPE_NPCS = "_npcs";
-    /** Virtual entity type for Player tab chain/separator preferences. */
+
     static final String ENTITY_TYPE_PLAYERS = "_players";
 
-    /** Yellow-tinted background for required segments in the editor. */
+
     private static final String COLOR_REQUIRED = "#3d3820";
-    /** Green-tinted background for enabled chain blocks. */
+
     private static final String COLOR_CHAIN_ACTIVE = "#1a3828";
-    /** Default background for empty chain block slots. */
+
     private static final String COLOR_CHAIN_EMPTY = "#1a2840";
-    /** Default background for available blocks. */
+
     private static final String COLOR_AVAIL_DEFAULT = "#162236";
-    /** Warm purple-tinted background for built-in blocks in the available list. */
+
     private static final String COLOR_BUILTIN_AVAIL = "#2a1f3d";
-    /** Selected variant option highlight in the variant popup. */
+
     private static final String COLOR_VARIANT_SELECTED = "#2d6b3f";
-    /** Maximum number of variants supported in the popup UI. */
+
     private static final int MAX_VARIANT_OPTIONS = 4;
-    /** Red-tinted background for disabled segments. */
+
     private static final String COLOR_DISABLED = "#3d2020";
-    /** Number of disabled blocks per page in the player Disabled tab (4x4 grid). */
+
     private static final int DISABLED_PAGE_SIZE = 16;
 
-    // ActiveTab and AdminSubTab are top-level enums (see ActiveTab.java, AdminSubTab.java)
+
 
     private final NameplateRegistry registry;
     private final NameplatePreferenceStore preferences;
@@ -120,74 +79,42 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     private int adminDisRightPage = 0;
     private int disabledPage = 0;
 
-    /**
-     * When non-null, the user is actively editing the offset field.
-     * We keep their raw input string here so {@link #populateCommands} won't
-     * overwrite it with the stored numeric value while they're still typing.
-     * Reset to {@code null} on any non-offset action (button press, page change, etc.).
-     */
+
     private String pendingOffsetInput = null;
 
-    /**
-     * When non-null, a save feedback message is displayed next to the Save button.
-     * Cleared on the next user interaction so it auto-disappears.
-     */
+
     private String saveMessage = null;
     private boolean saveMessageSuccess = false;
 
-    /**
-     * Index of the separator currently being edited (-1 = popup closed).
-     * This is the chain-page-relative index (0-3), corresponding to
-     * ChainSep0/1/2 (between blocks) and ChainSep3 (trailing, after last block).
-     */
+
     private int editingSepIndex = -1;
     private String sepText = "";
 
-    /**
-     * When non-null, the user is actively typing in the separator text field.
-     * We keep their raw input here so {@link #populateCommands} won't overwrite
-     * the field value while they're still editing (same pattern as pendingOffsetInput).
-     * Set on every ValueChanged from the text field; reset to {@code null} when the
-     * popup is closed (confirm/cancel) or when a non-sep action occurs.
-     */
+
     private String pendingSepInput = null;
 
-    /**
-     * When non-null, the variant format popup is open for the given segment key.
-     * The popup shows variant names and lets the player select their preferred format.
-     */
+
     private SegmentKey editingVariantKey = null;
 
-    /**
-     * Tracks the user's in-progress variant selection within the popup.
-     * Not committed to preferences until Confirm is pressed.
-     */
+
     private int pendingVariant = 0;
 
-    /** Original variant index when popup was opened — used to revert on Cancel. */
+
     private int originalVariant = 0;
-    /** Original prefix when popup was opened — used to revert on Cancel. */
+
     private String originalPrefix = "";
-    /** Original suffix when popup was opened — used to revert on Cancel. */
+
     private String originalSuffix = "";
-    /** Original bar empty char when popup was opened — used to revert on Cancel. */
+
     private String originalBarEmpty = "";
 
-    /**
-     * When non-null, the user is actively typing in the prefix text field.
-     * Same pattern as {@link #pendingSepInput}: prevents populateCommands from
-     * overwriting the field value while the user is still editing.
-     */
+
     private String pendingPrefixInput = null;
 
-    /**
-     * When non-null, the user is actively typing in the suffix text field.
-     */
+
     private String pendingSuffixInput = null;
 
-    /**
-     * When non-null, the user is actively typing in the bar empty char field.
-     */
+
     private String pendingBarEmptyInput = null;
 
     private static final Map<UUID, UiState> UI_STATE = new ConcurrentHashMap<>();
@@ -210,7 +137,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         UiState state = UI_STATE.get(viewerUuid);
         if (state != null) {
             this.activeTab = state.activeTab();
-            // Don't restore ADMIN tab for non-admins
+
             if (this.activeTab == ActiveTab.ADMIN && !isAdmin) {
                 this.activeTab = ActiveTab.NPCS;
             }
@@ -232,35 +159,35 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         commands.set("#FilterField.Value", filter);
         commands.set("#AdminFilterField.Value", adminFilter);
 
-        // Filter field binding
+
         events.addEventBinding(
                 com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
                 "#FilterField",
                 com.hypixel.hytale.server.core.ui.builder.EventData.of("@Filter", "#FilterField.Value"),
                 false);
 
-        // Admin filter field binding
+
         events.addEventBinding(
                 com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
                 "#AdminFilterField",
                 com.hypixel.hytale.server.core.ui.builder.EventData.of("@AdminFilter", "#AdminFilterField.Value"),
                 false);
 
-        // Offset field binding
+
         events.addEventBinding(
                 com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
                 "#OffsetField",
                 com.hypixel.hytale.server.core.ui.builder.EventData.of("@Offset", "#OffsetField.Value"),
                 false);
 
-        // Sidebar navigation bindings
+
         bindAction(events, "#NavGeneral", "NavGeneral");
         bindAction(events, "#NavNpcs", "NavNpcs");
         bindAction(events, "#NavPlayers", "NavPlayers");
         bindAction(events, "#NavAdmin", "NavAdmin");
         bindAction(events, "#EnableToggle", "ToggleEnable");
 
-        // Button bindings — both Save buttons (one per tab) share same action
+
         bindAction(events, "#SaveButton", "Save");
         bindAction(events, "#SaveButtonGeneral", "Save");
         bindAction(events, "#SaveButtonAdmin", "SaveAdmin");
@@ -275,61 +202,61 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         bindAction(events, "#PrevAdminRight", "PrevAdminRight");
         bindAction(events, "#NextAdminRight", "NextAdminRight");
 
-        // Chain block buttons (4 blocks)
+
         for (int i = 0; i < CHAIN_PAGE_SIZE; i++) {
             bindAction(events, "#ChainBlock" + i + "Left", "Left_" + i);
             bindAction(events, "#ChainBlock" + i + "Right", "Right_" + i);
             bindAction(events, "#ChainBlock" + i + "Remove", "Remove_" + i);
         }
 
-        // Chain separator indicators — clickable to open the separator editor popup.
-        // Indices 0–2 sit between blocks, index 3 sits after the last block
-        // (visible when the next page has more blocks).
+
+
+
         for (int i = 0; i < CHAIN_PAGE_SIZE; i++) {
             bindAction(events, "#ChainSep" + i, "EditSep_" + i);
         }
 
-        // Available block buttons (8 blocks)
+
         for (int i = 0; i < AVAIL_PAGE_SIZE; i++) {
             bindAction(events, "#AvailBlock" + i + "Add", "Add_" + i);
         }
 
-        // Admin enable buttons (left column — 8 rows)
+
         for (int i = 0; i < ADMIN_PAGE_SIZE; i++) {
             bindAction(events, "#AdminEnable" + i, "AdminEnable_" + i);
         }
 
-        // Admin disable buttons (right column — 8 rows)
+
         for (int i = 0; i < ADMIN_PAGE_SIZE; i++) {
             bindAction(events, "#AdminDisable" + i, "AdminDisable_" + i);
         }
 
-        // Admin disabled filter field binding
+
         events.addEventBinding(
                 com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
                 "#AdminDisFilterField",
                 com.hypixel.hytale.server.core.ui.builder.EventData.of("@AdminDisFilter", "#AdminDisFilterField.Value"),
                 false);
 
-        // Admin server name field binding
+
         events.addEventBinding(
                 com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
                 "#AdminServerNameField",
                 com.hypixel.hytale.server.core.ui.builder.EventData.of("@AdminServerName", "#AdminServerNameField.Value"),
                 false);
 
-        // Admin sub-tab buttons
+
         bindAction(events, "#AdminSubRequired", "AdminSubRequired");
         bindAction(events, "#AdminSubDisabled", "AdminSubDisabled");
         bindAction(events, "#AdminSubSettings", "AdminSubSettings");
         bindAction(events, "#NavAdminDisabled", "NavAdminDisabled");
         bindAction(events, "#NavAdminSettings", "NavAdminSettings");
 
-        // Admin settings buttons
+
         bindAction(events, "#SaveButtonAdminSettings", "SaveAdminSettings");
         bindAction(events, "#ResetButtonAdminSettings", "ResetAdminSettings");
 
-        // Admin disabled panel — enable/disable buttons (8 rows each)
+
         for (int i = 0; i < ADMIN_PAGE_SIZE; i++) {
             bindAction(events, "#AdminDisDisable" + i, "AdminDisDisable_" + i);
         }
@@ -339,27 +266,27 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         bindAction(events, "#ResetButtonAdminDis", "ResetAdminDis");
         bindAction(events, "#SaveButtonAdminDis", "SaveAdminDis");
 
-        // Admin disabled panel pagination
+
         bindAction(events, "#PrevAdminDisLeft", "PrevAdminDisLeft");
         bindAction(events, "#NextAdminDisLeft", "NextAdminDisLeft");
         bindAction(events, "#PrevAdminDisRight", "PrevAdminDisRight");
         bindAction(events, "#NextAdminDisRight", "NextAdminDisRight");
 
-        // Player disabled tab
+
         bindAction(events, "#NavDisabled", "NavDisabled");
         bindAction(events, "#PrevDisabled", "PrevDisabled");
         bindAction(events, "#NextDisabled", "NextDisabled");
 
-        // Welcome message toggle
+
         bindAction(events, "#WelcomeToggle", "ToggleWelcome");
 
-        // Clear chain
+
         bindAction(events, "#ClearChainButton", "ClearChain");
 
-        // Look-at toggle
+
         bindAction(events, "#LookToggle", "ToggleLook");
 
-        // Separator popup
+
         events.addEventBinding(
                 com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
                 "#SepTextField",
@@ -368,19 +295,19 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         bindAction(events, "#SepConfirm", "SepConfirm");
         bindAction(events, "#SepCancel", "SepCancel");
 
-        // Chain block format buttons (4 blocks)
+
         for (int i = 0; i < CHAIN_PAGE_SIZE; i++) {
             bindAction(events, "#ChainBlock" + i + "Format", "Format_" + i);
         }
 
-        // Variant popup buttons (4 option slots + cancel)
+
         for (int i = 0; i < MAX_VARIANT_OPTIONS; i++) {
             bindAction(events, "#Variant" + i, "VariantSelect_" + i);
         }
         bindAction(events, "#VariantCancel", "VariantCancel");
         bindAction(events, "#VariantConfirm", "VariantConfirm");
 
-        // Prefix/suffix field bindings (inside variant popup)
+
         events.addEventBinding(
                 com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
                 "#PrefixField",
@@ -413,13 +340,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         if (data == null) {
             return;
         }
-        // Clear pending offset input when the user performs any non-offset action
-        // (button click, page navigation, etc.) so the field shows the committed value.
+
+
         if (data.offset == null) {
             pendingOffsetInput = null;
         }
 
-        // Clear save message on any non-save interaction so it auto-disappears
+
         if (data.action == null || (!"Save".equals(data.action) && !"SaveAdmin".equals(data.action))) {
             saveMessage = null;
         }
@@ -443,7 +370,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
         if (data.adminServerName != null) {
             adminServerName = data.adminServerName;
-            // Store without sending update — avoids disrupting the active text field
+
             if (data.action == null && data.filter == null && data.offset == null && data.adminFilter == null
                     && data.adminDisFilter == null && data.sepText == null && data.prefixText == null
                     && data.suffixText == null && data.barEmptyText == null) {
@@ -454,15 +381,15 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         if (data.sepText != null) {
             sepText = data.sepText;
             pendingSepInput = data.sepText;
-            // If only the sep text changed (no action), just store it and return
-            // without sending an update — avoids disrupting the active text field.
+
+
             if (data.action == null && data.filter == null && data.offset == null && data.adminFilter == null
                     && data.prefixText == null && data.suffixText == null && data.barEmptyText == null) {
                 return;
             }
         }
 
-        // Prefix/suffix/barEmpty text changes — save immediately for live preview
+
         if (data.prefixText != null || data.suffixText != null || data.barEmptyText != null) {
             if (editingVariantKey != null) {
                 if (data.prefixText != null) {
@@ -480,7 +407,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     preferences.setBarEmptyChar(viewerUuid, tabEntityType(), editingVariantKey, clamped);
                 }
             }
-            // If only text fields changed (no action), just store and return
+
             if (data.action == null && data.filter == null && data.offset == null
                     && data.adminFilter == null && data.sepText == null) {
                 return;
@@ -584,7 +511,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 return;
             }
             case "ToggleEnable" -> {
-                // Prevent toggling when all segments are disabled by admin
+
                 if (areAllSegmentsDisabled()) {
                     sendUpdate(buildUpdate());
                     return;
@@ -605,9 +532,9 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 return;
             }
             case "Save" -> {
-                // Snapshot both tab chains so that segment enabled/order state
-                // is persisted even if the user never explicitly added/removed blocks.
-                // Use filtered keys per entity type so only relevant segments are snapshotted.
+
+
+
                 try {
                     List<SegmentKey> npcKeys = getFilteredKeysForEntityType(ENTITY_TYPE_NPCS);
                     List<SegmentKey> playerKeys = getFilteredKeysForEntityType(ENTITY_TYPE_PLAYERS);
@@ -731,7 +658,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             }
         }
 
-        // Separator click — open separator edit popup
+
         if (data.action.startsWith("EditSep_")) {
             int sepIndex = parseRowIndex(data.action, "EditSep_");
             List<SegmentView> chain = getChainViews();
@@ -740,14 +667,14 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 editingSepIndex = sepIndex;
                 SegmentKey blockKey = chain.get(absoluteIndex).key();
                 sepText = preferences.getSeparatorAfter(viewerUuid, tabEntityType(), blockKey);
-                // Reset pending input so populateCommands sets the initial value
+
                 pendingSepInput = null;
             }
             sendUpdate(buildUpdate());
             return;
         }
 
-        // Separator popup confirm
+
         if ("SepConfirm".equals(data.action)) {
             if (editingSepIndex >= 0) {
                 List<SegmentView> chain = getChainViews();
@@ -755,22 +682,22 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 if (absoluteIndex >= 0 && absoluteIndex < chain.size()) {
                     SegmentKey blockKey = chain.get(absoluteIndex).key();
                     String entityType = tabEntityType();
-                    // Freeze every other block's current separator as an explicit
-                    // per-block value before we change the global default. Without
-                    // this, blocks relying on the fallback would silently change.
+
+
+
                     String oldDefault = preferences.getSeparator(viewerUuid, entityType);
                     for (SegmentView cv : chain) {
                         if (!cv.key().equals(blockKey)) {
                             String existing = preferences.getSeparatorAfter(viewerUuid, entityType, cv.key());
                             if (existing.equals(oldDefault)) {
-                                // Block was using the fallback — pin it explicitly
+
                                 preferences.setSeparatorAfter(viewerUuid, entityType, cv.key(), existing);
                             }
                         }
                     }
-                    // Save the edited block's separator
+
                     preferences.setSeparatorAfter(viewerUuid, entityType, blockKey, sepText);
-                    // Update the global default so newly added blocks use this value
+
                     preferences.setSeparator(viewerUuid, entityType, sepText);
                 }
             }
@@ -781,7 +708,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return;
         }
 
-        // Separator popup cancel
+
         if ("SepCancel".equals(data.action)) {
             editingSepIndex = -1;
             sepText = "";
@@ -836,7 +763,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return;
         }
 
-        // Admin disabled panel — move segments between available and disabled
+
         if (data.action.startsWith("AdminDisDisable_")) {
             if (isAdmin) {
                 int row = parseRowIndex(data.action, "AdminDisDisable_");
@@ -854,7 +781,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return;
         }
 
-        // Format button on chain block — open variant popup
+
         if (data.action.startsWith("Format_")) {
             int row = parseRowIndex(data.action, "Format_");
             SegmentView view = getChainRow(row);
@@ -862,7 +789,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 NameplateRegistry.Segment segment = registry.getSegments().get(view.key());
                 if (segment != null && segment.variants().size() > 1) {
                     editingVariantKey = view.key();
-                    // Snapshot current values so Cancel can revert
+
                     originalVariant = preferences.getSelectedVariant(viewerUuid, tabEntityType(), view.key());
                     pendingVariant = originalVariant;
                     originalPrefix = preferences.getPrefix(viewerUuid, tabEntityType(), view.key());
@@ -877,11 +804,11 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return;
         }
 
-        // Variant popup selection — stays in popup, just updates pending choice
+
         if (data.action.startsWith("VariantSelect_")) {
             int variantIndex = parseRowIndex(data.action, "VariantSelect_");
             if (editingVariantKey != null && variantIndex >= 0) {
-                // Ignore clicks on the already-selected variant
+
                 if (variantIndex == pendingVariant) {
                     sendUpdate(buildUpdate());
                     return;
@@ -892,11 +819,11 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return;
         }
 
-        // Variant popup confirm — persist selections and close
+
         if ("VariantConfirm".equals(data.action)) {
             if (editingVariantKey != null) {
                 preferences.setSelectedVariant(viewerUuid, tabEntityType(), editingVariantKey, pendingVariant);
-                // Prefix/suffix/barEmpty are already saved live via ValueChanged — no extra work needed
+
             }
             editingVariantKey = null;
             pendingPrefixInput = null;
@@ -906,10 +833,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return;
         }
 
-        // Variant popup cancel — revert to originals and close
+
         if ("VariantCancel".equals(data.action)) {
             if (editingVariantKey != null) {
-                // Revert variant, prefix, suffix, barEmpty to what they were before popup opened
+
                 preferences.setSelectedVariant(viewerUuid, tabEntityType(), editingVariantKey, originalVariant);
                 preferences.setPrefix(viewerUuid, tabEntityType(), editingVariantKey, originalPrefix);
                 preferences.setSuffix(viewerUuid, tabEntityType(), editingVariantKey, originalSuffix);
@@ -929,30 +856,30 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return;
         }
 
-        // Normalize commas to dots and strip whitespace
+
         String normalized = rawOffset.replace(',', '.').trim();
 
-        // Reject anything that isn't a plausible numeric fragment.
-        // Allow: empty, "-", digits with at most one dot, optional leading minus.
+
+
         if (!normalized.isEmpty() && !isValidOffsetFragment(normalized)) {
-            // Invalid characters — reset the field to the stored value
+
             pendingOffsetInput = null;
             return;
         }
 
-        // Keep the raw input so the UI doesn't overwrite it while typing
+
         pendingOffsetInput = normalized;
 
-        // Try to parse as a finished number and commit to preferences
+
         try {
             double value = Double.parseDouble(normalized);
             preferences.setOffset(viewerUuid, ENTITY_TYPE_GLOBAL, value);
         } catch (NumberFormatException _) {
-            // Intermediate state like "", "-", "1.", "-0." — don't update the stored value yet
+
         }
     }
 
-    /** Returns the virtual entity type for the current tab's chain preferences. */
+
     private String tabEntityType() {
         return activeTab == ActiveTab.PLAYERS ? ENTITY_TYPE_PLAYERS : ENTITY_TYPE_NPCS;
     }
@@ -972,11 +899,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         pendingOffsetInput = null;
     }
 
-    /**
-     * Returns {@code true} if the given segment should be visible in the currently active tab.
-     * Segments with {@code target = ALL} appear in both NPCS and PLAYERS tabs.
-     */
-    /** Returns {@code true} if every registered segment is admin-disabled. */
+
+
     private boolean areAllSegmentsDisabled() {
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         if (segments.isEmpty()) return false;
@@ -997,51 +921,44 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         return false;
     }
 
-    /**
-     * Returns {@code true} if the string looks like a valid partial numeric input.
-     * Allows: empty, "-", "1", "-1", "1.", "-1.", "1.5", "-1.5", ".5", "-.5", etc.
-     * Rejects anything with letters or multiple dots/minuses.
-     */
+
     private static boolean isValidOffsetFragment(String s) {
         if (s.isEmpty()) return true;
         boolean hasDot = false;
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
             if (c == '-') {
-                if (i != 0) return false; // minus only at start
+                if (i != 0) return false;
             } else if (c == '.') {
-                if (hasDot) return false; // only one dot
+                if (hasDot) return false;
                 hasDot = true;
             } else if (c < '0' || c > '9') {
-                return false; // only digits, dot, and leading minus
+                return false;
             }
         }
         return true;
     }
 
-    /**
-     * Build an incremental update — only set property values on existing elements.
-     * Never re-append the .ui page or re-bind events; those are set once in {@link #build}.
-     */
+
     private UICommandBuilder buildUpdate() {
         UICommandBuilder commands = new UICommandBuilder();
         populateCommands(commands);
         return commands;
     }
 
-    /** Shared logic for populating all dynamic UI properties (used by both build and update). */
+
     private void populateCommands(UICommandBuilder commands) {
-        // ── Popups ── (hide unless editor tab explicitly shows them)
+
         commands.set("#SepPopupOverlay.Visible", false);
         commands.set("#VariantPopupOverlay.Visible", false);
 
-        // ── Sidebar active indicators ──
+
         commands.set("#NavGeneral.Text", activeTab == ActiveTab.GENERAL ? "> Settings" : "  Settings");
         commands.set("#NavNpcs.Text", activeTab == ActiveTab.NPCS ? "> NPCs" : "  NPCs");
         commands.set("#NavPlayers.Text", activeTab == ActiveTab.PLAYERS ? "> Players" : "  Players");
         commands.set("#NavDisabled.Text", activeTab == ActiveTab.DISABLED ? "> Disabled" : "  Disabled");
 
-        // Admin sidebar — only visible to admins
+
         commands.set("#AdminSection.Visible", isAdmin);
         if (isAdmin) {
             boolean adminReq = activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.REQUIRED;
@@ -1052,20 +969,20 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             commands.set("#NavAdminSettings.Text", adminSet ? "> Settings" : "  Settings");
         }
 
-        // ── Tab visibility ──
+
         commands.set("#TabGeneral.Visible", activeTab == ActiveTab.GENERAL);
         commands.set("#TabEditor.Visible", activeTab == ActiveTab.NPCS || activeTab == ActiveTab.PLAYERS);
         commands.set("#TabAdmin.Visible", activeTab == ActiveTab.ADMIN);
         commands.set("#TabDisabled.Visible", activeTab == ActiveTab.DISABLED);
 
-        // ── General tab content ──
+
         if (activeTab == ActiveTab.GENERAL) {
-            // Check if all segments are disabled by admin → force nameplates off
+
             boolean allDisabled = areAllSegmentsDisabled();
 
             boolean enabled = !allDisabled && preferences.isNameplatesEnabled(viewerUuid);
             commands.set("#EnableToggle.Text", enabled ? "  [X]  " : "  [ ]  ");
-            // Lock the toggle when all segments are disabled — no point enabling nameplates
+
             commands.set("#EnableToggle.Style.Default.Background", allDisabled ? "#1a1a1a" : "#1a2840");
             commands.set("#EnableToggle.Style.Hovered.Background", allDisabled ? "#1a1a1a" : "#253a55");
             commands.set("#AllDisabledNotice.Visible", allDisabled);
@@ -1076,7 +993,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             boolean welcome = preferences.isShowWelcomeMessage(viewerUuid);
             commands.set("#WelcomeToggle.Text", welcome ? "  [X]  " : "  [ ]  ");
 
-            // Offset field — preserve the user's raw input while they're typing
+
             if (pendingOffsetInput != null) {
                 commands.set("#OffsetField.Value", pendingOffsetInput);
             } else {
@@ -1084,7 +1001,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 commands.set("#OffsetField.Value", offset == 0.0 ? "0.0" : String.valueOf(offset));
             }
 
-            // Save feedback message
+
             commands.set("#SaveMessageGeneral.Visible", saveMessage != null);
             if (saveMessage != null) {
                 commands.set("#SaveMessageGeneral.Text", saveMessage);
@@ -1093,28 +1010,28 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return;
         }
 
-        // ── Admin tab content ──
+
         if (activeTab == ActiveTab.ADMIN) {
             commands.set("#AdminFilterField.Value", adminFilter);
 
-            // Sub-tab visibility + button styling
+
             commands.set("#AdminRequiredContent.Visible", adminSubTab == AdminSubTab.REQUIRED);
             commands.set("#AdminDisabledContent.Visible", adminSubTab == AdminSubTab.DISABLED);
             commands.set("#AdminSettingsContent.Visible", adminSubTab == AdminSubTab.SETTINGS);
 
-            // Required sub-tab button: orange (#8b6b2f) when active (locked), default otherwise
+
             boolean reqActive = adminSubTab == AdminSubTab.REQUIRED;
             commands.set("#AdminSubRequired.Style.Default.Background", reqActive ? "#8b6b2f" : "#1a2840");
             commands.set("#AdminSubRequired.Style.Hovered.Background", reqActive ? "#8b6b2f" : "#a07038");
             commands.set("#AdminSubRequired.Style.Pressed.Background", reqActive ? "#8b6b2f" : "#704b24");
 
-            // Disabled sub-tab button: red (#8b3a3a) when active (locked), default otherwise
+
             boolean disActive = adminSubTab == AdminSubTab.DISABLED;
             commands.set("#AdminSubDisabled.Style.Default.Background", disActive ? "#8b3a3a" : "#1a2840");
             commands.set("#AdminSubDisabled.Style.Hovered.Background", disActive ? "#8b3a3a" : "#9b4a4a");
             commands.set("#AdminSubDisabled.Style.Pressed.Background", disActive ? "#8b3a3a" : "#7b2a2a");
 
-            // Settings sub-tab button: blue (#2a4a6b) when active (locked), default otherwise
+
             boolean setActive = adminSubTab == AdminSubTab.SETTINGS;
             commands.set("#AdminSubSettings.Style.Default.Background", setActive ? "#2a4a6b" : "#1a2840");
             commands.set("#AdminSubSettings.Style.Hovered.Background", setActive ? "#2a4a6b" : "#3a5a7b");
@@ -1129,7 +1046,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 commands.set("#AdminServerNameField.Value", adminServerName);
             }
 
-            // Save feedback message (per sub-tab)
+
             String saveMsgId = switch (adminSubTab) {
                 case REQUIRED -> "#SaveMessageAdmin";
                 case DISABLED -> "#SaveMessageAdminDis";
@@ -1143,13 +1060,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return;
         }
 
-        // ── Player disabled tab content ──
+
         if (activeTab == ActiveTab.DISABLED) {
             fillDisabledTab(commands);
             return;
         }
 
-        // ── Editor tab content ──
+
         commands.set("#EditorTitle.Text", activeTab == ActiveTab.NPCS ? "YOUR NPC NAMEPLATE" : "YOUR PLAYER NAMEPLATE");
 
         commands.set("#FilterField.Value", filter);
@@ -1167,23 +1084,23 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
         commands.set("#PreviewText.Text", buildPreview(chain));
 
-        // Save feedback message
+
         commands.set("#SaveMessageEditor.Visible", saveMessage != null);
         if (saveMessage != null) {
             commands.set("#SaveMessageEditor.Text", saveMessage);
             commands.set("#SaveMessageEditor.Style.TextColor", saveMessageSuccess ? "#4ade80" : "#f87171");
         }
 
-        // Separator edit popup
+
         boolean showSepPopup = editingSepIndex >= 0;
         commands.set("#SepPopupOverlay.Visible", showSepPopup);
         if (showSepPopup && pendingSepInput == null) {
-            // Only set the field value when initially opening the popup,
-            // not while the user is actively typing (pendingSepInput != null).
+
+
             commands.set("#SepTextField.Value", sepText);
         }
 
-        // Variant format popup
+
         boolean showVariantPopup = editingVariantKey != null;
         commands.set("#VariantPopupOverlay.Visible", showVariantPopup);
         if (showVariantPopup) {
@@ -1191,17 +1108,17 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             if (varSeg != null) {
                 commands.set("#VariantSegmentName.Text", varSeg.displayName());
                 List<String> variants = varSeg.variants();
-                // Resolve the current bar empty character for dynamic preview
+
                 String barEmptyChar = pendingBarEmptyInput != null
                         ? pendingBarEmptyInput
                         : preferences.getBarEmptyChar(viewerUuid, tabEntityType(), editingVariantKey);
-                // Use pendingVariant (in-progress selection) instead of committed preferences
+
                 for (int vi = 0; vi < MAX_VARIANT_OPTIONS; vi++) {
                     boolean vVisible = vi < variants.size();
                     commands.set("#Variant" + vi + ".Visible", vVisible);
                     if (vVisible) {
                         String variantName = variants.get(vi);
-                        // Replace default dashes in bar preview with the player's chosen empty character
+
                         if (barEmptyChar.length() == 1) {
                             int pStart = variantName.indexOf('(');
                             int pEnd = variantName.lastIndexOf(')');
@@ -1213,19 +1130,19 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                         }
                         boolean selected = vi == pendingVariant;
                         commands.set("#Variant" + vi + ".Text", selected ? "> " + variantName : "  " + variantName);
-                        // Selected option: locked green background on all states (no hover effect)
-                        // Unselected options: normal hover/press feedback
+
+
                         commands.set("#Variant" + vi + ".Style.Default.Background", selected ? COLOR_VARIANT_SELECTED : "#1a2840");
                         commands.set("#Variant" + vi + ".Style.Hovered.Background", selected ? COLOR_VARIANT_SELECTED : "#243650");
                         commands.set("#Variant" + vi + ".Style.Pressed.Background", selected ? COLOR_VARIANT_SELECTED : "#0f1824");
                     }
                 }
 
-                // Prefix/suffix section — only shown for segments that support it
+
                 boolean showPrefixSuffix = varSeg.supportsPrefixSuffix();
                 commands.set("#PrefixSuffixSection.Visible", showPrefixSuffix);
                 if (showPrefixSuffix) {
-                    // Only set field values when not actively typing (same pattern as sep text)
+
                     if (pendingPrefixInput == null) {
                         String pfx = preferences.getPrefix(viewerUuid, tabEntityType(), editingVariantKey);
                         commands.set("#PrefixField.Value", pfx);
@@ -1236,8 +1153,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     }
                 }
 
-                // Bar customization section — only shown when a Bar variant is selected,
-                // since the empty fill character only applies to bar-style formatting
+
+
                 boolean isBarVariant = showPrefixSuffix && pendingVariant >= 0
                         && pendingVariant < variants.size()
                         && variants.get(pendingVariant).startsWith("Bar");
@@ -1257,7 +1174,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 adminLeftPage, adminRightPage, adminSubTab, adminDisLeftPage, adminDisRightPage, disabledPage));
     }
 
-    // ── Fill Chain Strip ──
+
 
     private void fillChain(UICommandBuilder commands, List<SegmentView> chain, int totalPages) {
         boolean hasChain = !chain.isEmpty();
@@ -1277,27 +1194,27 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 SegmentView view = chain.get(index);
                 commands.set(prefix + "Label.Text", view.displayName());
                 commands.set(prefix + "Sub.Text", truncateModName(view.modName()));
-                // Show target tag on chain blocks too
+
                 String authorWithTag = "by " + view.author();
                 if (!authorWithTag.contains("[")) {
                     authorWithTag += " [" + view.targetLabel() + "]";
                 }
                 commands.set(prefix + "Author.Text", authorWithTag);
-                // Background tint — yellow for required, green for active (including built-in)
+
                 boolean required = adminConfig.isRequired(view.key());
                 NameplateRegistry.Segment chainSeg = registry.getSegments().get(view.key());
                 commands.set(prefix + ".Background.Color", required ? COLOR_REQUIRED : COLOR_CHAIN_ACTIVE);
 
-                // Variant state — used for both example bar and format button
+
                 boolean hasVariants = chainSeg != null && chainSeg.variants().size() > 1;
                 int selectedVariant = hasVariants
                         ? preferences.getSelectedVariant(viewerUuid, tabEntityType(), view.key())
                         : 0;
 
-                // Example bar — show selected variant's example value when non-default
+
                 String example = view.example();
                 if (hasVariants && selectedVariant > 0 && selectedVariant < chainSeg.variants().size()) {
-                    // Extract the value inside parentheses if present, e.g. "Percentage (69%)" → "69%"
+
                     String variantName = chainSeg.variants().get(selectedVariant);
                     int parenStart = variantName.indexOf('(');
                     int parenEnd = variantName.lastIndexOf(')');
@@ -1306,7 +1223,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     } else {
                         example = variantName;
                     }
-                    // Replace default dashes in bar preview with the player's chosen empty character
+
                     if (chainSeg.supportsPrefixSuffix()) {
                         String emptyChar = preferences.getBarEmptyChar(viewerUuid, tabEntityType(), view.key());
                         if (emptyChar.length() == 1) {
@@ -1320,23 +1237,23 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     commands.set(prefix + "Example.Text", example);
                 }
 
-                // Hide remove button for required segments (locked in chain)
+
                 commands.set(prefix + "Remove.Visible", !required);
 
-                // Hide < > arrows when only 1 block (nothing to reorder)
+
                 commands.set(prefix + "Left.Visible", !singleBlock);
                 commands.set(prefix + "Right.Visible", !singleBlock);
 
-                // Center buttons horizontally when items are missing from the row:
-                // - required blocks (no X button) → center < >
-                // - single non-required block (no < > arrows) → center X
+
+
+
                 boolean centerButtons = (required && !singleBlock) || (!required && singleBlock);
                 commands.set(prefix + "TopSpacer.Visible", false);
                 commands.set(prefix + "BtnLeftSpacer.Visible", centerButtons);
                 commands.set(prefix + "BtnRightSpacer.Visible", centerButtons);
 
-                // Format button — shown when the segment has multiple variants
-                // Green background + "Formatted" text when a non-default variant is selected
+
+
                 commands.set(prefix + "Format.Visible", hasVariants);
                 if (hasVariants) {
                     boolean variantActive = selectedVariant > 0;
@@ -1346,7 +1263,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     commands.set(prefix + "Format.Style.Pressed.Background", variantActive ? "#225530" : "#225530");
                 }
             } else {
-                // Reset to default color when slot is empty
+
                 commands.set(prefix + ".Background.Color", COLOR_CHAIN_EMPTY);
                 commands.set(prefix + "ExampleBar.Visible", false);
                 commands.set(prefix + "Remove.Visible", true);
@@ -1358,7 +1275,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 commands.set(prefix + "Format.Visible", false);
             }
 
-            // Separator indicator between blocks (indices 0–2)
+
             if (i < CHAIN_PAGE_SIZE - 1) {
                 boolean sepVisible = visible && (start + i + 1) < end;
                 String sepId = "#ChainSep" + i;
@@ -1372,8 +1289,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             }
         }
 
-        // Trailing separator (ChainSep3) — shown after the last block on this page
-        // when there are more blocks continuing on the next page.
+
+
         {
             int lastOnPage = start + CHAIN_PAGE_SIZE - 1;
             boolean trailingSepVisible = lastOnPage < chain.size() && (lastOnPage + 1) < chain.size();
@@ -1386,7 +1303,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             }
         }
 
-        // Pagination — container always visible to reserve space; hide children instead
+
         boolean showPagination = totalPages > 1;
         commands.set("#PrevChain.Visible", showPagination);
         commands.set("#ChainPageLabel.Visible", showPagination);
@@ -1396,7 +1313,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
     }
 
-    // ── Fill Available Blocks ──
+
 
     private void fillAvailable(UICommandBuilder commands, List<SegmentView> available, int totalPages) {
         boolean hasAvailable = !available.isEmpty();
@@ -1414,14 +1331,14 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 SegmentView view = available.get(index);
                 commands.set(prefix + "Label.Text", view.displayName());
                 commands.set(prefix + "Sub.Text", truncateModName(view.modName()));
-                // Show target tag: "by Author [All]" etc.
+
                 String authorWithTag = "by " + view.author();
                 if (!authorWithTag.contains("[")) {
-                    // Always show the target scope so users know what tab it applies to
+
                     authorWithTag += " [" + view.targetLabel() + "]";
                 }
                 commands.set(prefix + "Author.Text", authorWithTag);
-                // Example bar
+
                 String example = view.example();
                 boolean hasExample = example != null && !example.isBlank();
                 commands.set(prefix + "ExampleBar.Visible", hasExample);
@@ -1429,7 +1346,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     commands.set(prefix + "Example.Text", example);
                 }
 
-                // Yellow tint for required, warm purple for built-in, default otherwise
+
                 boolean required = adminConfig.isRequired(view.key());
                 NameplateRegistry.Segment availSeg = registry.getSegments().get(view.key());
                 boolean builtIn = availSeg != null && availSeg.builtIn();
@@ -1438,7 +1355,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             }
         }
 
-        // Pagination — container always visible to reserve space; hide children instead
+
         boolean showPagination = totalPages > 1;
         commands.set("#PrevAvail.Visible", showPagination);
         commands.set("#AvailPaginationLabel.Visible", showPagination);
@@ -1448,19 +1365,19 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
     }
 
-    // ── Fill Admin Columns ──
+
 
     private void fillAdmin(UICommandBuilder commands) {
         List<SegmentView> allSegments = getAllSegmentViews();
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         String lowerAdminFilter = adminFilter.isBlank() ? null : adminFilter.toLowerCase();
 
-        // Split into left (available / not required) and right (required), applying filter.
-        // Disabled segments are excluded — they have their own sub-tab.
+
+
         List<SegmentView> leftList = new ArrayList<>();
         List<SegmentView> rightList = new ArrayList<>();
         for (SegmentView view : allSegments) {
-            // Skip disabled segments — managed in the Disabled sub-tab
+
             if (adminConfig.isDisabled(view.key())) {
                 continue;
             }
@@ -1559,19 +1476,19 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
     }
 
-    // ── Fill Admin Disabled Columns ──
+
 
     private void fillAdminDisabled(UICommandBuilder commands) {
         List<SegmentView> allSegments = getAllSegmentViews();
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         String lowerAdminFilter = adminDisFilter.isBlank() ? null : adminDisFilter.toLowerCase();
 
-        // Split into left (available / not disabled) and right (disabled), applying filter.
-        // Required segments are excluded — they cannot be disabled.
+
+
         List<SegmentView> leftList = new ArrayList<>();
         List<SegmentView> rightList = new ArrayList<>();
         for (SegmentView view : allSegments) {
-            // Skip required segments — they cannot be disabled
+
             if (adminConfig.isRequired(view.key())) {
                 continue;
             }
@@ -1670,10 +1587,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
     }
 
-    // ── Fill Player Disabled Tab ──
+
 
     private void fillDisabledTab(UICommandBuilder commands) {
-        // Collect all disabled segments, sorted alphabetically
+
         List<SegmentView> disabledViews = new ArrayList<>();
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         for (SegmentView view : getAllSegmentViews()) {
@@ -1723,16 +1640,16 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
     }
 
-    // ── Actions ──
+
 
     private void addRow(int row) {
         SegmentView view = getAvailableRow(row);
         if (view == null) {
             return;
         }
-        // Enable the segment in this tab's chain.
-        // New blocks inherit the global default separator (set by the last
-        // SepConfirm action) via getSeparatorAfter fallback.
+
+
+
         preferences.enable(viewerUuid, tabEntityType(), view.key());
     }
 
@@ -1741,7 +1658,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         if (view == null) {
             return;
         }
-        // Don't allow removing required segments
+
         if (adminConfig.isRequired(view.key())) {
             return;
         }
@@ -1751,7 +1668,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     private void clearChain() {
         List<SegmentKey> filteredKeys = getFilteredKeys();
         preferences.disableAll(viewerUuid, tabEntityType(), filteredKeys);
-        // Re-enable required segments after clearing
+
         for (SegmentKey key : filteredKeys) {
             if (adminConfig.isRequired(key)) {
                 preferences.enable(viewerUuid, tabEntityType(), key);
@@ -1768,7 +1685,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         preferences.move(viewerUuid, tabEntityType(), view.key(), delta, filteredKeys, getDefaultComparator());
     }
 
-    /** Move a segment from the left (available) column to the right (required) column. */
+
     private void enableAdminRow(int row) {
         List<SegmentView> leftList = getAdminLeftList();
         int index = adminLeftPage * ADMIN_PAGE_SIZE + row;
@@ -1778,7 +1695,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         adminConfig.setRequired(leftList.get(index).key(), true);
     }
 
-    /** Move a segment from the right (required) column back to the left (available) column. */
+
     private void disableAdminRow(int row) {
         List<SegmentView> rightList = getAdminRightList();
         int index = adminRightPage * ADMIN_PAGE_SIZE + row;
@@ -1788,7 +1705,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         adminConfig.setRequired(rightList.get(index).key(), false);
     }
 
-    /** Move a segment from the left (available) column to the right (disabled) column. */
+
     private void disableAdminDisRow(int row) {
         List<SegmentView> leftList = getAdminDisLeftList();
         int index = adminDisLeftPage * ADMIN_PAGE_SIZE + row;
@@ -1798,7 +1715,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         adminConfig.setDisabled(leftList.get(index).key(), true);
     }
 
-    /** Move a segment from the right (disabled) column back to the left (available) column. */
+
     private void enableAdminDisRow(int row) {
         List<SegmentView> rightList = getAdminDisRightList();
         int index = adminDisRightPage * ADMIN_PAGE_SIZE + row;
@@ -1813,7 +1730,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         String lowerFilter = adminFilter.isBlank() ? null : adminFilter.toLowerCase();
         List<SegmentView> left = new ArrayList<>();
         for (SegmentView view : getAllSegmentViews()) {
-            // Skip disabled segments — managed in the Disabled sub-tab
+
             if (adminConfig.isDisabled(view.key())) {
                 continue;
             }
@@ -1835,7 +1752,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         String lowerFilter = adminFilter.isBlank() ? null : adminFilter.toLowerCase();
         List<SegmentView> right = new ArrayList<>();
         for (SegmentView view : getAllSegmentViews()) {
-            // Skip disabled segments — managed in the Disabled sub-tab
+
             if (adminConfig.isDisabled(view.key())) {
                 continue;
             }
@@ -1852,13 +1769,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         return right;
     }
 
-    /** Returns segments not currently disabled — left column of admin Disabled sub-tab. */
+
     private List<SegmentView> getAdminDisLeftList() {
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         String lowerFilter = adminDisFilter.isBlank() ? null : adminDisFilter.toLowerCase();
         List<SegmentView> left = new ArrayList<>();
         for (SegmentView view : getAllSegmentViews()) {
-            // Skip required segments — they cannot be disabled
+
             if (adminConfig.isRequired(view.key())) {
                 continue;
             }
@@ -1875,13 +1792,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         return left;
     }
 
-    /** Returns segments currently disabled — right column of admin Disabled sub-tab. */
+
     private List<SegmentView> getAdminDisRightList() {
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         String lowerFilter = adminDisFilter.isBlank() ? null : adminDisFilter.toLowerCase();
         List<SegmentView> right = new ArrayList<>();
         for (SegmentView view : getAllSegmentViews()) {
-            // Skip required segments — they cannot be disabled
+
             if (adminConfig.isRequired(view.key())) {
                 continue;
             }
@@ -1918,19 +1835,15 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         return list.get(index);
     }
 
-    // ── Data Views ──
 
-    /**
-     * Returns the list of segment keys visible in the current tab, used for
-     * preference queries. This filters the full registry by the active tab's
-     * target type, so that chain/available lists only show relevant segments.
-     */
+
+
     private List<SegmentKey> getFilteredKeys() {
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         List<SegmentKey> filtered = new ArrayList<>();
         for (Map.Entry<SegmentKey, NameplateRegistry.Segment> entry : segments.entrySet()) {
             if (isSegmentVisibleForActiveTab(entry.getValue())) {
-                // Hide disabled segments from player chain/available lists
+
                 if (adminConfig.isDisabled(entry.getKey())) {
                     continue;
                 }
@@ -1940,16 +1853,12 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         return filtered;
     }
 
-    /**
-     * Returns the list of segment keys matching the given entity type,
-     * independent of the currently active tab. Used by the Save handler to
-     * snapshot both NPC and Player chains with the correct key subsets.
-     */
+
     private List<SegmentKey> getFilteredKeysForEntityType(String entityType) {
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         List<SegmentKey> filtered = new ArrayList<>();
         for (Map.Entry<SegmentKey, NameplateRegistry.Segment> entry : segments.entrySet()) {
-            // Skip disabled segments
+
             if (adminConfig.isDisabled(entry.getKey())) {
                 continue;
             }
@@ -1996,11 +1905,11 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         List<SegmentKey> filteredKeys = getFilteredKeys();
         List<SegmentKey> ordered = preferences.getChain(viewerUuid, tabEntityType(), filteredKeys, getDefaultComparator());
 
-        // Ensure required segments are always in the chain
+
         boolean chainChanged = false;
         for (SegmentKey key : filteredKeys) {
             if (adminConfig.isRequired(key) && !ordered.contains(key)) {
-                // Force-enable the required segment
+
                 preferences.enable(viewerUuid, tabEntityType(), key);
                 chainChanged = true;
             }
@@ -2020,10 +1929,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         return views;
     }
 
-    /**
-     * Returns views for ALL registered segments (across all targets), sorted alphabetically.
-     * Used by the admin panel to list every segment regardless of tab context.
-     */
+
     private List<SegmentView> getAllSegmentViews() {
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         if (segments.isEmpty()) {
@@ -2078,8 +1984,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return "(no blocks enabled)";
         }
 
-        // Build the full preview string with per-block separators and bracketed names.
-        // The preview bar is horizontally scrollable, so no truncation is needed.
+
+
         StringBuilder builder = new StringBuilder();
         SegmentView prevView = null;
         for (SegmentView view : views) {
@@ -2107,6 +2013,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
     }
 
-    // UiState, SettingsData, SegmentView are top-level types
-    // (see UiState.java, SettingsData.java, SegmentView.java)
+
+
 }

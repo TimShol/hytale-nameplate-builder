@@ -14,22 +14,6 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Server-side entry point for the NameplateBuilder mod.
- *
- * <p>Wires together the core subsystems on startup:</p>
- * <ul>
- *   <li>{@link NameplateRegistry} — segment UI metadata store</li>
- *   <li>{@link NameplatePreferenceStore} — per-player preference persistence</li>
- *   <li>{@link AdminConfigStore} — server-wide required/disabled segment and server name configuration</li>
- *   <li>{@link AnchorEntityManager} — invisible anchor entities for vertical offset</li>
- *   <li>{@link NameplateAggregatorSystem} — per-tick nameplate compositor</li>
- *   <li>{@link NameplateBuilderCommand} — {@code /npb} player command</li>
- *   <li>{@link PlayerReadyEvent} listener — sends a coloured welcome message on join</li>
- * </ul>
- *
- * <p>On shutdown, all persistent stores are saved to disk.</p>
- */
 public final class NameplateBuilderPlugin extends JavaPlugin {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
@@ -54,12 +38,12 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
         NameplateAPI.setRegistry(registry);
         anchorManager = new AnchorEntityManager();
 
-        // Register the NameplateData ECS component so mods can attach it to entities
+
         ComponentType<EntityStore, NameplateData> nameplateDataType =
                 getEntityStoreRegistry().registerComponent(NameplateData.class, "nameplate_data", NameplateData.CODEC);
         NameplateAPI.setComponentType(nameplateDataType);
 
-        // Describe built-in segments provided by NameplateBuilder itself
+
         String pluginId = NameplateRegistry.toPluginId(this);
         registry.describeBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_PLAYER_NAME,
                 "Player Name", SegmentTarget.PLAYERS, "Frotty27");
@@ -81,12 +65,12 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
                 List.of("Current/Max (30/50)", "Percentage (60%)", "Bar (||||||||||||-----)"));
         registry.setSupportsPrefixSuffix(pluginId, DefaultSegmentSystem.SEGMENT_MANA);
 
-        // Register tick systems
+
         getEntityStoreRegistry().registerSystem(new DefaultSegmentSystem(nameplateDataType));
         getEntityStoreRegistry().registerSystem(new NameplateAggregatorSystem(registry, preferences, adminConfig, nameplateDataType, anchorManager));
         getCommandRegistry().registerCommand(new NameplateBuilderCommand(registry, preferences, adminConfig));
 
-        // Send welcome message when a player joins
+
         getEventRegistry().registerGlobal(PlayerReadyEvent.class, event -> {
             try {
                 var player = event.getPlayer();
@@ -107,7 +91,7 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
                             .color("#55FF55"));
                 }
             } catch (RuntimeException _) {
-                // Best-effort — don't crash if message sending fails
+
             }
         });
 
