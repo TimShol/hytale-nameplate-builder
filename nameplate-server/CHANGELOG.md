@@ -13,7 +13,7 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 - Updated target server version to 2026.02.17-255364b8e
 - Updated nameplate protocol to match the latest Hytale build
 
-## [1.0.1] - 2025-02-13
+## [1.0.1] - 2026-02-13
 
 ### Fixed
 - Nameplate lagging behind fast-moving NPCs
@@ -25,7 +25,7 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 - Player nameplates now use client-side rendering for smoother display
 - NPC nameplates with vertical offset now use predictive positioning to reduce lag
 
-## [1.0.0] - 2025-02-11
+## [1.0.0] - 2026-02-11
 
 ### Added
 - Initial release of NameplateBuilder server plugin
