@@ -17,7 +17,7 @@ A server-side nameplate manager for Hytale that lets other mods contribute text 
 </td>
 <td align="center" width="50%">
 <img src="icons/NPB-API-128.png" alt="API" width="128"/><br/><br/>
-<strong>API (for modders)</strong><br/><br/>
+<strong>API</strong><br/><br/>
 <a href="https://www.curseforge.com/hytale/mods/nameplatebuilder-api">
 <img src="https://img.shields.io/badge/Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white" alt="Download NameplateBuilder API"/>
 </a>
