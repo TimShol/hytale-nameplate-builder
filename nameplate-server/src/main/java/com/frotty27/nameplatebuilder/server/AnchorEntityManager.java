@@ -178,37 +178,40 @@ final class AnchorEntityManager {
     }
 
     /**
-     * No-op - we no longer remove anchor entities to avoid chunk serialization
-     * race conditions. Anchors use AddReason.LOAD so they won't persist to disk.
-     *
-     * @deprecated No longer used - kept for API compatibility
-     */
-    @Deprecated
-    void cleanupPendingRemovals(CommandBuffer<EntityStore> commandBuffer) {
-        // No-op - we don't remove anchors anymore
-        pendingRemovals.clear();
-    }
-
-    /**
      * Clean up anchors whose real entity has been removed from the store
-     * (e.g. by {@code /npc clean}). Simply removes tracking state - the
-     * anchor entity is left in the world to avoid serialization races.
+     * (e.g. by {@code /npc clean}). Removes tracking state and returns the
+     * anchor refs that need a blank nameplate broadcast so clients don't see
+     * floating text above the removed entity's last position.
+     *
+     * <p>The anchor entity itself is left in the world to avoid serialization
+     * races; it will disappear when the chunk unloads.</p>
      *
      * <p>Call once per tick from the aggregator, before processing entities.</p>
+     *
+     * @return list of anchor refs whose nameplates should be blanked, or empty list
      */
-    void cleanupOrphanedAnchors(CommandBuffer<EntityStore> commandBuffer) {
+    List<Ref<EntityStore>> cleanupOrphanedAnchors(CommandBuffer<EntityStore> commandBuffer) {
         if (anchors.isEmpty()) {
-            return;
+            return List.of();
         }
+        List<Ref<EntityStore>> orphanedAnchors = null;
         Iterator<Map.Entry<Ref<EntityStore>, AnchorState>> it = anchors.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<Ref<EntityStore>, AnchorState> entry = it.next();
             Ref<EntityStore> realRef = entry.getKey();
             if (!realRef.isValid()) {
-                // Just remove from tracking - leave anchor in world
+                AnchorState state = entry.getValue();
                 it.remove();
+                // Return ready anchor refs so the aggregator can blank their nameplates
+                if (!state.spawnPending && state.anchorRef != null && state.anchorRef.isValid()) {
+                    if (orphanedAnchors == null) {
+                        orphanedAnchors = new ArrayList<>();
+                    }
+                    orphanedAnchors.add(state.anchorRef);
+                }
             }
         }
+        return orphanedAnchors != null ? orphanedAnchors : List.of();
     }
 
     /** Clears all anchor state. Called during plugin shutdown. */

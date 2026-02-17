@@ -2,19 +2,28 @@
 
 All notable changes to NameplateBuilder Server will be documented in this file.
 
+## [1.0.2] - 2026-02-17
+
+### Fixed
+- Nameplate text remaining visible above entities after they are removed
+- Crash when moving quickly with a health nameplate visible
+- Nameplate offset anchor not recovering after being invalidated by the engine
+
+### Changed
+- Updated target server version to 2026.02.17-255364b8e
+- Updated nameplate protocol to match the latest Hytale build
+
 ## [1.0.1] - 2025-02-13
 
 ### Fixed
-- Fixed nameplate lag on moving NPCs with velocity-based predictive positioning
-- Fixed crash during chunk serialization when entities die
-- Fixed orphaned anchor cleanup when entities are removed (e.g., via `/npc clean`)
-- Fixed anchor entities being persisted to disk during chunk saves
+- Nameplate lagging behind fast-moving NPCs
+- Crash when an entity dies during chunk saving
+- Nameplate remaining visible after an entity is cleaned up
+- Nameplate offset anchors being incorrectly saved to disk
 
 ### Changed
-- Player nameplates now always use vanilla client-side rendering (zero lag, no anchor entities)
-- NPC nameplates use invisible anchor entities with velocity prediction when vertical offset is configured
-- Anchor entities are no longer explicitly removed to avoid chunk serialization race conditions
-- Orphaned anchors persist with blank nameplates until chunk unload (not saved to disk due to `AddReason.LOAD`)
+- Player nameplates now use client-side rendering for smoother display
+- NPC nameplates with vertical offset now use predictive positioning to reduce lag
 
 ## [1.0.0] - 2025-02-11
 
