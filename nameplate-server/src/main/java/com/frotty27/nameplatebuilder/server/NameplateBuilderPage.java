@@ -255,6 +255,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
         bindAction(events, "#SaveButtonAdminSettings", "SaveAdminSettings");
         bindAction(events, "#ResetButtonAdminSettings", "ResetAdminSettings");
+        bindAction(events, "#AdminWelcomeToggle", "ToggleAdminWelcome");
 
 
         for (int i = 0; i < ADMIN_PAGE_SIZE; i++) {
@@ -501,6 +502,14 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 if (isAdmin) {
                     adminServerName = "";
                     adminConfig.setServerName("");
+                    adminConfig.setWelcomeMessagesEnabled(false);
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "ToggleAdminWelcome" -> {
+                if (isAdmin) {
+                    adminConfig.setWelcomeMessagesEnabled(!adminConfig.isWelcomeMessagesEnabled());
                 }
                 sendUpdate(buildUpdate());
                 return;
@@ -1044,6 +1053,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 fillAdminDisabled(commands);
             } else if (adminSubTab == AdminSubTab.SETTINGS) {
                 commands.set("#AdminServerNameField.Value", adminServerName);
+                boolean welcomeEnabled = adminConfig.isWelcomeMessagesEnabled();
+                commands.set("#AdminWelcomeToggle.Text", welcomeEnabled ? "  [X]  " : "  [ ]  ");
             }
 
 

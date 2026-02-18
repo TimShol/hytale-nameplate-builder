@@ -15,6 +15,7 @@ final class AdminConfigStore {
     private final Set<SegmentKey> requiredSegments = ConcurrentHashMap.newKeySet();
     private final Set<SegmentKey> disabledSegments = ConcurrentHashMap.newKeySet();
     private volatile String serverName = "";
+    private volatile boolean welcomeMessagesEnabled = false;
 
 
     AdminConfigStore(Path filePath) {
@@ -26,6 +27,7 @@ final class AdminConfigStore {
         requiredSegments.clear();
         disabledSegments.clear();
         serverName = "";
+        welcomeMessagesEnabled = false;
         if (!Files.exists(filePath)) {
             return;
         }
@@ -38,6 +40,10 @@ final class AdminConfigStore {
                 String[] parts = line.split("\\|", -1);
                 if (parts.length >= 2 && "S".equals(parts[0])) {
                     serverName = parts[1];
+                    continue;
+                }
+                if (parts.length >= 2 && "G".equals(parts[0])) {
+                    welcomeMessagesEnabled = Boolean.parseBoolean(parts[1]);
                     continue;
                 }
                 if (parts.length >= 3) {
@@ -65,6 +71,11 @@ final class AdminConfigStore {
             writer.write("# Server name for welcome message");
             writer.newLine();
             writer.write("S|" + serverName);
+            writer.newLine();
+            writer.newLine();
+            writer.write("# Show welcome messages for all players");
+            writer.newLine();
+            writer.write("G|" + welcomeMessagesEnabled);
             writer.newLine();
             writer.newLine();
             writer.write("# Required segments — always displayed for all players");
@@ -158,5 +169,15 @@ final class AdminConfigStore {
 
     String getDisplayServerName() {
         return serverName.isBlank() ? "NameplateBuilder" : serverName;
+    }
+
+
+    boolean isWelcomeMessagesEnabled() {
+        return welcomeMessagesEnabled;
+    }
+
+
+    void setWelcomeMessagesEnabled(boolean enabled) {
+        this.welcomeMessagesEnabled = enabled;
     }
 }

@@ -77,6 +77,7 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
                 UUID playerUuid = player.getPlayerRef().getUuid();
                 if (playerUuid == null) return;
 
+                if (!adminConfig.isWelcomeMessagesEnabled()) return;
                 if (!preferences.isShowWelcomeMessage(playerUuid)) return;
 
                 boolean allDisabled = !registry.getSegments().isEmpty()
