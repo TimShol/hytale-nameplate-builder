@@ -2,6 +2,11 @@
 
 All notable changes to NameplateBuilder Server will be documented in this file.
 
+## [1.0.3] - 2026-02-18
+
+### Added
+- Admin setting to enable or disable welcome messages for all players
+
 ## [1.0.2] - 2026-02-17
 
 ### Fixed

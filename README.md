@@ -54,7 +54,7 @@ Players get a UI to choose which segments they see, reorder them, customize sepa
 
 ### Welcome Message
 
-- **Coloured join message** — Green when nameplates are available (`[ServerName] - Use /npb to customize your nameplates.`) or red when all segments are admin-disabled (`[ServerName] - Nameplates are disabled on this server.`). Players can toggle this off via General settings
+- **Coloured join message** — Green when nameplates are available (`[ServerName] - Use /npb to customize your nameplates.`) or red when all segments are admin-disabled (`[ServerName] - Nameplates are disabled on this server.`). Disabled by default — admins can enable it in the Settings sub-tab. Players can also individually toggle it off via General settings
 
 ### Player UI
 
@@ -141,7 +141,10 @@ When all registered segments are disabled, nameplates are blanked globally and t
 
 #### Settings Sub-Tab
 
-- **Server Name** — text field for the display name shown in the join welcome message. Defaults to "NameplateBuilder" if left blank. Has Save and Reset buttons.
+- **Server Name** — text field for the display name shown in the join welcome message. Defaults to "NameplateBuilder" if left blank
+- **Show Welcome Messages** — global toggle to enable or disable welcome messages for all players. Disabled by default. When enabled, players can still individually turn it off in their General settings
+
+Has Save and Reset buttons.
 
 Admin configuration is persisted in `admin_config.txt`.
 

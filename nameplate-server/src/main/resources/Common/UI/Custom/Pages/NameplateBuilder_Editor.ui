@@ -1572,6 +1572,28 @@ $C.@PageOverlay {
               Anchor: (Height: 20, Bottom: 20);
             }
 
+            Group {
+              LayoutMode: Left;
+              Anchor: (Height: 28, Bottom: 8);
+
+              Label {
+                Text: "Show Welcome Messages";
+                Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center);
+                Anchor: (Width: 300, Height: 28);
+              }
+
+              $C.@SmallSecondaryTextButton #AdminWelcomeToggle {
+                @Text = "[ ]";
+                Anchor: (Width: 70, Height: 28);
+              }
+            }
+
+            Label {
+              Text: "When enabled, all players see a welcome message on join. Players can still individually disable it.";
+              Style: (TextColor: #5a6d82, FontSize: 11);
+              Anchor: (Height: 20, Bottom: 10);
+            }
+
             Group { FlexWeight: 1; }
 
             Group {
