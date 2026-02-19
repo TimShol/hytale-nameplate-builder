@@ -3,8 +3,10 @@ plugins {
     id 'com.gradleup.shadow' version '9.3.0'
 }
 
+def mod_build = 0
+
 group = rootProject.property('group')
-version = '1.0.1'  // Example mod version - unchanged reference implementation
+version = rootProject.ext.computeVersion(mod_build)
 base.archivesName.set(rootProject.property('name') + '-Example-Mod')
 
 dependencies {

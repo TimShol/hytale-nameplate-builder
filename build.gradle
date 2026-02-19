@@ -1,3 +1,9 @@
+// Compute version from server_version date + hytale_update + mod_build
+// e.g. server_version=2026.02.18-f3b8fff95, mod_build=0 → 3.260218.0
+String[] dateParts = ((String) property('server_version')).split('-')[0].split('\\.')
+def yy = dateParts[0].substring(2) // 2026 → 26
+ext.computeVersion = { int modBuild -> "${property('hytale_update')}.${yy}${dateParts[1]}${dateParts[2]}.${modBuild}" }
+
 allprojects {
     repositories {
         mavenCentral()
@@ -8,7 +14,7 @@ subprojects {
     apply plugin: 'java'
 
     java {
-        toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+        toolchain.languageVersion = JavaLanguageVersion.of((String) java_version)
     }
 
     tasks.withType(JavaCompile).configureEach {
