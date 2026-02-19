@@ -3,8 +3,10 @@ plugins {
     id 'com.gradleup.shadow' version '9.3.0'
 }
 
+def mod_build = 0
+
 group = rootProject.property('group')
-version = rootProject.property('version')
+version = rootProject.ext.computeVersion(mod_build)
 base.archivesName.set(rootProject.property('name') as String)
 
 dependencies {
@@ -16,7 +18,7 @@ dependencies {
 tasks.processResources {
     def expandProps = [
             'name'          : rootProject.property('name'),
-            'version'       : rootProject.property('version'),
+            'version'       : version,
             'group'         : rootProject.property('group'),
             'description'   : rootProject.property('description'),
             'website'       : rootProject.property('website'),

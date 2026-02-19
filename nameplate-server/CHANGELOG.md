@@ -2,6 +2,12 @@
 
 All notable changes to NameplateBuilder Server will be documented in this file.
 
+## [3.260218.0] - 2026-02-19
+
+### Changed
+- Adopted new versioning scheme: `{hytale_update}.{YYMMDD}.{mod_build}`
+- Updated server version
+
 ## [1.0.3] - 2026-02-18
 
 ### Added
