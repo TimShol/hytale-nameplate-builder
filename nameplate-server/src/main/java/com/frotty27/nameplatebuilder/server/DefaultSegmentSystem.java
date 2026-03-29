@@ -1,23 +1,32 @@
 package com.frotty27.nameplatebuilder.server;
 
 import com.frotty27.nameplatebuilder.api.NameplateData;
-import com.hypixel.hytale.component.Archetype;
-import com.hypixel.hytale.component.ArchetypeChunk;
-import com.hypixel.hytale.component.CommandBuffer;
-import com.hypixel.hytale.component.ComponentType;
-import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
+import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.entity.tracker.EntityTrackerSystems;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.NonNull;
 
 final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
 
+    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
+    private static boolean debugEnabled = false;
+
+    static void setDebugEnabled(boolean enabled) {
+        debugEnabled = enabled;
+    }
+
+    static boolean isDebugEnabled() {
+        return debugEnabled;
+    }
+
+    static final String SEGMENT_ENTITY_NAME = "entity-name";
     static final String SEGMENT_PLAYER_NAME = "player-name";
     static final String SEGMENT_PLAYER_NAME_ANON = "player-name.1";
     static final String SEGMENT_HEALTH = "health";
@@ -36,12 +45,17 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
     private final ComponentType<EntityStore, NameplateData> nameplateDataType;
     private final ComponentType<EntityStore, Player> playerType;
     private final ComponentType<EntityStore, EntityStatMap> statMapType;
+    private final ComponentType<EntityStore, NPCEntity> npcEntityType;
+    private final AdminConfigStore adminConfig;
 
-    DefaultSegmentSystem(ComponentType<EntityStore, NameplateData> nameplateDataType) {
+    DefaultSegmentSystem(ComponentType<EntityStore, NameplateData> nameplateDataType,
+                         AdminConfigStore adminConfig) {
         this.visibleType = EntityTrackerSystems.Visible.getComponentType();
         this.nameplateDataType = nameplateDataType;
         this.playerType = Player.getComponentType();
         this.statMapType = EntityStatMap.getComponentType();
+        this.npcEntityType = NPCEntity.getComponentType();
+        this.adminConfig = adminConfig;
     }
 
     @Override
@@ -50,13 +64,17 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
     }
 
     @Override
-    public com.hypixel.hytale.component.SystemGroup<EntityStore> getGroup() {
+    public SystemGroup<EntityStore> getGroup() {
         return EntityTrackerSystems.QUEUE_UPDATE_GROUP;
     }
 
     @Override
-    public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk,
+    public void tick(float dt, int index, @NonNull ArchetypeChunk<EntityStore> chunk,
                      @NonNull Store<EntityStore> store, @NonNull CommandBuffer<EntityStore> commandBuffer) {
+
+        if (!adminConfig.isMasterEnabled()) {
+            return;
+        }
 
         Ref<EntityStore> entityRef = chunk.getReferenceTo(index);
 
@@ -65,6 +83,9 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
 
 
         if (player != null && existing == null) {
+            if (!adminConfig.isPlayerChainEnabled()) {
+                return;
+            }
             NameplateData data = new NameplateData();
             seedPlayerDefaults(data, player, store, entityRef);
             commandBuffer.putComponent(entityRef, nameplateDataType, data);
@@ -72,19 +93,57 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
         }
 
 
-
         if (player == null && existing == null) {
+            if (!adminConfig.isNpcChainEnabled()) {
+                if (debugEnabled) LOGGER.atInfo().log("[Seed] Skipped NPC - npcChainEnabled=false");
+                return;
+            }
+
+            NPCEntity npcEntity = store.getComponent(entityRef, npcEntityType);
+
+            if (npcEntity != null) {
+                String roleName = npcEntity.getRoleName();
+                if (roleName != null && adminConfig.isNpcBlacklisted(roleName)) {
+                    if (debugEnabled) LOGGER.atInfo().log("[Seed] Skipped NPC - blacklisted: %s", roleName);
+                    return;
+                }
+            }
+
             EntityStatMap statMap = store.getComponent(entityRef, statMapType);
+
+            if (debugEnabled) {
+                String roleName = npcEntity != null ? npcEntity.getRoleName() : "null";
+                boolean hasStatMap = statMap != null;
+                boolean hasHealth = hasStatMap && statMap.get(DefaultEntityStatTypes.getHealth()) != null;
+                LOGGER.atInfo().log("[Seed] NPC: roleName=%s hasStatMap=%s health=%s hasNPCEntity=%s",
+                        roleName, hasStatMap, hasHealth, npcEntity != null);
+            }
+
             if (statMap != null) {
                 boolean hasStats = statMap.get(DefaultEntityStatTypes.getHealth()) != null
                         || statMap.get(DefaultEntityStatTypes.getStamina()) != null
                         || statMap.get(DefaultEntityStatTypes.getMana()) != null;
                 if (hasStats) {
                     NameplateData data = new NameplateData();
+                    String entityName = null;
+                    if (npcEntity != null) {
+                        String roleName = npcEntity.getRoleName();
+                        if (roleName != null && !roleName.isBlank()) {
+                            entityName = roleName.replace('_', ' ');
+                        }
+                    }
+                    if (entityName != null && !entityName.isBlank()) {
+                        data.setText(SEGMENT_ENTITY_NAME, entityName);
+                        adminConfig.trackNamespaceSegment("hytale", SEGMENT_ENTITY_NAME, true);
+                    }
                     setHealthText(data, store, entityRef);
                     setStaminaText(data, store, entityRef);
                     setManaText(data, store, entityRef);
+                    adminConfig.trackNamespaceSegment("hytale", SEGMENT_HEALTH, true);
+                    adminConfig.trackNamespaceSegment("hytale", SEGMENT_STAMINA, true);
+                    adminConfig.trackNamespaceSegment("hytale", SEGMENT_MANA, true);
                     commandBuffer.putComponent(entityRef, nameplateDataType, data);
+                    if (debugEnabled) LOGGER.atInfo().log("[Seed] SEEDED NPC with stats: name=%s", entityName);
                     return;
                 }
             }
@@ -117,6 +176,19 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
 
     private void updateBuiltInSegments(NameplateData data, Player player,
                                        Store<EntityStore> store, Ref<EntityStore> entityRef) {
+
+        if (player == null) {
+            String existingName = data.getText(SEGMENT_ENTITY_NAME);
+            if (existingName == null || existingName.isBlank()) {
+                NPCEntity npcEntity = store.getComponent(entityRef, npcEntityType);
+                if (npcEntity != null) {
+                    String roleName = npcEntity.getRoleName();
+                    if (roleName != null && !roleName.isBlank()) {
+                        data.setText(SEGMENT_ENTITY_NAME, roleName.replace('_', ' '));
+                    }
+                }
+            }
+        }
 
         if (player != null) {
             String displayName = player.getDisplayName();
@@ -173,10 +245,8 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
 
         int filled = max > 0 ? Math.round((float) BAR_LENGTH * current / max) : 0;
         filled = Math.max(0, Math.min(BAR_LENGTH, filled));
-        StringBuilder bar = new StringBuilder(BAR_LENGTH);
-        for (int i = 0; i < filled; i++) bar.append('|');
-        for (int i = filled; i < BAR_LENGTH; i++) bar.append('.');
-        data.setText(SEGMENT_HEALTH_BAR, bar.toString());
+        String bar = "|".repeat(filled) + ".".repeat(BAR_LENGTH - filled);
+        data.setText(SEGMENT_HEALTH_BAR, bar);
     }
 
     private void setStaminaText(NameplateData data, Store<EntityStore> store, Ref<EntityStore> entityRef) {
@@ -199,10 +269,8 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
 
         int filled = max > 0 ? Math.round((float) BAR_LENGTH * current / max) : 0;
         filled = Math.max(0, Math.min(BAR_LENGTH, filled));
-        StringBuilder bar = new StringBuilder(BAR_LENGTH);
-        for (int i = 0; i < filled; i++) bar.append('|');
-        for (int i = filled; i < BAR_LENGTH; i++) bar.append('.');
-        data.setText(SEGMENT_STAMINA_BAR, bar.toString());
+        String bar = "|".repeat(filled) + ".".repeat(BAR_LENGTH - filled);
+        data.setText(SEGMENT_STAMINA_BAR, bar);
     }
 
     private void setManaText(NameplateData data, Store<EntityStore> store, Ref<EntityStore> entityRef) {
@@ -225,10 +293,7 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
 
         int filled = max > 0 ? Math.round((float) BAR_LENGTH * current / max) : 0;
         filled = Math.max(0, Math.min(BAR_LENGTH, filled));
-        StringBuilder bar = new StringBuilder(BAR_LENGTH);
-        for (int i = 0; i < filled; i++) bar.append('|');
-        for (int i = filled; i < BAR_LENGTH; i++) bar.append('.');
-        data.setText(SEGMENT_MANA_BAR, bar.toString());
+        String bar = "|".repeat(filled) + ".".repeat(BAR_LENGTH - filled);
+        data.setText(SEGMENT_MANA_BAR, bar);
     }
-
 }

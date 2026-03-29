@@ -1,5 +1,6 @@
 ---
 title: Register Text
+icon: file-lines
 description: Push, update, and remove segment text on entities.
 ---
 
@@ -57,7 +58,7 @@ IllegalStateException: Store is currently processing
 
 This happens because the store is locked for structural changes during tick processing. Use the `CommandBuffer` pattern from the [Tick Systems](/modding/tick-systems) page instead.
 
-If the entity **already has** the component, `register()` just mutates the internal map — which is safe from tick systems.
+If the entity **already has** the component, `register()` just mutates the internal map - which is safe from tick systems.
 
 ## NameplateData Direct Access
 

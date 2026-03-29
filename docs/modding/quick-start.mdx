@@ -1,5 +1,6 @@
 ---
 title: Quick Start
+icon: rocket
 description: Add your own nameplate segment in under 5 minutes.
 ---
 
@@ -16,7 +17,7 @@ NameplateBuilder is a **central nameplate aggregator**. Instead of each mod figh
 
 That's it. NameplateBuilder handles compositing, per-player preferences, the UI, persistence, death cleanup, and everything else.
 
-## Step 1 — Add the Manifest Dependency
+## Step 1 - Add the Manifest Dependency
 
 In your mod's `manifest.json`, add NameplateBuilder as a dependency so it loads first:
 
@@ -30,7 +31,7 @@ In your mod's `manifest.json`, add NameplateBuilder as a dependency so it loads 
 
 Without this, calling the API throws `NameplateNotInitializedException`.
 
-## Step 2 — Add the API Jar
+## Step 2 - Add the API Jar
 
 In your `build.gradle`:
 
@@ -46,14 +47,14 @@ You only need the lightweight API jar, not the full server plugin. It contains:
 
 | Class | Purpose |
 | :--- | :--- |
-| `NameplateAPI` | Main entry point — all calls go through here |
+| `NameplateAPI` | Main entry point - all calls go through here |
 | `NameplateData` | ECS component that holds segment text on entities |
 | `SegmentTarget` | Enum: `ALL`, `PLAYERS`, or `NPCS` |
 | `NameplateException` | Base exception class |
 | `NameplateNotInitializedException` | Thrown if NameplateBuilder hasn't loaded yet |
 | `NameplateArgumentException` | Thrown for null/blank arguments |
 
-## Step 3 — Describe and Register
+## Step 3 - Describe and Register
 
 ```java
 import com.frotty27.nameplatebuilder.api.NameplateAPI;
@@ -78,7 +79,7 @@ public final class MyModPlugin extends JavaPlugin {
 }
 ```
 
-## Step 4 — Push Text to Entities
+## Step 4 - Push Text to Entities
 
 ```java
 import com.frotty27.nameplatebuilder.api.NameplateData;
@@ -118,8 +119,8 @@ Your segment now appears in the `/npb` UI. Players can add it to their chain, re
 
 ## Next Steps
 
-* **[Describe Segments](/modding/describe-segments)** — All three `describe()` overloads explained
-* **[Format Variants](/modding/format-variants)** — Let players pick between display formats
-* **[Register Text](/modding/register-text)** — `register()`, `remove()`, and `NameplateData` methods
-* **[Tick Systems](/modding/tick-systems)** — NPC spawn initialization and live tick updates
-* **[Advanced](/modding/advanced)** — Hidden metadata keys, cleanup, and edge cases
+* **[Describe Segments](/modding/describe-segments)** - All three `describe()` overloads explained
+* **[Format Variants](/modding/format-variants)** - Let players pick between display formats
+* **[Register Text](/modding/register-text)** - `register()`, `remove()`, and `NameplateData` methods
+* **[Tick Systems](/modding/tick-systems)** - NPC spawn initialization and live tick updates
+* **[Advanced](/modding/advanced)** - Hidden metadata keys, cleanup, and edge cases

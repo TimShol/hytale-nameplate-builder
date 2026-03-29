@@ -1,5 +1,6 @@
 ---
 title: Advanced
+icon: flask
 description: Hidden keys, cleanup behaviour, undescribe, and common mistakes.
 ---
 
@@ -11,7 +12,7 @@ Keys that start with `_` (underscore) are **hidden metadata**. They are stored i
 // Store a spawn tick so you can compute per-entity lifetime
 data.setText("_spawn_tick", String.valueOf(globalTick));
 
-// Read it back later — invisible to players
+// Read it back later - invisible to players
 String spawnTick = data.getText("_spawn_tick");
 
 // Store any internal state alongside visible segments
@@ -19,19 +20,19 @@ data.setText("_last_hit_by", attackerName);
 data.setText("_phase", "enraged");
 ```
 
-This is useful when you need per-entity state inside a tick system but don't want to register a separate ECS component for it. The `_` prefix convention is enforced by the aggregator — it skips any key starting with underscore.
+This is useful when you need per-entity state inside a tick system but don't want to register a separate ECS component for it. The `_` prefix convention is enforced by the aggregator - it skips any key starting with underscore.
 
 ## Cleanup and Unregistering
 
-### Death Cleanup — Automatic
+### Death Cleanup - Automatic
 
 NameplateBuilder **automatically clears nameplates when an entity dies**. When an entity receives a `DeathComponent`, the aggregator sends an empty nameplate to all viewers and removes the `NameplateData` component. You don't need to handle this yourself.
 
-### Plugin Unload — Automatic
+### Plugin Unload - Automatic
 
 When your plugin unloads, NameplateBuilder **automatically removes all segment descriptions** registered by your plugin. No shutdown hook needed.
 
-### Runtime Removal — `undescribe()`
+### Runtime Removal - `undescribe()`
 
 The `undescribe()` method exists for edge cases where you want to dynamically remove a segment from the UI **while the server is running** (e.g. a minigame mod that adds/removes segments based on game phase):
 
@@ -43,7 +44,7 @@ NameplateAPI.undescribe(this, "bounty");
 After calling `undescribe()`:
 
 * The segment disappears from the NameplateBuilder UI
-* Existing `NameplateData` on entities is **not** affected — the text stays until you explicitly remove it or the entity dies
+* Existing `NameplateData` on entities is **not** affected - the text stays until you explicitly remove it or the entity dies
 * Players who had it in their chain will no longer see it rendered
 
 For the vast majority of mods, you will **never need to call `undescribe()`**.
@@ -55,9 +56,9 @@ For the vast majority of mods, you will **never need to call `undescribe()`**.
 | Calling `store.addComponent()` inside a tick system | Use `commandBuffer.putComponent()` instead |
 | Calling `NameplateAPI.register()` inside a tick system on an entity without data | Build a `NameplateData` manually and use `commandBuffer.putComponent()` |
 | Forgetting the manifest dependency | Add `"Frotty27:NameplateBuilder": "*"` to your `manifest.json` |
-| Calling `undescribe()` in a shutdown hook | Not needed — auto-cleaned on plugin unload |
-| Removing nameplate data on entity death | Not needed — auto-cleaned on death |
-| Pushing variant text without the base key | Always set the base key (`"health"`) — suffixed keys (`.1`, `.2`) are optional fallbacks |
+| Calling `undescribe()` in a shutdown hook | Not needed - auto-cleaned on plugin unload |
+| Removing nameplate data on entity death | Not needed - auto-cleaned on death |
+| Pushing variant text without the base key | Always set the base key (`"health"`) - suffixed keys (`.1`, `.2`) are optional fallbacks |
 
 ## Complete Plugin Example
 
@@ -84,7 +85,7 @@ public final class MyModPlugin extends JavaPlugin {
 
     @Override
     protected void setup() {
-        // Health — for all entities, with 3 format variants
+        // Health - for all entities, with 3 format variants
         NameplateAPI.describe(this, "health", "Health Bar",
                 SegmentTarget.ALL, "100/100");
         NameplateAPI.describeVariants(this, "health", List.of(
@@ -93,11 +94,11 @@ public final class MyModPlugin extends JavaPlugin {
             "Bar"
         ));
 
-        // Guild — for players only
+        // Guild - for players only
         NameplateAPI.describe(this, "guild", "Guild Tag",
                 SegmentTarget.PLAYERS, "[Warriors]");
 
-        // Faction — for NPCs only
+        // Faction - for NPCs only
         NameplateAPI.describe(this, "faction", "Faction",
                 SegmentTarget.NPCS, "<Undead>");
 
@@ -112,6 +113,6 @@ public final class MyModPlugin extends JavaPlugin {
 
 ## Further Reading
 
-* **[API Reference](/reference/api)** — Full method tables and exception docs
-* **[Architecture](/reference/architecture)** — Internal systems and data flow
-* **[Example Mod](https://github.com/TimShol/hytale-nameplate-builder)** — Full working source code
+* **[API Reference](/reference/api)** - Full method tables and exception docs
+* **[Architecture](/reference/architecture)** - Internal systems and data flow
+* **[Example Mod](https://github.com/TimShol/hytale-nameplate-builder)** - Full working source code

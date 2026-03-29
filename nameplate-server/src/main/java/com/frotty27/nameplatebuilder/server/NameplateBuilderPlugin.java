@@ -3,14 +3,18 @@ package com.frotty27.nameplatebuilder.server;
 import com.frotty27.nameplatebuilder.api.NameplateAPI;
 import com.frotty27.nameplatebuilder.api.NameplateData;
 import com.frotty27.nameplatebuilder.api.SegmentTarget;
+import com.hypixel.hytale.builtin.instances.InstancesPlugin;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,6 +26,9 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
     private NameplatePreferenceStore preferences;
     private AdminConfigStore adminConfig;
     private AnchorEntityManager anchorManager;
+
+    private final List<String> discoveredWorldNames = new ArrayList<>();
+    private final List<String> discoveredInstanceNames = new ArrayList<>();
 
     public NameplateBuilderPlugin(JavaPluginInit init) {
         super(init);
@@ -45,6 +52,8 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
 
 
         String pluginId = NameplateRegistry.toPluginId(this);
+        registry.describeBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_ENTITY_NAME,
+                "Entity Name", SegmentTarget.NPCS, "Archaeopteryx");
         registry.describeBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_PLAYER_NAME,
                 "Player Name", SegmentTarget.PLAYERS, "Frotty27");
         registry.describeVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_PLAYER_NAME,
@@ -66,9 +75,12 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
         registry.setSupportsPrefixSuffix(pluginId, DefaultSegmentSystem.SEGMENT_MANA);
 
 
-        getEntityStoreRegistry().registerSystem(new DefaultSegmentSystem(nameplateDataType));
+        adminConfig.prePopulateProfiles(registry.getSegments());
+
+        getEntityStoreRegistry().registerSystem(new DefaultSegmentSystem(nameplateDataType, adminConfig));
         getEntityStoreRegistry().registerSystem(new NameplateAggregatorSystem(registry, preferences, adminConfig, nameplateDataType, anchorManager));
-        getCommandRegistry().registerCommand(new NameplateBuilderCommand(registry, preferences, adminConfig));
+        getCommandRegistry().registerCommand(new NameplateBuilderCommand(registry, preferences, adminConfig, this));
+        getCommandRegistry().registerCommand(new NameplateDebugCommand());
 
 
         getEventRegistry().registerGlobal(PlayerReadyEvent.class, event -> {
@@ -96,6 +108,11 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
             }
         });
 
+        PlaceholderAPIHook.init();
+        PlaceholderAPIHook.registerExpansion();
+
+        discoverWorlds();
+
         LOGGER.atInfo().log("NameplateBuilder loaded. Registry ready for mod integrations.");
     }
 
@@ -113,5 +130,34 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
         if (anchorManager != null) {
             anchorManager.clear();
         }
+    }
+
+    void discoverWorlds() {
+        try {
+            var worlds = Universe.get().getWorlds();
+            if (worlds != null) {
+                discoveredWorldNames.clear();
+                discoveredWorldNames.addAll(worlds.keySet());
+                discoveredWorldNames.sort(String.CASE_INSENSITIVE_ORDER);
+            }
+        } catch (Throwable _) {
+        }
+        try {
+            var instanceAssets = InstancesPlugin.get().getInstanceAssets();
+            if (instanceAssets != null) {
+                discoveredInstanceNames.clear();
+                discoveredInstanceNames.addAll(instanceAssets);
+                discoveredInstanceNames.sort(String.CASE_INSENSITIVE_ORDER);
+            }
+        } catch (Throwable _) {
+        }
+    }
+
+    List<String> getDiscoveredWorldNames() {
+        return Collections.unmodifiableList(discoveredWorldNames);
+    }
+
+    List<String> getDiscoveredInstanceNames() {
+        return Collections.unmodifiableList(discoveredInstanceNames);
     }
 }

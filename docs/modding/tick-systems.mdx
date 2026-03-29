@@ -1,12 +1,13 @@
 ---
 title: Tick Systems
+icon: clock
 description: Initialize NPC nameplates on spawn and update them every tick.
 ---
 
 The two most common patterns for tick-based nameplate updates are:
 
-1. **NPC spawn initialization** — Detect newly spawned NPCs and seed their nameplate data
-2. **Live tick updates** — Update dynamic values (health, timers, buffs) every tick
+1. **NPC spawn initialization** - Detect newly spawned NPCs and seed their nameplate data
+2. **Live tick updates** - Update dynamic values (health, timers, buffs) every tick
 
 ## NPC Spawn Initialization
 
@@ -59,7 +60,7 @@ final class MyNpcNameplateSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
-        // First time — seed nameplate data
+        // First time - seed nameplate data
         NameplateData data = new NameplateData();
         data.setText("health", "100/100");
         data.setText("level", "Lv. 10");
@@ -83,7 +84,7 @@ The `CommandBuffer` queues changes and executes them after the system finishes i
 
 ### Why `putComponent()`?
 
-`addComponent()` throws if the component already exists. `putComponent()` is an **upsert** (add or replace) — safe against race conditions when multiple systems or mods might initialize the same entity.
+`addComponent()` throws if the component already exists. `putComponent()` is an **upsert** (add or replace) - safe against race conditions when multiple systems or mods might initialize the same entity.
 
 ## Live Tick Updates
 
@@ -115,7 +116,7 @@ final class MyTickUpdater extends EntityTickingSystem<EntityStore> {
         NameplateData data = chunk.getComponent(index, nameplateDataType);
         if (data == null) return;
 
-        // setText() every tick is safe — it's just a HashMap.put().
+        // setText() every tick is safe - it's just a HashMap.put().
         // No component is added or removed, so there's no flashing.
         // The aggregator reads the latest value on the next nameplate tick.
         data.setText("health", computeHealthText(store, chunk, index));
@@ -123,7 +124,7 @@ final class MyTickUpdater extends EntityTickingSystem<EntityStore> {
 }
 ```
 
-Calling `data.setText()` every tick is **cheap** — it's just a `HashMap.put()`. The aggregator reads the latest values when it composites the nameplate, so updates are reflected immediately.
+Calling `data.setText()` every tick is **cheap** - it's just a `HashMap.put()`. The aggregator reads the latest values when it composites the nameplate, so updates are reflected immediately.
 
 ## Registering Systems
 

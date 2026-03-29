@@ -19,15 +19,15 @@ $C = "../Common.ui";
 );
 
 @FormatButtonStyle = TextButtonStyle(
-  Default: (Background: #1a2840, LabelStyle: (FontSize: 10, TextColor: #96a9be, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-  Hovered: (Background: #2d6b3f, LabelStyle: (FontSize: 10, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-  Pressed: (Background: #225530, LabelStyle: (FontSize: 10, TextColor: #96a9be, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+  Default: (Background: #1a2840, LabelStyle: (FontSize: 11, TextColor: #96a9be, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #2d6b3f, LabelStyle: (FontSize: 11, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #225530, LabelStyle: (FontSize: 11, TextColor: #96a9be, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
 );
 
 @FormatButtonActiveStyle = TextButtonStyle(
-  Default: (Background: #2d6b3f, LabelStyle: (FontSize: 10, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-  Hovered: (Background: #3a8a50, LabelStyle: (FontSize: 10, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-  Pressed: (Background: #225530, LabelStyle: (FontSize: 10, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+  Default: (Background: #2d6b3f, LabelStyle: (FontSize: 11, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #3a8a50, LabelStyle: (FontSize: 11, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #225530, LabelStyle: (FontSize: 11, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
 );
 
 @SaveButtonStyle = TextButtonStyle(
@@ -40,6 +40,54 @@ $C = "../Common.ui";
   Default: (Background: #8b5e2f, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
   Hovered: (Background: #a07038, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
   Pressed: (Background: #704b24, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@SidebarNavStyle = TextButtonStyle(
+  Default: (Background: #0d1520, LabelStyle: (FontSize: 13, TextColor: #96a9be, RenderBold: false, HorizontalAlignment: Start, VerticalAlignment: Center)),
+  Hovered: (Background: #1a2840, LabelStyle: (FontSize: 13, TextColor: #c8d6e5, RenderBold: false, HorizontalAlignment: Start, VerticalAlignment: Center)),
+  Pressed: (Background: #0a1119, LabelStyle: (FontSize: 13, TextColor: #96a9be, RenderBold: false, HorizontalAlignment: Start, VerticalAlignment: Center))
+);
+
+@NpcPickerBackdropStyle = TextButtonStyle(
+  Default: (Background: #00000000, LabelStyle: (FontSize: 1, TextColor: #00000000)),
+  Hovered: (Background: #00000000, LabelStyle: (FontSize: 1, TextColor: #00000000)),
+  Pressed: (Background: #00000000, LabelStyle: (FontSize: 1, TextColor: #00000000))
+);
+
+@NpcPickerRowStyle = TextButtonStyle(
+  Default: (Background: #141c26, LabelStyle: (FontSize: 13, TextColor: #96a9be, RenderBold: false, HorizontalAlignment: Start, VerticalAlignment: Center)),
+  Hovered: (Background: #1e2a3a, LabelStyle: (FontSize: 13, TextColor: #c8d6e5, RenderBold: false, HorizontalAlignment: Start, VerticalAlignment: Center)),
+  Pressed: (Background: #121a24, LabelStyle: (FontSize: 13, TextColor: #96a9be, RenderBold: false, HorizontalAlignment: Start, VerticalAlignment: Center))
+);
+
+@SidebarNavActiveStyle = TextButtonStyle(
+  Default: (Background: #1a2840, LabelStyle: (FontSize: 13, TextColor: #4ade80, RenderBold: true, HorizontalAlignment: Start, VerticalAlignment: Center)),
+  Hovered: (Background: #243650, LabelStyle: (FontSize: 13, TextColor: #4ade80, RenderBold: true, HorizontalAlignment: Start, VerticalAlignment: Center)),
+  Pressed: (Background: #0f1824, LabelStyle: (FontSize: 13, TextColor: #4ade80, RenderBold: true, HorizontalAlignment: Start, VerticalAlignment: Center))
+);
+
+@SubTabStyle = TextButtonStyle(
+  Default: (Background: #1a2840, LabelStyle: (FontSize: 13, TextColor: #96a9be, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #243650, LabelStyle: (FontSize: 13, TextColor: #c8d6e5, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #0f1824, LabelStyle: (FontSize: 13, TextColor: #96a9be, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@SubTabActiveStyle = TextButtonStyle(
+  Default: (Background: #2d6b3f, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #3a8a50, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #225530, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@ToggleOnStyle = TextButtonStyle(
+  Default: (Background: #1a3a2a, LabelStyle: (FontSize: 13, TextColor: #4ade80, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #244a3a, LabelStyle: (FontSize: 13, TextColor: #6aee9a, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #0f2018, LabelStyle: (FontSize: 13, TextColor: #4ade80, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@ToggleOffStyle = TextButtonStyle(
+  Default: (Background: #1e2530, LabelStyle: (FontSize: 13, TextColor: #5a6d82, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #252e3a, LabelStyle: (FontSize: 13, TextColor: #728898, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #171d26, LabelStyle: (FontSize: 13, TextColor: #5a6d82, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
 );
 
 $C.@PageOverlay {
@@ -78,46 +126,43 @@ $C.@PageOverlay {
       Padding: (Left: 0, Right: 0, Top: 0, Bottom: 0);
 
       Group #Sidebar {
-        Anchor: (Width: 200);
+        Anchor: (Width: 250);
         Background: (Color: #0a1119);
         LayoutMode: Top;
-        Padding: (Left: 14, Right: 14, Top: 18, Bottom: 18);
+        Padding: (Left: 14, Right: 14, Top: 12, Bottom: 12);
 
         Label {
           Text: "GENERAL";
-          Style: (TextColor: #5a6d82, FontSize: 11, RenderBold: true, RenderUppercase: true, LetterSpacing: 2);
+          Style: (TextColor: #5a6d82, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 2);
           Anchor: (Height: 18, Bottom: 6);
         }
 
-        $C.@SmallSecondaryTextButton #NavGeneral {
-          @Text = "  Settings";
-          Anchor: (Height: 28, Bottom: 4);
+        Group #NavGeneralGroup { Anchor: (Height: 28, Bottom: 3);
+          TextButton #NavGeneral { Text: "Settings"; Anchor: (Height: 28); Style: @SidebarNavStyle; Padding: (Left: 12); }
+          TextButton #NavGeneralActive { Text: "Settings"; Anchor: (Height: 28); Style: @SidebarNavActiveStyle; Padding: (Left: 12); Visible: false; }
         }
 
-        Group {
-          Anchor: (Height: 1, Top: 10, Bottom: 14);
-          Background: (Color: #1a2840);
+        Group #NavDisabledGroup { Anchor: (Height: 28, Bottom: 3);
+          TextButton #NavDisabled { Text: "Disabled Segments"; Anchor: (Height: 28); Style: @SidebarNavStyle; Padding: (Left: 12); }
+          TextButton #NavDisabledActive { Text: "Disabled Segments"; Anchor: (Height: 28); Style: @SidebarNavActiveStyle; Padding: (Left: 12); Visible: false; }
         }
 
-        Label {
+        Group { Anchor: (Height: 1, Top: 8, Bottom: 10); Background: (Color: #1a2840); }
+
+        Label #NameplatesHeader {
           Text: "NAMEPLATES";
-          Style: (TextColor: #5a6d82, FontSize: 11, RenderBold: true, RenderUppercase: true, LetterSpacing: 2);
+          Style: (TextColor: #5a6d82, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 2);
           Anchor: (Height: 18, Bottom: 6);
         }
 
-        $C.@SmallSecondaryTextButton #NavNpcs {
-          @Text = "> NPCs";
-          Anchor: (Height: 28, Bottom: 4);
+        Group #NavNpcsGroup { Anchor: (Height: 28, Bottom: 3);
+          TextButton #NavNpcs { Text: "NPCs"; Anchor: (Height: 28); Style: @SidebarNavStyle; Padding: (Left: 12); }
+          TextButton #NavNpcsActive { Text: "NPCs"; Anchor: (Height: 28); Style: @SidebarNavActiveStyle; Padding: (Left: 12); Visible: false; }
         }
 
-        $C.@SmallSecondaryTextButton #NavPlayers {
-          @Text = "  Players";
-          Anchor: (Height: 28, Bottom: 4);
-        }
-
-        $C.@SmallSecondaryTextButton #NavDisabled {
-          @Text = "  Disabled";
-          Anchor: (Height: 28, Bottom: 4);
+        Group #NavPlayersGroup { Anchor: (Height: 28, Bottom: 3);
+          TextButton #NavPlayers { Text: "Players"; Anchor: (Height: 28); Style: @SidebarNavStyle; Padding: (Left: 12); }
+          TextButton #NavPlayersActive { Text: "Players"; Anchor: (Height: 28); Style: @SidebarNavActiveStyle; Padding: (Left: 12); Visible: false; }
         }
 
         Group { FlexWeight: 1; }
@@ -126,30 +171,29 @@ $C.@PageOverlay {
           LayoutMode: Top;
           Visible: false;
 
-          Group {
-            Anchor: (Height: 1, Bottom: 14);
-            Background: (Color: #1a2840);
-          }
+          Group { Anchor: (Height: 1, Bottom: 10); Background: (Color: #1a2840); }
 
           Label {
             Text: "ADMIN";
-            Style: (TextColor: #5a6d82, FontSize: 11, RenderBold: true, RenderUppercase: true, LetterSpacing: 2);
+            Style: (TextColor: #5a6d82, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 2);
             Anchor: (Height: 18, Bottom: 6);
           }
 
-          $C.@SmallSecondaryTextButton #NavAdmin {
-            @Text = "  Required";
-            Anchor: (Height: 28, Bottom: 4);
+          Group #NavAdminNpcsGroup { Anchor: (Height: 28, Bottom: 3);
+            TextButton #NavAdminNpcs { Text: "NPCs"; Anchor: (Height: 28); Style: @SidebarNavStyle; Padding: (Left: 12); }
+            TextButton #NavAdminNpcsActive { Text: "NPCs"; Anchor: (Height: 28); Style: @SidebarNavActiveStyle; Padding: (Left: 12); Visible: false; }
           }
 
-          $C.@SmallSecondaryTextButton #NavAdminDisabled {
-            @Text = "  Disabled";
-            Anchor: (Height: 28, Bottom: 4);
+          Group #NavAdminPlayersGroup2 { Anchor: (Height: 28, Bottom: 3);
+            TextButton #NavAdminPlayers { Text: "Players"; Anchor: (Height: 28); Style: @SidebarNavStyle; Padding: (Left: 12); }
+            TextButton #NavAdminPlayersActive { Text: "Players"; Anchor: (Height: 28); Style: @SidebarNavActiveStyle; Padding: (Left: 12); Visible: false; }
           }
 
-          $C.@SmallSecondaryTextButton #NavAdminSettings {
-            @Text = "  Settings";
-            Anchor: (Height: 28, Bottom: 4);
+          Group { Anchor: (Height: 1, Top: 6, Bottom: 6); Background: (Color: #1a2840); }
+
+          Group #NavAdminConfigGroup { Anchor: (Height: 28, Bottom: 3);
+            TextButton #NavAdminConfig { Text: "Configuration"; Anchor: (Height: 28); Style: @SidebarNavStyle; Padding: (Left: 12); }
+            TextButton #NavAdminConfigActive { Text: "Configuration"; Anchor: (Height: 28); Style: @SidebarNavActiveStyle; Padding: (Left: 12); Visible: false; }
           }
         }
       }
@@ -164,6 +208,7 @@ $C.@PageOverlay {
           LayoutMode: Top;
           FlexWeight: 1;
           Visible: false;
+          Padding: (Top: 12);
 
           Label {
             Text: "GENERAL";
@@ -176,21 +221,19 @@ $C.@PageOverlay {
             Anchor: (Height: 28, Bottom: 8);
             Padding: (Left: 16, Right: 16);
 
-            Label {
+            Label #EnableToggleLabel {
               Text: "Enable Nameplates";
               Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center);
               Anchor: (Width: 300, Height: 28);
             }
 
-            $C.@SmallSecondaryTextButton #EnableToggle {
-              @Text = "[X]";
-              Anchor: (Width: 70, Height: 28);
-            }
+            TextButton #EnableToggleOn { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+            TextButton #EnableToggleOff { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
           }
 
           Label #AllDisabledNotice {
             Text: "All segments disabled by admin. Nameplates are inactive.";
-            Style: (TextColor: #c94c4c, FontSize: 12, RenderBold: true);
+            Style: (TextColor: #c94c4c, FontSize: 13, RenderBold: true);
             Anchor: (Height: 20, Bottom: 4);
             Visible: false;
           }
@@ -217,10 +260,8 @@ $C.@PageOverlay {
               Anchor: (Width: 300, Height: 28);
             }
 
-            $C.@SmallSecondaryTextButton #LookToggle {
-              @Text = "[ ]";
-              Anchor: (Width: 70, Height: 28);
-            }
+            TextButton #LookToggleOn { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+            TextButton #LookToggleOff { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
           }
 
           Group {
@@ -228,16 +269,14 @@ $C.@PageOverlay {
             Anchor: (Height: 28, Bottom: 8);
             Padding: (Left: 16, Right: 16);
 
-            Label {
+            Label #WelcomeToggleLabel {
               Text: "Show Welcome Message";
               Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center);
               Anchor: (Width: 300, Height: 28);
             }
 
-            $C.@SmallSecondaryTextButton #WelcomeToggle {
-              @Text = "[X]";
-              Anchor: (Width: 70, Height: 28);
-            }
+            TextButton #WelcomeToggleOn { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+            TextButton #WelcomeToggleOff { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
           }
 
           Group {
@@ -287,6 +326,41 @@ $C.@PageOverlay {
           FlexWeight: 1;
           Visible: true;
 
+          Group #ChainSubTabBar {
+            LayoutMode: Left;
+            Anchor: (Height: 38);
+            Padding: (Left: 24, Right: 24, Top: 4, Bottom: 4);
+
+            Group { FlexWeight: 1; Anchor: (Height: 30);
+              TextButton #SubTabChain { Text: "Chain"; Anchor: (Height: 30); Style: @SubTabStyle; }
+              TextButton #SubTabChainActive { Text: "Chain"; Anchor: (Height: 30); Style: @SubTabActiveStyle; Visible: false; }
+            }
+            Group { Anchor: (Width: 4, Height: 30); }
+            Group { FlexWeight: 1; Anchor: (Height: 30);
+              TextButton #SubTabSettings { Text: "Settings"; Anchor: (Height: 30); Style: @SubTabStyle; }
+              TextButton #SubTabSettingsActive { Text: "Settings"; Anchor: (Height: 30); Style: @SubTabActiveStyle; Visible: false; }
+            }
+          }
+
+          Group #EditorContent {
+            LayoutMode: Top;
+            FlexWeight: 1;
+
+          Group #LockChainBar { LayoutMode: Left; Anchor: (Height: 34, Bottom: 8); Visible: false;
+            Label { Text: "Lock Chain"; Style: (TextColor: #c8d6e5, FontSize: 14, RenderBold: true, VerticalAlignment: Center); Anchor: (Width: 120, Height: 34); }
+            TextButton #LockChainOn { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+            TextButton #LockChainOff { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
+            Group { Anchor: (Width: 14); }
+            Label #LockChainHint { Text: ""; Style: (TextColor: #5a6d82, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; }
+          }
+
+          Label #ChainLockedNotice {
+            Text: "Chain locked by the server admin.";
+            Style: (TextColor: #c94c4c, FontSize: 14, RenderBold: true);
+            Anchor: (Height: 24, Bottom: 8);
+            Visible: false;
+          }
+
           Group {
             LayoutMode: Left;
             Anchor: (Height: 20, Bottom: 4);
@@ -299,9 +373,23 @@ $C.@PageOverlay {
 
             Label {
               Text: "  (read left to right)";
-              Style: (TextColor: #5a6d82, FontSize: 12, VerticalAlignment: Center);
+              Style: (TextColor: #5a6d82, FontSize: 13, VerticalAlignment: Center);
               Anchor: (Height: 20);
             }
+          }
+
+          Label #AdminChainDisabledNotice {
+            Text: "";
+            Style: (TextColor: #c94c4c, FontSize: 13, RenderBold: true);
+            Anchor: (Height: 40, Bottom: 8);
+            Visible: false;
+          }
+
+          Label #NonIntegratedInfo {
+            Text: "";
+            Style: (TextColor: #7a8a9e, FontSize: 13);
+            Anchor: (Height: 44, Bottom: 8);
+            Visible: false;
           }
 
           Label #ChainEmpty {
@@ -325,8 +413,8 @@ $C.@PageOverlay {
               LayoutMode: Top;
               Visible: false;
               Label #ChainBlock0Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
-              Label #ChainBlock0Sub { Style: (FontSize: 10, TextColor: #96a9be); Anchor: (Height: 16); }
-              Label #ChainBlock0Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Label #ChainBlock0Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock0Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
               Group #ChainBlock0TopSpacer { FlexWeight: 1; Visible: false; }
               Group #ChainBlock0Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
                 Group #ChainBlock0BtnLeftSpacer { FlexWeight: 1; Visible: false; }
@@ -338,7 +426,7 @@ $C.@PageOverlay {
               Group { FlexWeight: 1; }
               Group #ChainBlock0BottomRow { LayoutMode: Left; Anchor: (Height: 18);
                 Group #ChainBlock0ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
-                  Label #ChainBlock0Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                  Label #ChainBlock0Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
                 }
                 TextButton #ChainBlock0Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
               }
@@ -357,8 +445,8 @@ $C.@PageOverlay {
               LayoutMode: Top;
               Visible: false;
               Label #ChainBlock1Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
-              Label #ChainBlock1Sub { Style: (FontSize: 10, TextColor: #96a9be); Anchor: (Height: 16); }
-              Label #ChainBlock1Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Label #ChainBlock1Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock1Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
               Group #ChainBlock1TopSpacer { FlexWeight: 1; Visible: false; }
               Group #ChainBlock1Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
                 Group #ChainBlock1BtnLeftSpacer { FlexWeight: 1; Visible: false; }
@@ -370,7 +458,7 @@ $C.@PageOverlay {
               Group { FlexWeight: 1; }
               Group #ChainBlock1BottomRow { LayoutMode: Left; Anchor: (Height: 18);
                 Group #ChainBlock1ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
-                  Label #ChainBlock1Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                  Label #ChainBlock1Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
                 }
                 TextButton #ChainBlock1Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
               }
@@ -389,8 +477,8 @@ $C.@PageOverlay {
               LayoutMode: Top;
               Visible: false;
               Label #ChainBlock2Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
-              Label #ChainBlock2Sub { Style: (FontSize: 10, TextColor: #96a9be); Anchor: (Height: 16); }
-              Label #ChainBlock2Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Label #ChainBlock2Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock2Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
               Group #ChainBlock2TopSpacer { FlexWeight: 1; Visible: false; }
               Group #ChainBlock2Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
                 Group #ChainBlock2BtnLeftSpacer { FlexWeight: 1; Visible: false; }
@@ -402,7 +490,7 @@ $C.@PageOverlay {
               Group { FlexWeight: 1; }
               Group #ChainBlock2BottomRow { LayoutMode: Left; Anchor: (Height: 18);
                 Group #ChainBlock2ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
-                  Label #ChainBlock2Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                  Label #ChainBlock2Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
                 }
                 TextButton #ChainBlock2Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
               }
@@ -421,8 +509,8 @@ $C.@PageOverlay {
               LayoutMode: Top;
               Visible: false;
               Label #ChainBlock3Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
-              Label #ChainBlock3Sub { Style: (FontSize: 10, TextColor: #96a9be); Anchor: (Height: 16); }
-              Label #ChainBlock3Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Label #ChainBlock3Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock3Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
               Group #ChainBlock3TopSpacer { FlexWeight: 1; Visible: false; }
               Group #ChainBlock3Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
                 Group #ChainBlock3BtnLeftSpacer { FlexWeight: 1; Visible: false; }
@@ -434,7 +522,7 @@ $C.@PageOverlay {
               Group { FlexWeight: 1; }
               Group #ChainBlock3BottomRow { LayoutMode: Left; Anchor: (Height: 18);
                 Group #ChainBlock3ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
-                  Label #ChainBlock3Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                  Label #ChainBlock3Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
                 }
                 TextButton #ChainBlock3Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
               }
@@ -467,6 +555,34 @@ $C.@PageOverlay {
               Text: ">";
               Anchor: (Width: 24, Height: 24, Left: 6);
               Style: @PaginationButtonStyle;
+            }
+          }
+
+          Group #PreviewTargetBar {
+            LayoutMode: Left;
+            Anchor: (Height: 28, Bottom: 4);
+            Visible: false;
+
+            Label { Text: "Preview:"; Style: (TextColor: #5a6d82, FontSize: 13, VerticalAlignment: Center, RenderBold: true); Anchor: (Width: 60, Height: 28); }
+
+            Group #PreviewTarget0 { Anchor: (Height: 26, Bottom: 2); Visible: false;
+              TextButton #PreviewTargetBtn0 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
+              TextButton #PreviewTargetBtn0Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
+            }
+            Group { Anchor: (Width: 4); }
+            Group #PreviewTarget1 { Anchor: (Height: 26, Bottom: 2); Visible: false;
+              TextButton #PreviewTargetBtn1 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
+              TextButton #PreviewTargetBtn1Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
+            }
+            Group { Anchor: (Width: 4); }
+            Group #PreviewTarget2 { Anchor: (Height: 26, Bottom: 2); Visible: false;
+              TextButton #PreviewTargetBtn2 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
+              TextButton #PreviewTargetBtn2Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
+            }
+            Group { Anchor: (Width: 4); }
+            Group #PreviewTarget3 { Anchor: (Height: 26, Bottom: 2); Visible: false;
+              TextButton #PreviewTargetBtn3 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
+              TextButton #PreviewTargetBtn3Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
             }
           }
 
@@ -541,10 +657,10 @@ $C.@PageOverlay {
               LayoutMode: Top;
               Visible: false;
               Label #AvailBlock0Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
-              Label #AvailBlock0Sub { Style: (FontSize: 10, TextColor: #96a9be); Anchor: (Height: 16); }
-              Label #AvailBlock0Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Label #AvailBlock0Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #AvailBlock0Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
               Group #AvailBlock0ExampleBar { Anchor: (Height: 18, Top: 4); Background: (Color: #0f1824); Padding: (Left: 10, Right: 10);
-                Label #AvailBlock0Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                Label #AvailBlock0Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
               }
               Group { FlexWeight: 1; }
               Group { LayoutMode: Left; Anchor: (Height: 24);
@@ -561,10 +677,10 @@ $C.@PageOverlay {
               LayoutMode: Top;
               Visible: false;
               Label #AvailBlock1Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
-              Label #AvailBlock1Sub { Style: (FontSize: 10, TextColor: #96a9be); Anchor: (Height: 16); }
-              Label #AvailBlock1Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Label #AvailBlock1Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #AvailBlock1Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
               Group #AvailBlock1ExampleBar { Anchor: (Height: 18, Top: 4); Background: (Color: #0f1824); Padding: (Left: 10, Right: 10);
-                Label #AvailBlock1Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                Label #AvailBlock1Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
               }
               Group { FlexWeight: 1; }
               Group { LayoutMode: Left; Anchor: (Height: 24);
@@ -581,10 +697,10 @@ $C.@PageOverlay {
               LayoutMode: Top;
               Visible: false;
               Label #AvailBlock2Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
-              Label #AvailBlock2Sub { Style: (FontSize: 10, TextColor: #96a9be); Anchor: (Height: 16); }
-              Label #AvailBlock2Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Label #AvailBlock2Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #AvailBlock2Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
               Group #AvailBlock2ExampleBar { Anchor: (Height: 18, Top: 4); Background: (Color: #0f1824); Padding: (Left: 10, Right: 10);
-                Label #AvailBlock2Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                Label #AvailBlock2Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
               }
               Group { FlexWeight: 1; }
               Group { LayoutMode: Left; Anchor: (Height: 24);
@@ -601,10 +717,10 @@ $C.@PageOverlay {
               LayoutMode: Top;
               Visible: false;
               Label #AvailBlock3Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
-              Label #AvailBlock3Sub { Style: (FontSize: 10, TextColor: #96a9be); Anchor: (Height: 16); }
-              Label #AvailBlock3Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Label #AvailBlock3Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #AvailBlock3Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
               Group #AvailBlock3ExampleBar { Anchor: (Height: 18, Top: 4); Background: (Color: #0f1824); Padding: (Left: 10, Right: 10);
-                Label #AvailBlock3Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                Label #AvailBlock3Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
               }
               Group { FlexWeight: 1; }
               Group { LayoutMode: Left; Anchor: (Height: 24);
@@ -626,10 +742,10 @@ $C.@PageOverlay {
               LayoutMode: Top;
               Visible: false;
               Label #AvailBlock4Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
-              Label #AvailBlock4Sub { Style: (FontSize: 10, TextColor: #96a9be); Anchor: (Height: 16); }
-              Label #AvailBlock4Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Label #AvailBlock4Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #AvailBlock4Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
               Group #AvailBlock4ExampleBar { Anchor: (Height: 18, Top: 4); Background: (Color: #0f1824); Padding: (Left: 10, Right: 10);
-                Label #AvailBlock4Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                Label #AvailBlock4Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
               }
               Group { FlexWeight: 1; }
               Group { LayoutMode: Left; Anchor: (Height: 24);
@@ -646,10 +762,10 @@ $C.@PageOverlay {
               LayoutMode: Top;
               Visible: false;
               Label #AvailBlock5Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
-              Label #AvailBlock5Sub { Style: (FontSize: 10, TextColor: #96a9be); Anchor: (Height: 16); }
-              Label #AvailBlock5Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Label #AvailBlock5Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #AvailBlock5Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
               Group #AvailBlock5ExampleBar { Anchor: (Height: 18, Top: 4); Background: (Color: #0f1824); Padding: (Left: 10, Right: 10);
-                Label #AvailBlock5Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                Label #AvailBlock5Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
               }
               Group { FlexWeight: 1; }
               Group { LayoutMode: Left; Anchor: (Height: 24);
@@ -666,10 +782,10 @@ $C.@PageOverlay {
               LayoutMode: Top;
               Visible: false;
               Label #AvailBlock6Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
-              Label #AvailBlock6Sub { Style: (FontSize: 10, TextColor: #96a9be); Anchor: (Height: 16); }
-              Label #AvailBlock6Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Label #AvailBlock6Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #AvailBlock6Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
               Group #AvailBlock6ExampleBar { Anchor: (Height: 18, Top: 4); Background: (Color: #0f1824); Padding: (Left: 10, Right: 10);
-                Label #AvailBlock6Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                Label #AvailBlock6Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
               }
               Group { FlexWeight: 1; }
               Group { LayoutMode: Left; Anchor: (Height: 24);
@@ -686,10 +802,10 @@ $C.@PageOverlay {
               LayoutMode: Top;
               Visible: false;
               Label #AvailBlock7Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
-              Label #AvailBlock7Sub { Style: (FontSize: 10, TextColor: #96a9be); Anchor: (Height: 16); }
-              Label #AvailBlock7Author { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Label #AvailBlock7Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #AvailBlock7Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
               Group #AvailBlock7ExampleBar { Anchor: (Height: 18, Top: 4); Background: (Color: #0f1824); Padding: (Left: 10, Right: 10);
-                Label #AvailBlock7Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                Label #AvailBlock7Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
               }
               Group { FlexWeight: 1; }
               Group { LayoutMode: Left; Anchor: (Height: 24);
@@ -723,19 +839,240 @@ $C.@PageOverlay {
             }
           }
 
-          Group {
-            FlexWeight: 1;
           }
 
-          Group {
+          Group #ChainSettingsContent {
+            LayoutMode: TopScrolling;
+            ScrollbarStyle: (Spacing: 8, Size: 4, Background: #1a2840, Handle: #2a3d5a, HoveredHandle: #3a5070, DraggedHandle: #4a6080);
+            FlexWeight: 1;
+            Visible: false;
+            Padding: (Left: 24, Right: 16, Top: 12);
+
+            Label {
+              Text: "CHAIN SETTINGS";
+              Style: (TextColor: #96a9be, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 1);
+              Anchor: (Height: 24, Bottom: 12);
+            }
+
+            Label #AdminDisabledNotice {
+              Text: "";
+              Style: (TextColor: #c94c4c, FontSize: 13, RenderBold: true);
+              Anchor: (Height: 20, Bottom: 12);
+              Visible: false;
+            }
+
+            Group {
+              LayoutMode: Left;
+              Anchor: (Height: 28, Bottom: 4);
+
+              Label #ChainEnabledLabel {
+                Text: "NPC Nameplates";
+                Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center);
+                Anchor: (Width: 300, Height: 28);
+              }
+
+              TextButton #ChainEnabledOn { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+              TextButton #ChainEnabledOff { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
+            }
+
+            Label #ChainEnabledDesc {
+              Text: "When disabled, no NPC nameplates are shown.";
+              Style: (TextColor: #5a6d82, FontSize: 11);
+              Anchor: (Height: 16, Bottom: 12);
+            }
+
+            Group #ModSectionSep { Anchor: (Height: 1, Bottom: 12); Background: (Color: #1a2840); }
+
+            Label #ModSectionHeader {
+              Text: "MODS";
+              Style: (TextColor: #96a9be, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 1);
+              Anchor: (Height: 20, Bottom: 4);
+            }
+
+            Label #ModSectionDesc {
+              Text: "Enable or disable nameplate segments from specific mods.";
+              Style: (TextColor: #5a6d82, FontSize: 11);
+              Anchor: (Height: 16, Bottom: 8);
+            }
+
+            Group #ModRow0 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 4); Visible: false;
+              Label #ModRow0Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); Anchor: (Width: 300, Height: 28); }
+              TextButton #ModRow0On { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+              TextButton #ModRow0Off { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
+            }
+            Group #ModRow1 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 4); Visible: false;
+              Label #ModRow1Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); Anchor: (Width: 300, Height: 28); }
+              TextButton #ModRow1On { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+              TextButton #ModRow1Off { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
+            }
+            Group #ModRow2 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 4); Visible: false;
+              Label #ModRow2Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); Anchor: (Width: 300, Height: 28); }
+              TextButton #ModRow2On { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+              TextButton #ModRow2Off { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
+            }
+            Group #ModRow3 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 4); Visible: false;
+              Label #ModRow3Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); Anchor: (Width: 300, Height: 28); }
+              TextButton #ModRow3On { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+              TextButton #ModRow3Off { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
+            }
+            Group #ModRow4 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 4); Visible: false;
+              Label #ModRow4Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); Anchor: (Width: 300, Height: 28); }
+              TextButton #ModRow4On { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+              TextButton #ModRow4Off { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
+            }
+            Group #ModRow5 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 4); Visible: false;
+              Label #ModRow5Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); Anchor: (Width: 300, Height: 28); }
+              TextButton #ModRow5On { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+              TextButton #ModRow5Off { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
+            }
+            Group #ModRow6 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 4); Visible: false;
+              Label #ModRow6Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); Anchor: (Width: 300, Height: 28); }
+              TextButton #ModRow6On { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+              TextButton #ModRow6Off { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
+            }
+            Group #ModRow7 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 4); Visible: false;
+              Label #ModRow7Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); Anchor: (Width: 300, Height: 28); }
+              TextButton #ModRow7On { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+              TextButton #ModRow7Off { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
+            }
+
+            Group #WorldSectionSep { Anchor: (Height: 1, Top: 8, Bottom: 12); Background: (Color: #1a2840); }
+
+            Label #WorldSectionHeader {
+              Text: "WORLDS";
+              Style: (TextColor: #96a9be, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 1);
+              Anchor: (Height: 20, Bottom: 4);
+            }
+
+            Label #WorldSectionDesc {
+              Text: "Control nameplate visibility per world and instance.";
+              Style: (TextColor: #5a6d82, FontSize: 11);
+              Anchor: (Height: 16, Bottom: 8);
+            }
+
+            Group #WorldsContainer {
+              LayoutMode: Left;
+              Anchor: (Height: 220);
+
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Label {
+                  Text: "Worlds";
+                  Style: (TextColor: #7a8a9e, FontSize: 13, RenderBold: true);
+                  Anchor: (Height: 18, Bottom: 4);
+                }
+
+                Group #WorldRow0 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #WorldRow0Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #WorldRow0On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #WorldRow0Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #WorldRow1 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #WorldRow1Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #WorldRow1On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #WorldRow1Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #WorldRow2 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #WorldRow2Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #WorldRow2On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #WorldRow2Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #WorldRow3 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #WorldRow3Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #WorldRow3On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #WorldRow3Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #WorldRow4 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #WorldRow4Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #WorldRow4On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #WorldRow4Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+
+                Group #WorldPagination {
+                  LayoutMode: Left;
+                  Anchor: (Width: 160, Height: 22, Top: 2);
+                  Visible: false;
+                  TextButton #WorldFirst { Text: "<<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                  TextButton #WorldPrev { Text: "<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                  Label #WorldPageLabel { Text: "1/1"; Style: (TextColor: #5a6d82, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center); FlexWeight: 1; }
+                  TextButton #WorldNext { Text: ">"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                  TextButton #WorldLast { Text: ">>"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                }
+              }
+
+              Group { Anchor: (Width: 16); }
+
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Label {
+                  Text: "Instances";
+                  Style: (TextColor: #7a8a9e, FontSize: 13, RenderBold: true);
+                  Anchor: (Height: 18, Bottom: 4);
+                }
+
+                Group #InstRow0 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #InstRow0Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #InstRow0On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #InstRow0Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #InstRow1 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #InstRow1Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #InstRow1On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #InstRow1Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #InstRow2 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #InstRow2Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #InstRow2On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #InstRow2Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #InstRow3 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #InstRow3Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #InstRow3On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #InstRow3Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #InstRow4 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #InstRow4Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #InstRow4On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #InstRow4Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+
+                Group #InstPagination {
+                  LayoutMode: Left;
+                  Anchor: (Width: 160, Height: 22, Top: 2);
+                  Visible: false;
+                  TextButton #InstFirst { Text: "<<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                  TextButton #InstPrev { Text: "<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                  Label #InstPageLabel { Text: "1/1"; Style: (TextColor: #5a6d82, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center); FlexWeight: 1; }
+                  TextButton #InstNext { Text: ">"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                  TextButton #InstLast { Text: ">>"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                }
+              }
+            }
+
+            Group { Anchor: (Height: 20); }
+          }
+
+          Group #ChainFooter {
             LayoutMode: Left;
-            Anchor: (Height: 42, Bottom: 4);
+            Anchor: (Height: 50);
+            Padding: (Left: 24, Right: 24, Top: 8, Bottom: 8);
 
             Group { FlexWeight: 1; }
 
             Label #SaveMessageEditor {
               Text: "";
-              Style: (TextColor: #4ade80, FontSize: 13, RenderBold: true, VerticalAlignment: Center);
+              Style: (TextColor: #4ade80, FontSize: 14, RenderBold: true, VerticalAlignment: Center);
+              Anchor: (Height: 36, Right: 10);
+              Visible: false;
+            }
+
+            Label #SaveMessageSettings {
+              Text: "";
+              Style: (TextColor: #4ade80, FontSize: 14, RenderBold: true, VerticalAlignment: Center);
               Anchor: (Height: 36, Right: 10);
               Visible: false;
             }
@@ -744,6 +1081,13 @@ $C.@PageOverlay {
               Text: "Save";
               Anchor: (Width: 140, Height: 36);
               Style: @SaveButtonStyle;
+            }
+
+            TextButton #SaveButtonSettings {
+              Text: "Save";
+              Anchor: (Width: 140, Height: 36);
+              Style: @SaveButtonStyle;
+              Visible: false;
             }
           }
         }
@@ -755,30 +1099,34 @@ $C.@PageOverlay {
 
           Group #AdminSubTabBar {
             LayoutMode: Left;
-            Anchor: (Height: 36, Bottom: 10);
+            Anchor: (Height: 38);
+            Padding: (Left: 24, Right: 24, Top: 4, Bottom: 4);
 
-            TextButton #AdminSubRequired {
-              Text: "Required";
-              Anchor: (Width: 160, Height: 32, Right: 8);
-              Style: @PaginationButtonStyle;
+            Group { FlexWeight: 1; Anchor: (Height: 30);
+              TextButton #AdminSubTab0 { Text: "Required"; Anchor: (Height: 30); Style: @SubTabStyle; }
+              TextButton #AdminSubTab0Active { Text: "Required"; Anchor: (Height: 30); Style: @SubTabActiveStyle; Visible: false; }
             }
-
-            TextButton #AdminSubDisabled {
-              Text: "Disabled";
-              Anchor: (Width: 160, Height: 32, Right: 8);
-              Style: @PaginationButtonStyle;
+            Group { Anchor: (Width: 4, Height: 30); }
+            Group { FlexWeight: 1; Anchor: (Height: 30);
+              TextButton #AdminSubTab1 { Text: "Disabled"; Anchor: (Height: 30); Style: @SubTabStyle; }
+              TextButton #AdminSubTab1Active { Text: "Disabled"; Anchor: (Height: 30); Style: @SubTabActiveStyle; Visible: false; }
             }
-
-            TextButton #AdminSubSettings {
-              Text: "Settings";
-              Anchor: (Width: 160, Height: 32);
-              Style: @PaginationButtonStyle;
+            Group { Anchor: (Width: 4, Height: 30); }
+            Group { FlexWeight: 1; Anchor: (Height: 30);
+              TextButton #AdminSubTab2 { Text: "Settings"; Anchor: (Height: 30); Style: @SubTabStyle; }
+              TextButton #AdminSubTab2Active { Text: "Settings"; Anchor: (Height: 30); Style: @SubTabActiveStyle; Visible: false; }
+            }
+            Group { Anchor: (Width: 4, Height: 30); }
+            Group { FlexWeight: 1; Anchor: (Height: 30);
+              TextButton #AdminSubTab3 { Text: "Blacklist"; Anchor: (Height: 30); Style: @SubTabStyle; }
+              TextButton #AdminSubTab3Active { Text: "Blacklist"; Anchor: (Height: 30); Style: @SubTabActiveStyle; Visible: false; }
             }
           }
 
           Group #AdminRequiredContent {
             LayoutMode: Top;
             FlexWeight: 1;
+            Padding: (Left: 8, Right: 8, Top: 12);
 
             Label {
               Text: "REQUIRED SEGMENTS";
@@ -839,9 +1187,9 @@ $C.@PageOverlay {
                 Group #AdminLeftRow0 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
                   Group #AdminLeftBlock0 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminLeftBlock0Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminLeftBlock0Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminLeftBlock0Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminLeftBlock0ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
-                      Label #AdminLeftBlock0Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminLeftBlock0Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                   Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
@@ -854,9 +1202,9 @@ $C.@PageOverlay {
                 Group #AdminLeftRow1 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
                   Group #AdminLeftBlock1 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminLeftBlock1Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminLeftBlock1Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminLeftBlock1Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminLeftBlock1ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
-                      Label #AdminLeftBlock1Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminLeftBlock1Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                   Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
@@ -869,9 +1217,9 @@ $C.@PageOverlay {
                 Group #AdminLeftRow2 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
                   Group #AdminLeftBlock2 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminLeftBlock2Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminLeftBlock2Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminLeftBlock2Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminLeftBlock2ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
-                      Label #AdminLeftBlock2Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminLeftBlock2Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                   Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
@@ -884,9 +1232,9 @@ $C.@PageOverlay {
                 Group #AdminLeftRow3 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
                   Group #AdminLeftBlock3 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminLeftBlock3Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminLeftBlock3Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminLeftBlock3Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminLeftBlock3ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
-                      Label #AdminLeftBlock3Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminLeftBlock3Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                   Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
@@ -899,9 +1247,9 @@ $C.@PageOverlay {
                 Group #AdminLeftRow4 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
                   Group #AdminLeftBlock4 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminLeftBlock4Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminLeftBlock4Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminLeftBlock4Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminLeftBlock4ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
-                      Label #AdminLeftBlock4Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminLeftBlock4Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                   Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
@@ -914,9 +1262,9 @@ $C.@PageOverlay {
                 Group #AdminLeftRow5 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
                   Group #AdminLeftBlock5 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminLeftBlock5Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminLeftBlock5Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminLeftBlock5Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminLeftBlock5ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
-                      Label #AdminLeftBlock5Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminLeftBlock5Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                   Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
@@ -929,9 +1277,9 @@ $C.@PageOverlay {
                 Group #AdminLeftRow6 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
                   Group #AdminLeftBlock6 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminLeftBlock6Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminLeftBlock6Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminLeftBlock6Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminLeftBlock6ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
-                      Label #AdminLeftBlock6Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminLeftBlock6Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                   Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
@@ -947,7 +1295,7 @@ $C.@PageOverlay {
                   Visible: false;
                   Label {
                     Text: "All segments are required";
-                    Style: (TextColor: #5a6d82, FontSize: 12, HorizontalAlignment: Center);
+                    Style: (TextColor: #5a6d82, FontSize: 13, HorizontalAlignment: Center);
                     Anchor: (Width: 275, Height: 40);
                   }
                 }
@@ -994,9 +1342,9 @@ $C.@PageOverlay {
                   }
                   Group #AdminRightBlock0 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminRightBlock0Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminRightBlock0Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminRightBlock0Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminRightBlock0ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                      Label #AdminRightBlock0Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminRightBlock0Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                 }
@@ -1009,9 +1357,9 @@ $C.@PageOverlay {
                   }
                   Group #AdminRightBlock1 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminRightBlock1Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminRightBlock1Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminRightBlock1Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminRightBlock1ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                      Label #AdminRightBlock1Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminRightBlock1Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                 }
@@ -1024,9 +1372,9 @@ $C.@PageOverlay {
                   }
                   Group #AdminRightBlock2 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminRightBlock2Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminRightBlock2Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminRightBlock2Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminRightBlock2ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                      Label #AdminRightBlock2Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminRightBlock2Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                 }
@@ -1039,9 +1387,9 @@ $C.@PageOverlay {
                   }
                   Group #AdminRightBlock3 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminRightBlock3Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminRightBlock3Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminRightBlock3Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminRightBlock3ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                      Label #AdminRightBlock3Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminRightBlock3Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                 }
@@ -1054,9 +1402,9 @@ $C.@PageOverlay {
                   }
                   Group #AdminRightBlock4 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminRightBlock4Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminRightBlock4Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminRightBlock4Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminRightBlock4ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                      Label #AdminRightBlock4Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminRightBlock4Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                 }
@@ -1069,9 +1417,9 @@ $C.@PageOverlay {
                   }
                   Group #AdminRightBlock5 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminRightBlock5Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminRightBlock5Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminRightBlock5Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminRightBlock5ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                      Label #AdminRightBlock5Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminRightBlock5Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                 }
@@ -1084,9 +1432,9 @@ $C.@PageOverlay {
                   }
                   Group #AdminRightBlock6 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d3820); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminRightBlock6Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminRightBlock6Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminRightBlock6Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminRightBlock6ExampleBar { Anchor: (Height: 14); Background: (Color: #2a2610); Padding: (Left: 8, Right: 8);
-                      Label #AdminRightBlock6Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminRightBlock6Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                 }
@@ -1098,7 +1446,7 @@ $C.@PageOverlay {
                   Group { Anchor: (Width: 50, Height: 40); }
                   Label {
                     Text: "No required segments";
-                    Style: (TextColor: #5a6d82, FontSize: 12, HorizontalAlignment: Center);
+                    Style: (TextColor: #5a6d82, FontSize: 13, HorizontalAlignment: Center);
                     Anchor: (Width: 275, Height: 40);
                   }
                 }
@@ -1159,6 +1507,7 @@ $C.@PageOverlay {
             LayoutMode: Top;
             FlexWeight: 1;
             Visible: false;
+            Padding: (Left: 8, Right: 8, Top: 12);
 
             Label {
               Text: "DISABLED SEGMENTS";
@@ -1219,9 +1568,9 @@ $C.@PageOverlay {
                 Group #AdminDisLeftRow0 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
                   Group #AdminDisLeftBlock0 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminDisLeftBlock0Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminDisLeftBlock0Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminDisLeftBlock0Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminDisLeftBlock0ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
-                      Label #AdminDisLeftBlock0Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminDisLeftBlock0Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                   Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
@@ -1234,9 +1583,9 @@ $C.@PageOverlay {
                 Group #AdminDisLeftRow1 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
                   Group #AdminDisLeftBlock1 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminDisLeftBlock1Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminDisLeftBlock1Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminDisLeftBlock1Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminDisLeftBlock1ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
-                      Label #AdminDisLeftBlock1Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminDisLeftBlock1Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                   Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
@@ -1249,9 +1598,9 @@ $C.@PageOverlay {
                 Group #AdminDisLeftRow2 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
                   Group #AdminDisLeftBlock2 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminDisLeftBlock2Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminDisLeftBlock2Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminDisLeftBlock2Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminDisLeftBlock2ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
-                      Label #AdminDisLeftBlock2Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminDisLeftBlock2Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                   Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
@@ -1264,9 +1613,9 @@ $C.@PageOverlay {
                 Group #AdminDisLeftRow3 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
                   Group #AdminDisLeftBlock3 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminDisLeftBlock3Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminDisLeftBlock3Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminDisLeftBlock3Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminDisLeftBlock3ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
-                      Label #AdminDisLeftBlock3Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminDisLeftBlock3Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                   Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
@@ -1279,9 +1628,9 @@ $C.@PageOverlay {
                 Group #AdminDisLeftRow4 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
                   Group #AdminDisLeftBlock4 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminDisLeftBlock4Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminDisLeftBlock4Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminDisLeftBlock4Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminDisLeftBlock4ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
-                      Label #AdminDisLeftBlock4Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminDisLeftBlock4Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                   Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
@@ -1294,9 +1643,9 @@ $C.@PageOverlay {
                 Group #AdminDisLeftRow5 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
                   Group #AdminDisLeftBlock5 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminDisLeftBlock5Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminDisLeftBlock5Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminDisLeftBlock5Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminDisLeftBlock5ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
-                      Label #AdminDisLeftBlock5Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminDisLeftBlock5Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                   Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
@@ -1309,9 +1658,9 @@ $C.@PageOverlay {
                 Group #AdminDisLeftRow6 { LayoutMode: Left; Anchor: (Height: 60, Bottom: 4); Visible: false;
                   Group #AdminDisLeftBlock6 { Anchor: (Width: 275, Height: 56); Background: (Color: #1a3828); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminDisLeftBlock6Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminDisLeftBlock6Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminDisLeftBlock6Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminDisLeftBlock6ExampleBar { Anchor: (Height: 14); Background: (Color: #0f2418); Padding: (Left: 8, Right: 8);
-                      Label #AdminDisLeftBlock6Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminDisLeftBlock6Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                   Group { Anchor: (Width: 50, Height: 56); LayoutMode: Top;
@@ -1327,7 +1676,7 @@ $C.@PageOverlay {
                   Visible: false;
                   Label {
                     Text: "All segments are disabled";
-                    Style: (TextColor: #5a6d82, FontSize: 12, HorizontalAlignment: Center);
+                    Style: (TextColor: #5a6d82, FontSize: 13, HorizontalAlignment: Center);
                     Anchor: (Width: 275, Height: 40);
                   }
                 }
@@ -1374,9 +1723,9 @@ $C.@PageOverlay {
                   }
                   Group #AdminDisRightBlock0 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d2020); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminDisRightBlock0Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminDisRightBlock0Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminDisRightBlock0Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminDisRightBlock0ExampleBar { Anchor: (Height: 14); Background: (Color: #2a1010); Padding: (Left: 8, Right: 8);
-                      Label #AdminDisRightBlock0Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminDisRightBlock0Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                 }
@@ -1389,9 +1738,9 @@ $C.@PageOverlay {
                   }
                   Group #AdminDisRightBlock1 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d2020); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminDisRightBlock1Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminDisRightBlock1Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminDisRightBlock1Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminDisRightBlock1ExampleBar { Anchor: (Height: 14); Background: (Color: #2a1010); Padding: (Left: 8, Right: 8);
-                      Label #AdminDisRightBlock1Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminDisRightBlock1Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                 }
@@ -1404,9 +1753,9 @@ $C.@PageOverlay {
                   }
                   Group #AdminDisRightBlock2 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d2020); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminDisRightBlock2Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminDisRightBlock2Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminDisRightBlock2Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminDisRightBlock2ExampleBar { Anchor: (Height: 14); Background: (Color: #2a1010); Padding: (Left: 8, Right: 8);
-                      Label #AdminDisRightBlock2Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminDisRightBlock2Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                 }
@@ -1419,9 +1768,9 @@ $C.@PageOverlay {
                   }
                   Group #AdminDisRightBlock3 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d2020); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminDisRightBlock3Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminDisRightBlock3Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminDisRightBlock3Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminDisRightBlock3ExampleBar { Anchor: (Height: 14); Background: (Color: #2a1010); Padding: (Left: 8, Right: 8);
-                      Label #AdminDisRightBlock3Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminDisRightBlock3Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                 }
@@ -1434,9 +1783,9 @@ $C.@PageOverlay {
                   }
                   Group #AdminDisRightBlock4 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d2020); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminDisRightBlock4Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminDisRightBlock4Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminDisRightBlock4Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminDisRightBlock4ExampleBar { Anchor: (Height: 14); Background: (Color: #2a1010); Padding: (Left: 8, Right: 8);
-                      Label #AdminDisRightBlock4Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminDisRightBlock4Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                 }
@@ -1449,9 +1798,9 @@ $C.@PageOverlay {
                   }
                   Group #AdminDisRightBlock5 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d2020); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminDisRightBlock5Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminDisRightBlock5Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminDisRightBlock5Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminDisRightBlock5ExampleBar { Anchor: (Height: 14); Background: (Color: #2a1010); Padding: (Left: 8, Right: 8);
-                      Label #AdminDisRightBlock5Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminDisRightBlock5Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                 }
@@ -1464,9 +1813,9 @@ $C.@PageOverlay {
                   }
                   Group #AdminDisRightBlock6 { Anchor: (Width: 275, Height: 56); Background: (Color: #3d2020); Padding: (Left: 10, Right: 10, Top: 6, Bottom: 4); LayoutMode: Top;
                     Label #AdminDisRightBlock6Label { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
-                    Label #AdminDisRightBlock6Sub { Style: (FontSize: 10, TextColor: #5a6d82); Anchor: (Height: 14); }
+                    Label #AdminDisRightBlock6Sub { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
                     Group #AdminDisRightBlock6ExampleBar { Anchor: (Height: 14); Background: (Color: #2a1010); Padding: (Left: 8, Right: 8);
-                      Label #AdminDisRightBlock6Example { Style: (FontSize: 10, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
+                      Label #AdminDisRightBlock6Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 14); }
                     }
                   }
                 }
@@ -1478,7 +1827,7 @@ $C.@PageOverlay {
                   Group { Anchor: (Width: 50, Height: 40); }
                   Label {
                     Text: "No disabled segments";
-                    Style: (TextColor: #5a6d82, FontSize: 12, HorizontalAlignment: Center);
+                    Style: (TextColor: #5a6d82, FontSize: 13, HorizontalAlignment: Center);
                     Anchor: (Width: 275, Height: 40);
                   }
                 }
@@ -1536,9 +1885,11 @@ $C.@PageOverlay {
           }
 
           Group #AdminSettingsContent {
-            LayoutMode: Top;
+            LayoutMode: TopScrolling;
+            ScrollbarStyle: (Spacing: 8, Size: 4, Background: #1a2840, Handle: #2a3d5a, HoveredHandle: #3a5070, DraggedHandle: #4a6080);
             FlexWeight: 1;
             Visible: false;
+            Padding: (Left: 24, Right: 16, Top: 12);
 
             Label {
               Text: "ADMIN SETTINGS";
@@ -1548,8 +1899,8 @@ $C.@PageOverlay {
 
             Label {
               Text: "Configure server-wide nameplate settings.";
-              Style: (TextColor: #5a6d82, FontSize: 13);
-              Anchor: (Height: 28, Bottom: 14);
+              Style: (TextColor: #5a6d82, FontSize: 11);
+              Anchor: (Height: 16, Bottom: 12);
             }
 
             Group {
@@ -1582,16 +1933,212 @@ $C.@PageOverlay {
                 Anchor: (Width: 300, Height: 28);
               }
 
-              $C.@SmallSecondaryTextButton #AdminWelcomeToggle {
-                @Text = "[ ]";
-                Anchor: (Width: 70, Height: 28);
-              }
+              TextButton #AdminWelcomeToggleOn { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+              TextButton #AdminWelcomeToggleOff { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
             }
 
             Label {
               Text: "When enabled, all players see a welcome message on join. Players can still individually disable it.";
               Style: (TextColor: #5a6d82, FontSize: 11);
-              Anchor: (Height: 20, Bottom: 10);
+              Anchor: (Height: 20, Bottom: 20);
+            }
+
+            Group {
+              Anchor: (Height: 1, Bottom: 14);
+              Background: (Color: #1a2840);
+            }
+
+            Label {
+              Text: "KILLSWITCHES";
+              Style: (TextColor: #96a9be, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 1);
+              Anchor: (Height: 20, Bottom: 8);
+            }
+
+            Group {
+              LayoutMode: Left;
+              Anchor: (Height: 28, Bottom: 4);
+
+              Label {
+                Text: "Master Enable";
+                Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center);
+                Anchor: (Width: 300, Height: 28);
+              }
+
+              TextButton #AdminMasterToggleOn { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+              TextButton #AdminMasterToggleOff { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
+            }
+
+            Label {
+              Text: "When disabled, NameplateBuilder does nothing. No nameplates are created or updated.";
+              Style: (TextColor: #5a6d82, FontSize: 11);
+              Anchor: (Height: 20, Bottom: 8);
+            }
+
+            Group {
+              LayoutMode: Left;
+              Anchor: (Height: 28, Bottom: 4);
+
+              Label {
+                Text: "Player Nameplates";
+                Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center);
+                Anchor: (Width: 300, Height: 28);
+              }
+
+              TextButton #AdminPlayerChainToggleOn { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+              TextButton #AdminPlayerChainToggleOff { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
+            }
+
+            Label {
+              Text: "When disabled, no player nameplates are shown for any player.";
+              Style: (TextColor: #5a6d82, FontSize: 11);
+              Anchor: (Height: 20, Bottom: 8);
+            }
+
+            Group {
+              LayoutMode: Left;
+              Anchor: (Height: 28, Bottom: 4);
+
+              Label {
+                Text: "NPC Nameplates";
+                Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center);
+                Anchor: (Width: 300, Height: 28);
+              }
+
+              TextButton #AdminNpcChainToggleOn { Text: "ON"; Anchor: (Width: 38, Height: 28); Style: @ToggleOnStyle; Visible: false; }
+              TextButton #AdminNpcChainToggleOff { Text: "OFF"; Anchor: (Width: 38, Height: 28); Style: @ToggleOffStyle; Visible: false; }
+            }
+
+            Label {
+              Text: "When disabled, no NPC nameplates are shown for any entity.";
+              Style: (TextColor: #5a6d82, FontSize: 11);
+              Anchor: (Height: 20, Bottom: 8);
+            }
+
+            Group {
+              Anchor: (Height: 1, Top: 8, Bottom: 14);
+              Background: (Color: #1a2840);
+            }
+
+            Label {
+              Text: "WORLD KILLSWITCHES";
+              Style: (TextColor: #96a9be, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 1);
+              Anchor: (Height: 20, Bottom: 4);
+            }
+
+            Label {
+              Text: "Disabled worlds/instances will not show nameplates for any player.";
+              Style: (TextColor: #5a6d82, FontSize: 11);
+              Anchor: (Height: 16, Bottom: 8);
+            }
+
+            Group #AdminWorldsContainer {
+              LayoutMode: Left;
+              Anchor: (Height: 220);
+
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Label {
+                  Text: "Worlds";
+                  Style: (TextColor: #7a8a9e, FontSize: 13, RenderBold: true);
+                  Anchor: (Height: 18, Bottom: 4);
+                }
+
+                Group #AdminWorldRow0 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #AdminWorldRow0Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #AdminWorldRow0On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #AdminWorldRow0Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #AdminWorldRow1 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #AdminWorldRow1Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #AdminWorldRow1On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #AdminWorldRow1Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #AdminWorldRow2 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #AdminWorldRow2Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #AdminWorldRow2On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #AdminWorldRow2Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #AdminWorldRow3 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #AdminWorldRow3Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #AdminWorldRow3On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #AdminWorldRow3Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #AdminWorldRow4 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #AdminWorldRow4Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #AdminWorldRow4On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #AdminWorldRow4Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+
+                Group #AdminWorldPagination {
+                  LayoutMode: Left;
+                  Anchor: (Width: 160, Height: 22, Top: 2);
+                  Visible: false;
+                  TextButton #AdminWorldFirst { Text: "<<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                  TextButton #AdminWorldPrev { Text: "<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                  Label #AdminWorldPageLabel { Text: "1/1"; Style: (TextColor: #5a6d82, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center); FlexWeight: 1; }
+                  TextButton #AdminWorldNext { Text: ">"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                  TextButton #AdminWorldLast { Text: ">>"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                }
+              }
+
+              Group { Anchor: (Width: 16); }
+
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Label {
+                  Text: "Instances";
+                  Style: (TextColor: #7a8a9e, FontSize: 13, RenderBold: true);
+                  Anchor: (Height: 18, Bottom: 4);
+                }
+
+                Group #AdminInstRow0 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #AdminInstRow0Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #AdminInstRow0On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #AdminInstRow0Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #AdminInstRow1 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #AdminInstRow1Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #AdminInstRow1On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #AdminInstRow1Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #AdminInstRow2 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #AdminInstRow2Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #AdminInstRow2On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #AdminInstRow2Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #AdminInstRow3 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #AdminInstRow3Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #AdminInstRow3On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #AdminInstRow3Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+                Group #AdminInstRow4 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 2); Visible: false;
+                  Label #AdminInstRow4Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 26); }
+                  TextButton #AdminInstRow4On { Text: "ON"; Anchor: (Width: 38, Height: 26); Style: @ToggleOnStyle; Visible: false; }
+                  TextButton #AdminInstRow4Off { Text: "OFF"; Anchor: (Width: 38, Height: 26); Style: @ToggleOffStyle; Visible: false; }
+                }
+
+                Group #AdminInstPagination {
+                  LayoutMode: Left;
+                  Anchor: (Width: 160, Height: 22, Top: 2);
+                  Visible: false;
+                  TextButton #AdminInstFirst { Text: "<<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                  TextButton #AdminInstPrev { Text: "<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                  Label #AdminInstPageLabel { Text: "1/1"; Style: (TextColor: #5a6d82, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center); FlexWeight: 1; }
+                  TextButton #AdminInstNext { Text: ">"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                  TextButton #AdminInstLast { Text: ">>"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                }
+              }
+            }
+
+            Label #AdminWorldEmpty {
+              Text: "No worlds discovered yet.";
+              Style: (TextColor: #5a6d82, FontSize: 13);
+              Anchor: (Height: 18);
+              Visible: false;
             }
 
             Group { FlexWeight: 1; }
@@ -1620,6 +2167,102 @@ $C.@PageOverlay {
                 Anchor: (Width: 140, Height: 36);
                 Style: @SaveButtonStyle;
               }
+            }
+          }
+
+          Group #AdminBlacklistContent {
+            LayoutMode: Top;
+            FlexWeight: 1;
+            Visible: false;
+            Padding: (Left: 8, Right: 8, Top: 12);
+
+            Label {
+              Text: "NPC BLACKLIST";
+              Style: (TextColor: #96a9be, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 1);
+              Anchor: (Height: 24, Bottom: 4);
+            }
+
+            Label {
+              Text: "Blacklisted NPCs will never receive nameplates from NameplateBuilder.";
+              Style: (TextColor: #5a6d82, FontSize: 13);
+              Anchor: (Height: 18, Bottom: 12);
+            }
+
+            TextButton #BlacklistAddBtn {
+              Text: "[+] Add NPC to Blacklist";
+              Anchor: (Width: 220, Height: 30, Bottom: 12);
+              Style: @SaveButtonStyle;
+            }
+
+            Group #BlacklistList {
+              LayoutMode: Top;
+
+              Group #BlacklistRow0 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false;
+                Label #BlacklistRow0Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 28); }
+                TextButton #BlacklistRow0Remove { Text: "X"; Anchor: (Width: 30, Height: 28); Style: @RemoveButtonStyle; }
+              }
+              Group #BlacklistRow1 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false;
+                Label #BlacklistRow1Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 28); }
+                TextButton #BlacklistRow1Remove { Text: "X"; Anchor: (Width: 30, Height: 28); Style: @RemoveButtonStyle; }
+              }
+              Group #BlacklistRow2 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false;
+                Label #BlacklistRow2Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 28); }
+                TextButton #BlacklistRow2Remove { Text: "X"; Anchor: (Width: 30, Height: 28); Style: @RemoveButtonStyle; }
+              }
+              Group #BlacklistRow3 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false;
+                Label #BlacklistRow3Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 28); }
+                TextButton #BlacklistRow3Remove { Text: "X"; Anchor: (Width: 30, Height: 28); Style: @RemoveButtonStyle; }
+              }
+              Group #BlacklistRow4 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false;
+                Label #BlacklistRow4Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 28); }
+                TextButton #BlacklistRow4Remove { Text: "X"; Anchor: (Width: 30, Height: 28); Style: @RemoveButtonStyle; }
+              }
+              Group #BlacklistRow5 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false;
+                Label #BlacklistRow5Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 28); }
+                TextButton #BlacklistRow5Remove { Text: "X"; Anchor: (Width: 30, Height: 28); Style: @RemoveButtonStyle; }
+              }
+              Group #BlacklistRow6 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false;
+                Label #BlacklistRow6Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 28); }
+                TextButton #BlacklistRow6Remove { Text: "X"; Anchor: (Width: 30, Height: 28); Style: @RemoveButtonStyle; }
+              }
+              Group #BlacklistRow7 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false;
+                Label #BlacklistRow7Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 28); }
+                TextButton #BlacklistRow7Remove { Text: "X"; Anchor: (Width: 30, Height: 28); Style: @RemoveButtonStyle; }
+              }
+            }
+
+            Group #BlacklistPagination {
+              LayoutMode: Left;
+              Anchor: (Height: 22, Top: 4);
+              Visible: false;
+              TextButton #BlacklistFirst { Text: "<<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+              TextButton #BlacklistPrev { Text: "<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+              Label #BlacklistPageLabel { Text: "1/1"; Style: (TextColor: #5a6d82, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center); FlexWeight: 1; }
+              TextButton #BlacklistNext { Text: ">"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+              TextButton #BlacklistLast { Text: ">>"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+            }
+
+            Label #BlacklistEmpty {
+              Text: "No NPCs are blacklisted.";
+              Style: (TextColor: #5a6d82, FontSize: 13);
+              Anchor: (Height: 20, Top: 8);
+            }
+
+            Group { FlexWeight: 1; }
+
+            Group {
+              LayoutMode: Left;
+              Anchor: (Height: 42, Bottom: 4);
+              Group { FlexWeight: 1; }
+
+              Label #SaveMessageBlacklist {
+                Text: "";
+                Style: (TextColor: #4ade80, FontSize: 13, RenderBold: true, VerticalAlignment: Center);
+                Anchor: (Height: 36, Right: 10);
+                Visible: false;
+              }
+
+              TextButton #SaveButtonBlacklist { Text: "Save"; Anchor: (Width: 140, Height: 36); Style: @SaveButtonStyle; }
             }
           }
         }
@@ -2292,7 +2935,7 @@ $C.@PageOverlay {
 
             Label #DisabledPageLabel {
               Text: "";
-              Style: (TextColor: #5a6d82, FontSize: 12, HorizontalAlignment: Center, VerticalAlignment: Center);
+              Style: (TextColor: #5a6d82, FontSize: 13, HorizontalAlignment: Center, VerticalAlignment: Center);
               Anchor: (Width: 80, Height: 36, Right: 8);
               Visible: false;
             }
@@ -2409,7 +3052,7 @@ $C.@PageOverlay {
 
           Label {
             Text: "Before:";
-            Style: (TextColor: #5a6d82, FontSize: 12, VerticalAlignment: Center);
+            Style: (TextColor: #5a6d82, FontSize: 13, VerticalAlignment: Center);
             Anchor: (Width: 56, Height: 28);
           }
 
@@ -2427,7 +3070,7 @@ $C.@PageOverlay {
 
           Label {
             Text: "After:";
-            Style: (TextColor: #5a6d82, FontSize: 12, VerticalAlignment: Center);
+            Style: (TextColor: #5a6d82, FontSize: 13, VerticalAlignment: Center);
             Anchor: (Width: 56, Height: 28);
           }
 
@@ -2461,7 +3104,7 @@ $C.@PageOverlay {
 
           Label {
             Text: "Empty:";
-            Style: (TextColor: #5a6d82, FontSize: 12, VerticalAlignment: Center);
+            Style: (TextColor: #5a6d82, FontSize: 13, VerticalAlignment: Center);
             Anchor: (Width: 56, Height: 28);
           }
 
@@ -2482,10 +3125,91 @@ $C.@PageOverlay {
         Style: @PaginationButtonStyle;
       }
 
+
       TextButton #VariantConfirm {
         Text: "Confirm";
         Anchor: (Height: 36);
         Style: @SaveButtonStyle;
+      }
+    }
+  }
+
+  Group #NpcPickerPopup {
+    Anchor: (Width: 1080, Height: 780);
+    Background: (Color: #00000080);
+    Visible: false;
+
+    TextButton #NpcPickerBackdrop { Text: ""; Anchor: (Width: 1080, Height: 780); Style: @NpcPickerBackdropStyle; }
+
+    Group {
+      Anchor: (Width: 420, Height: 620);
+      Background: (Color: #141c26);
+      LayoutMode: Top;
+      Padding: (Left: 18, Right: 18, Top: 14, Bottom: 14);
+
+      Label { Text: "Select NPC"; Style: (FontSize: 16, TextColor: #c8d6e5, RenderBold: true); Anchor: (Height: 26, Bottom: 8); }
+
+      Group { LayoutMode: Left; Anchor: (Height: 32, Bottom: 6);
+        Label { Text: "Filter:"; Style: (FontSize: 13, TextColor: #96a9be, VerticalAlignment: Center); Anchor: (Width: 50, Height: 28); }
+        $C.@TextField #NpcPickerFilter { Anchor: (Height: 28); Style: (FontSize: 13, TextColor: #c8d6e5); FlexWeight: 1; }
+      }
+
+      Group #NpcPickerRows {
+        LayoutMode: Top;
+
+        Group #NpcPickerRow0 { Anchor: (Height: 26, Bottom: 2); Visible: false;
+          TextButton #NpcPickerRowBtn0 { Text: ""; Anchor: (Height: 26); Style: @NpcPickerRowStyle; }
+        }
+        Group #NpcPickerRow1 { Anchor: (Height: 26, Bottom: 2); Visible: false;
+          TextButton #NpcPickerRowBtn1 { Text: ""; Anchor: (Height: 26); Style: @NpcPickerRowStyle; }
+        }
+        Group #NpcPickerRow2 { Anchor: (Height: 26, Bottom: 2); Visible: false;
+          TextButton #NpcPickerRowBtn2 { Text: ""; Anchor: (Height: 26); Style: @NpcPickerRowStyle; }
+        }
+        Group #NpcPickerRow3 { Anchor: (Height: 26, Bottom: 2); Visible: false;
+          TextButton #NpcPickerRowBtn3 { Text: ""; Anchor: (Height: 26); Style: @NpcPickerRowStyle; }
+        }
+        Group #NpcPickerRow4 { Anchor: (Height: 26, Bottom: 2); Visible: false;
+          TextButton #NpcPickerRowBtn4 { Text: ""; Anchor: (Height: 26); Style: @NpcPickerRowStyle; }
+        }
+        Group #NpcPickerRow5 { Anchor: (Height: 26, Bottom: 2); Visible: false;
+          TextButton #NpcPickerRowBtn5 { Text: ""; Anchor: (Height: 26); Style: @NpcPickerRowStyle; }
+        }
+        Group #NpcPickerRow6 { Anchor: (Height: 26, Bottom: 2); Visible: false;
+          TextButton #NpcPickerRowBtn6 { Text: ""; Anchor: (Height: 26); Style: @NpcPickerRowStyle; }
+        }
+        Group #NpcPickerRow7 { Anchor: (Height: 26, Bottom: 2); Visible: false;
+          TextButton #NpcPickerRowBtn7 { Text: ""; Anchor: (Height: 26); Style: @NpcPickerRowStyle; }
+        }
+        Group #NpcPickerRow8 { Anchor: (Height: 26, Bottom: 2); Visible: false;
+          TextButton #NpcPickerRowBtn8 { Text: ""; Anchor: (Height: 26); Style: @NpcPickerRowStyle; }
+        }
+        Group #NpcPickerRow9 { Anchor: (Height: 26, Bottom: 2); Visible: false;
+          TextButton #NpcPickerRowBtn9 { Text: ""; Anchor: (Height: 26); Style: @NpcPickerRowStyle; }
+        }
+      }
+
+      Label #NpcPickerEmpty { Text: "No NPCs match filter."; Style: (FontSize: 13, TextColor: #5a6d82); Anchor: (Height: 18); Visible: false; }
+
+      Group #NpcPickerPagination { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Visible: false;
+        TextButton #NpcPickerFirstPage { Text: "<<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+        TextButton #NpcPickerPrevPage { Text: "<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+        Label #NpcPickerPageInfo { Text: "1/1"; Style: (TextColor: #5a6d82, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center); FlexWeight: 1; }
+        TextButton #NpcPickerNextPage { Text: ">"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+        TextButton #NpcPickerLastPage { Text: ">>"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+      }
+
+      Group { FlexWeight: 1; }
+
+      Group { LayoutMode: Left; Anchor: (Height: 22, Bottom: 6);
+        Label { Text: "Selected: "; Style: (FontSize: 13, TextColor: #96a9be, VerticalAlignment: Center); }
+        Label #NpcPickerSelectedLabel { Text: "None"; Style: (FontSize: 13, TextColor: #4ade80, VerticalAlignment: Center); }
+      }
+
+      Group { LayoutMode: Left; Anchor: (Height: 34);
+        TextButton #NpcPickerCancel { Text: "Cancel"; Anchor: (Width: 140, Height: 30); Style: @ResetButtonStyle; }
+        Group { FlexWeight: 1; }
+        TextButton #NpcPickerAdd { Text: "Add to Blacklist"; Anchor: (Width: 170, Height: 30); Style: @SaveButtonStyle; Visible: false; }
       }
     }
   }

@@ -39,7 +39,7 @@ You can find all the documentation, modding guides, and API references on the do
 
 ## Overview
 
-NameplateBuilder solves a core problem for modders and players for Hytale: when multiple mods want to display information above entities (health, guild tags, titles, ranks, etc.), they conflict over the single `Nameplate` component. NameplateBuilder acts as a central aggregator — each mod registers its own named segments, and the system composites them into a single nameplate string per viewer, per entity, every tick (in an efficient way).
+NameplateBuilder solves a core problem for modders and players for Hytale: when multiple mods want to display information above entities (health, guild tags, titles, ranks, etc.), they conflict over the single `Nameplate` component. NameplateBuilder acts as a central aggregator - each mod registers its own named segments, and the system composites them into a single nameplate string per viewer, per entity, every tick (in an efficient way).
 
 Players get a UI to choose which segments they see, reorder them, customize separators between individual segments, pick format variants, configure prefix/suffix wrapping, adjust bar display styles, configure a vertical nameplate offset, and toggle a "only show when looking at entity" mode. Server administrators can force specific segments to always display for all players, disable segments globally, and configure a custom server name. A coloured welcome message is shown on join. Nameplates are automatically cleared when an entity dies.
 
@@ -47,32 +47,36 @@ Players get a UI to choose which segments they see, reorder them, customize sepa
 
 ### Core
 
-- **Multi-mod nameplate aggregation** — Any number of mods can register their own named segments (health, guild tag, tier, title, etc.) and NameplateBuilder composites them into a single nameplate per entity
-- **Built-in segments** — Ships with **Player Name** (with an anonymize variant), **Health**, **Stamina**, and **Mana** (each with current/max, percentage, and visual bar variants). Built-in segments are shown with a distinct warm-purple tint
-- **Death cleanup** — Nameplates are automatically cleared when an entity dies, instead of lingering through the death animation
-- **Persistent preferences** — All player settings and admin config are saved to disk and survive server restarts
+- **Multi-mod nameplate aggregation** - Any number of mods can register their own named segments (health, guild tag, tier, title, etc.) and NameplateBuilder composites them into a single nameplate per entity
+- **Built-in segments** - Ships with **Player Name** (with an anonymize variant), **Health**, **Stamina**, and **Mana** (each with current/max, percentage, and visual bar variants). Built-in segments are shown with a distinct warm-purple tint
+- **Death cleanup** - Nameplates are automatically cleared when an entity dies, instead of lingering through the death animation
+- **Persistent preferences** - All player settings and admin config are saved to disk and survive server restarts
 
 ### Welcome Message
 
-- **Coloured join message** — Green when nameplates are available (`[ServerName] - Use /npb to customize your nameplates.`) or red when all segments are admin-disabled (`[ServerName] - Nameplates are disabled on this server.`). Disabled by default — admins can enable it in the Settings sub-tab. Players can also individually toggle it off via General settings
+- **Coloured join message** - Green when nameplates are available (`[ServerName] - Use /npb to customize your nameplates.`) or red when all segments are admin-disabled (`[ServerName] - Nameplates are disabled on this server.`). Disabled by default - admins can enable it in the Settings sub-tab. Players can also individually toggle it off via General settings
 
 ### Player UI
 
-- **Per-player customization UI** — Players open `/npb` to browse, search, add, remove, and reorder nameplate segments from all installed mods
-- **Live preview** — Real-time composited text preview with the player's current segment chain and separators
-- **Per-block separators** — Each segment can have its own separator to the next segment (or no separator at all)
-- **Format variants** — Mods can register multiple display formats per segment (e.g. health as `"42/67"`, `"63%"`, or `"||||||------"`). Players choose their preferred format via a popup
-- **Prefix/suffix wrapping** — Custom prefix and suffix text (e.g. `"HP: ["` and `"]"`) to wrap segment output
-- **Bar empty-fill customization** — Customize the empty-slot character in visual bar variants (default: `"-"`)
-- **Confirm/cancel workflow** — Format changes are previewed live but only persisted on Confirm
-- **Nameplate offset** — Configurable vertical offset using invisible anchor entities for hologram-style rendering
-- **View-cone filtering** — Optional "only show when looking at" mode (~25 degree cone, up to 30 blocks)
+- **Per-player customization UI** - Players open `/npb` to browse, search, add, remove, and reorder nameplate segments from all installed mods
+- **Live preview** - Real-time composited text preview with the player's current segment chain and separators
+- **Per-block separators** - Each segment can have its own separator to the next segment (or no separator at all)
+- **Format variants** - Mods can register multiple display formats per segment (e.g. health as `"42/67"`, `"63%"`, or `"||||||------"`). Players choose their preferred format via a popup
+- **Prefix/suffix wrapping** - Custom prefix and suffix text (e.g. `"HP: ["` and `"]"`) to wrap segment output
+- **Bar empty-fill customization** - Customize the empty-slot character in visual bar variants (default: `"-"`)
+- **Confirm/cancel workflow** - Format changes are previewed live but only persisted on Confirm
+- **Nameplate offset** - Configurable vertical offset using invisible anchor entities for hologram-style rendering
+- **View-cone filtering** - Optional "only show when looking at" mode (~25 degree cone, up to 30 blocks)
 
 ### Admin
 
-- **Required segments** — Force specific segments to always display for all players. Move segments between "Available" and "Required" columns; required segments appear with a yellow tint and cannot be removed
-- **Disabled segments** — Globally disable specific segments so they are hidden from all players entirely. When every segment is disabled, nameplates are blanked globally
-- **Server name** — Set a custom display name for the join welcome message (defaults to "NameplateBuilder")
+- **Required segments** - Force specific segments to always display for all players. Move segments between "Available" and "Required" columns; required segments appear with a yellow tint and cannot be removed
+- **Disabled segments** - Globally disable specific segments so they are hidden from all players entirely. When every segment is disabled, nameplates are blanked globally
+- **Killswitches** - Master enable/disable, per-chain NPC/Player toggles, per-mod namespace killswitches, and per-world/instance killswitches. All admin killswitches override player settings with clear "(Disabled by Admin)" indicators
+- **Chain locking** - Lock the NPC and/or Player chain order so all players see the admin's configured segment order (read-only for players)
+- **NPC blacklist** - Blacklist specific NPC types from ever receiving nameplates. Searchable NPC picker popup with filter and pagination
+- **World/instance killswitches** - Two-column layout for worlds (left) and instances (right) with independent pagination. Disabled worlds show no nameplates for any player
+- **Server name** - Set a custom display name for the join welcome message (defaults to "NameplateBuilder")
 
 ## Permissions
 
@@ -88,30 +92,30 @@ Players open the editor via `/npb` (aliases: `/nameplatebuilder`, `/nameplateui`
 
 | Section | Contents |
 |---------|----------|
-| **GENERAL** | Settings — master enable/disable, look-at toggle, vertical offset, welcome message toggle |
-| **NAMEPLATES** | NPCs — segment chain editor for NPC nameplates |
-| | Players — segment chain editor for player nameplates |
-| | Disabled — read-only view of all admin-disabled segments |
-| **ADMIN** | Required — required segments panel (only visible with `nameplatebuilder.admin` permission) |
-| | Disabled — disabled segments panel |
-| | Settings — server name configuration |
+| **GENERAL** | Settings - master enable/disable, look-at toggle, vertical offset, welcome message toggle |
+| **NAMEPLATES** | NPCs - segment chain editor for NPC nameplates |
+| | Players - segment chain editor for player nameplates |
+| | Disabled - read-only view of all admin-disabled segments |
+| **ADMIN** | NPCs - admin NPC chain order editor (Chain / Settings sub-tabs) |
+| | Players - admin Player chain order editor (Chain / Settings sub-tabs) |
+| | Configuration - Required / Disabled / Settings / Blacklist sub-tabs |
 
 ### General Tab
 
-- **Enable Nameplates** — master toggle to show/hide all nameplates
-- **Only Show When Looking** — view-cone filter toggle
-- **Show Welcome Message** — toggle the coloured join message on/off
-- **Offset** — vertical nameplate offset (accepts both `,` and `.` as decimal separators, clamped to -5.0 to 5.0)
+- **Enable Nameplates** - master toggle to show/hide all nameplates
+- **Only Show When Looking** - view-cone filter toggle
+- **Show Welcome Message** - toggle the coloured join message on/off
+- **Offset** - vertical nameplate offset (accepts both `,` and `.` as decimal separators, clamped to -5.0 to 5.0)
 
 ### Editor Tabs (NPCs / Players)
 
 Each editor tab lets players customize nameplates for a specific entity type:
 
-- **Chain** — the player's active segment chain, shown as blocks with move left/right and remove buttons. Each block shows a preview example bar and a Format button when the segment has multiple variants
-- **Format popup** — variant selection, prefix/suffix text fields, and bar empty-fill customization with a Confirm/Cancel workflow
-- **Preview** — real-time composited text preview, truncated with ellipsis if too long
-- **Available Blocks** — all registered segments not yet in the chain, with search/filter, pagination, and an Add button per block
-- **Clear All / Save** — remove all blocks or persist the current chain to disk
+- **Chain** - the player's active segment chain, shown as blocks with move left/right and remove buttons. Each block shows a preview example bar and a Format button when the segment has multiple variants
+- **Format popup** - variant selection, prefix/suffix text fields, and bar empty-fill customization with a Confirm/Cancel workflow
+- **Preview** - real-time composited text preview, truncated with ellipsis if too long
+- **Available Blocks** - all registered segments not yet in the chain, with search/filter, pagination, and an Add button per block
+- **Clear All / Save** - remove all blocks or persist the current chain to disk
 
 ### Disabled Tab (Player View)
 
@@ -119,14 +123,14 @@ Read-only 4x4 grid of all admin-disabled segments so players can see what has be
 
 ### Admin Tab
 
-Visible only with the `nameplatebuilder.admin` permission. Contains three sub-tabs:
+Visible only with the `nameplatebuilder.admin` permission. The admin sidebar has NPCs, Players (each with Chain/Settings sub-tabs for admin chain order and chain locking), and Configuration with four sub-tabs:
 
 #### Required Sub-Tab
 
 Two-column layout with a vertical divider. Available blocks are shown with a green tint and the "REQUIRED SEGMENTS" title is orange:
 
-- **Left column ("Available")** — segments that are not required (excludes disabled segments). `>` button to move to required
-- **Right column ("Required")** — segments forced on all players. `<` button to move back. Yellow-tinted background
+- **Left column ("Available")** - segments that are not required (excludes disabled segments). `>` button to move to required
+- **Right column ("Required")** - segments forced on all players. `<` button to move back. Yellow-tinted background
 
 Required segments are always displayed, always included in the nameplate output, still reorderable by players, and cannot simultaneously be disabled. Each column has independent pagination (7 rows per page) with Save and Reset buttons.
 
@@ -134,17 +138,26 @@ Required segments are always displayed, always included in the nameplate output,
 
 Same two-column layout, using red-tinted blocks and headers:
 
-- **Left column ("Available")** — segments that are not disabled (excludes required). `>` button to disable
-- **Right column ("Disabled")** — segments hidden from all players. Red-tinted backgrounds
+- **Left column ("Available")** - segments that are not disabled (excludes required). `>` button to disable
+- **Right column ("Disabled")** - segments hidden from all players. Red-tinted backgrounds
 
 When all registered segments are disabled, nameplates are blanked globally and the join message switches to the red "disabled" variant. Each column has independent pagination (7 rows per page) with Save and Reset buttons.
 
 #### Settings Sub-Tab
 
-- **Server Name** — text field for the display name shown in the join welcome message. Defaults to "NameplateBuilder" if left blank
-- **Show Welcome Messages** — global toggle to enable or disable welcome messages for all players. Disabled by default. When enabled, players can still individually turn it off in their General settings
+- **Server Name** - text field for the display name shown in the join welcome message. Defaults to "NameplateBuilder" if left blank
+- **Show Welcome Messages** - global toggle to enable or disable welcome messages for all players. Disabled by default. When enabled, players can still individually turn it off in their General settings
+- **Killswitches** - Master Enable (disables all nameplate processing), Player Nameplates, and NPC Nameplates toggles
+- **World Killswitches** - Two-column layout: Worlds (left) and Instances (right) with ON/OFF toggles and independent pagination. Disabled worlds/instances show no nameplates for any player
+
+All admin-disabled features show "(Disabled by Admin)" to players and prevent them from re-enabling.
 
 Has Save and Reset buttons.
+
+#### Blacklist Sub-Tab
+
+- **NPC Blacklist** - Blacklisted NPC types never receive nameplates. Add NPCs via a searchable picker popup with filter and pagination. Remove entries individually
+- Has its own Save button with success feedback
 
 Admin configuration is persisted in `admin_config.txt`.
 
@@ -215,11 +228,11 @@ When a player has no blocks enabled, entities show "Type /npb to customize" as a
 
 #### Admin required segments panel
 ![Admin panel](docs/screenshots/admin-required.png)
-<!-- SCREENSHOT: Admin Required sub-tab showing the two-column layout — left "AVAILABLE" column (green-tinted blocks) with ">" buttons, orange "REQUIRED SEGMENTS" title, 5px vertical divider in the center, right "REQUIRED" column (yellow-tinted) with "<" buttons and segment blocks, pagination under each column, and Save/Reset buttons at the bottom -->
+<!-- SCREENSHOT: Admin Required sub-tab showing the two-column layout - left "AVAILABLE" column (green-tinted blocks) with ">" buttons, orange "REQUIRED SEGMENTS" title, 5px vertical divider in the center, right "REQUIRED" column (yellow-tinted) with "<" buttons and segment blocks, pagination under each column, and Save/Reset buttons at the bottom -->
 
 #### Admin disabled segments panel
 ![Admin disabled](docs/screenshots/admin-disabled.png)
-<!-- SCREENSHOT: Admin Disabled sub-tab showing two-column layout — left "AVAILABLE" column (green-tinted) with ">" buttons, right "DISABLED" column (red-tinted #3d2020 backgrounds) with "<" buttons, pagination under each column, Save/Reset buttons -->
+<!-- SCREENSHOT: Admin Disabled sub-tab showing two-column layout - left "AVAILABLE" column (green-tinted) with ">" buttons, right "DISABLED" column (red-tinted #3d2020 backgrounds) with "<" buttons, pagination under each column, Save/Reset buttons -->
 
 #### Admin settings panel
 ![Admin settings](docs/screenshots/admin-settings.png)

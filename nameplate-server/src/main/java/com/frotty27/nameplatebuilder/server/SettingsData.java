@@ -49,6 +49,10 @@ final class SettingsData {
                     (SettingsData data, String value) -> data.adminServerName = value,
                     (SettingsData data) -> data.adminServerName)
             .add()
+            .append(new KeyedCodec<>("@NpcPickerFilter", Codec.STRING),
+                    (SettingsData data, String value) -> data.npcPickerFilter = value,
+                    (SettingsData data) -> data.npcPickerFilter)
+            .add()
             .build();
 
 
@@ -71,4 +75,6 @@ final class SettingsData {
     String suffixText;
 
     String barEmptyText;
+
+    String npcPickerFilter;
 }

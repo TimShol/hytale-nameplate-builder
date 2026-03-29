@@ -1,9 +1,30 @@
 ---
 title: Admin Panel
-description: Server-wide segment controls and configuration.
+description: Server-wide killswitches, chain locking, world restrictions, and NPC blacklists.
+icon: shield-halved
 ---
 
-The **ADMIN** section in the sidebar is only visible to players with the `nameplatebuilder.admin` permission. It contains three sub-tabs: **Required**, **Disabled**, and **Settings**.
+The **ADMIN** section in the sidebar is only visible to players with the `nameplatebuilder.admin` permission. It contains:
+
+* **NPCs** / **Players** - Admin chain order editors with Chain and Settings sub-tabs
+* **Configuration** - Four sub-tabs: Required, Disabled, Settings, and Blacklist
+
+## Admin Chain Editors (NPCs / Players)
+
+Admins can configure a default chain order that all players see when chain locking is enabled.
+
+### Chain Sub-Tab
+
+Same editor as the player view, but changes are saved to the admin chain (UUID `0`). When the chain is locked, all players see this exact order.
+
+### Settings Sub-Tab
+
+Contains per-chain settings:
+
+* **NPC/Player Nameplates** - ON/OFF toggle for this chain type. When disabled, no nameplates of this type are shown for any player
+* **Lock Chain Order** - When locked, all players see the admin's chain order (read-only). Players cannot reorder, add, or remove segments
+* **Mods** - Per-mod namespace killswitches. Disabled mods have all their segments stripped from nameplates
+* **Worlds / Instances** - Two-column layout with ON/OFF toggles and independent pagination per column
 
 ## Required Sub-Tab
 
@@ -22,7 +43,7 @@ The panel uses a **two-column layout** with a vertical divider:
 * They are **always included** in every player's chain
 * Players can still **reorder** required segments within their chain
 * Players **cannot remove** required segments from their chain
-* A segment **cannot be both** required and disabled — marking one removes the other
+* A segment **cannot be both** required and disabled - marking one removes the other
 
 Each column has independent pagination (7 rows per page). Use **Save** to persist changes and **Reset** to revert.
 
@@ -41,7 +62,7 @@ Same two-column layout, using red-tinted blocks and headers:
 
 * Disabled segments are **excluded** from all player chains
 * They are **filtered out** of available-block lists in the editor
-* They are **skipped** by the aggregator — never shown in nameplates
+* They are **skipped** by the aggregator - never shown in nameplates
 * Players can see which segments are disabled via the [Disabled tab](/player-guide/editor#disabled-tab) under NAMEPLATES
 * When **all segments are disabled**, nameplates are blanked globally and the join message switches to the red "disabled" variant
 
@@ -51,22 +72,52 @@ Each column has independent pagination (7 rows per page). Use **Save** to persis
 
 ### Server Name
 
-A text field for the display name shown in the join welcome message. The name appears inside brackets:
+A text field for the display name shown in the join welcome message:
 
 ```
 [YourServerName] - Use /npb to customize your nameplates.
 ```
 
-Defaults to "NameplateBuilder" if left blank. Use **Save** to persist and **Reset** to revert.
+Defaults to "NameplateBuilder" if left blank.
+
+### Welcome Messages
+
+Global toggle to enable or disable welcome messages for all players. Disabled by default. When enabled, players can still individually turn it off in their General settings.
+
+### Killswitches
+
+| Toggle | Effect |
+| :--- | :--- |
+| **Master Enable** | When OFF, NameplateBuilder does nothing. No nameplates are created, updated, or displayed. Existing nameplates are actively cleared. |
+| **Player Nameplates** | When OFF, no player nameplates are shown for any player. |
+| **NPC Nameplates** | When OFF, no NPC nameplates are shown for any entity. |
+
+### World Killswitches
+
+Two-column layout: **Worlds** (left) and **Instances** (right). Each column shows discovered worlds/instances with ON/OFF toggles and independent pagination.
+
+Disabled worlds/instances show no nameplates for any player. Players see "(Disabled by Admin)" on affected world toggles in their chain Settings tab and cannot re-enable them.
+
+## Blacklist Sub-Tab
+
+### NPC Blacklist
+
+Blacklisted NPC types never receive nameplates from NameplateBuilder, regardless of other settings. Useful for decorative NPCs, quest givers, or entities managed by other mods.
+
+* **Add NPC** - Opens a searchable picker popup with all discovered NPC types. Filter by name, paginate through results, select and confirm
+* **Remove** - Click the remove button next to any blacklisted entry
+* **Save** - Persist the blacklist to disk
+
+## Admin Override Behavior
+
+All admin killswitches override player settings. When an admin disables a feature:
+
+* The player's toggle shows **OFF** with **(Disabled by Admin)** appended to the label
+* The player **cannot re-enable** the feature - the toggle handler rejects the action
+* Relevant UI sections may be **hidden entirely** (e.g. chain content when chain is disabled, available blocks when chain is locked)
+
+This applies consistently to: master enable, NPC/player chain enable, per-mod killswitches, per-world/instance killswitches, welcome messages, and chain locking.
 
 ## Persistence
 
-All admin configuration is stored in `admin_config.txt` in the mod's data folder. The format uses pipe-delimited lines:
-
-| Prefix | Format | Description |
-| :--- | :--- | :--- |
-| `S` | `S\|serverName` | Server display name |
-| `R` | `R\|pluginId\|segmentId` | Required segment |
-| `D` | `D\|pluginId\|segmentId` | Disabled segment |
-
-Lines starting with `#` are comments. Blank lines are ignored.
+All admin configuration is stored in `admin_config.txt` in the mod's data folder. See the [Persistence reference](/reference/persistence) for the file format.

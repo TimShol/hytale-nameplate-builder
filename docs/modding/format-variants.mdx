@@ -1,5 +1,6 @@
 ---
 title: Format Variants
+icon: list
 description: Let players choose between multiple display formats for a segment.
 ---
 
@@ -41,13 +42,13 @@ NameplateAPI.describeVariants(this, "level", List.of(
 At runtime, push text for **each variant** using suffixed keys:
 
 ```java
-// Variant 0 (default) — uses the base key
+// Variant 0 (default) - uses the base key
 data.setText("health", currentHp + "/" + maxHp);
 
-// Variant 1 — uses ".1" suffix
+// Variant 1 - uses ".1" suffix
 data.setText("health.1", percent + "%");
 
-// Variant 2 — uses ".2" suffix
+// Variant 2 - uses ".2" suffix
 data.setText("health.2", barString);
 ```
 
@@ -60,7 +61,7 @@ When the aggregator composites the nameplate for a viewer:
 3. If that key exists, it uses that text
 4. If that key is **missing**, it falls back to the base key `"health"`
 
-**Always set the base key** — suffixed keys are optional. If you don't set a suffixed key, the viewer sees the base format regardless of their selection.
+**Always set the base key** - suffixed keys are optional. If you don't set a suffixed key, the viewer sees the base format regardless of their selection.
 
 ## Variant Name Tips
 
@@ -80,11 +81,11 @@ The UI extracts the value inside parentheses to show as a preview in the format 
 
 When a player selects a variant, the format popup also lets them configure:
 
-* **Prefix** — text prepended to the value (e.g. `HP: [`)
-* **Suffix** — text appended to the value (e.g. `]`)
-* **Bar empty fill** — the character used for unfilled bar positions (only shown for Bar variants)
+* **Prefix** - text prepended to the value (e.g. `HP: [`)
+* **Suffix** - text appended to the value (e.g. `]`)
+* **Bar empty fill** - the character used for unfilled bar positions (only shown for Bar variants)
 
-These wrapping and fill options are handled entirely by NameplateBuilder — you don't need to do anything special in your mod. Just push the raw variant text and NameplateBuilder wraps it.
+These wrapping and fill options are handled entirely by NameplateBuilder - you don't need to do anything special in your mod. Just push the raw variant text and NameplateBuilder wraps it.
 
 ## Segments Without Variants
 

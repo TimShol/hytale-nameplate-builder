@@ -5,14 +5,12 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 final class NameplatePreferenceStore {
+
+    private static final UUID ADMIN_CHAIN_UUID = new UUID(0L, 0L);
+    private static final Set<String> DEFAULT_ENABLED_BUILTINS = Set.of("entity-name", "health", "player-name");
 
     private final Path filePath;
     private final Map<UUID, Map<String, PreferenceSet>> data = new HashMap<>();
@@ -102,6 +100,11 @@ final class NameplatePreferenceStore {
                         SegmentKey key = new SegmentKey(parts[3], parts[4]);
                         set.barEmptyChar.put(key, parts[5].replace("\\p", "|").replace("\\\\", "\\"));
                     }
+                    case "WP" -> {
+                        if (parts.length < 4) continue;
+                        PreferenceSet set = getSet(UUID.fromString(parts[1]), "*", true);
+                        set.worldEnabled.put(parts[2], Boolean.parseBoolean(parts[3]));
+                    }
                     default -> {
 
                         if (parts.length >= 6) {
@@ -115,6 +118,29 @@ final class NameplatePreferenceStore {
             }
         } catch (IOException | RuntimeException _) {
 
+        }
+        migratePerNamespaceKeys();
+    }
+
+    private void migratePerNamespaceKeys() {
+        for (Map.Entry<UUID, Map<String, PreferenceSet>> viewerEntry : data.entrySet()) {
+            Map<String, PreferenceSet> byEntity = viewerEntry.getValue();
+            PreferenceSet existing = byEntity.get("_npcs");
+            if (existing != null) {
+                continue;
+            }
+            PreferenceSet best = null;
+            for (Map.Entry<String, PreferenceSet> entry : byEntity.entrySet()) {
+                if (entry.getKey().startsWith("_npcs:")) {
+                    if (best == null || entry.getValue().order.size() > best.order.size()) {
+                        best = entry.getValue();
+                    }
+                }
+            }
+            if (best != null) {
+                byEntity.put("_npcs", best);
+            }
+            byEntity.keySet().removeIf(k -> k.startsWith("_npcs:"));
         }
     }
 
@@ -211,6 +237,10 @@ final class NameplatePreferenceStore {
                         writer.write("W|" + viewer + "|" + set.showWelcomeMessage);
                         writer.newLine();
                     }
+                    for (Map.Entry<String, Boolean> worldEntry : set.worldEnabled.entrySet()) {
+                        writer.write("WP|" + viewer + "|" + worldEntry.getKey() + "|" + worldEntry.getValue());
+                        writer.newLine();
+                    }
                 }
             }
         } catch (IOException _) {
@@ -218,27 +248,20 @@ final class NameplatePreferenceStore {
         }
     }
 
-
-    boolean isUsingGlobal(UUID viewer, String entityType) {
-        if ("*".equals(entityType)) {
-            return false;
-        }
-        PreferenceSet set = getSet(viewer, entityType, false);
-        return set != null && set.useGlobal;
-    }
-
-
-    boolean hasPreferences(UUID viewer, String entityType) {
-        if ("*".equals(entityType)) {
-            return false;
-        }
-        return getSet(viewer, entityType, false) != null;
-    }
-
-
     boolean isNameplatesEnabled(UUID viewer) {
         PreferenceSet set = getSet(viewer, "*", false);
         return set == null || set.nameplatesEnabled;
+    }
+
+    boolean isChainEnabled(UUID viewer, String entityType) {
+        PreferenceSet set = getSet(viewer, entityType, false);
+        if (set == null) return true;
+        return set.nameplatesEnabled;
+    }
+
+    void setChainEnabled(UUID viewer, String entityType, boolean enabled) {
+        PreferenceSet set = getSet(viewer, entityType, true);
+        set.nameplatesEnabled = enabled;
     }
 
 
@@ -257,6 +280,35 @@ final class NameplatePreferenceStore {
     void setShowWelcomeMessage(UUID viewer, boolean show) {
         PreferenceSet set = getSet(viewer, "*", true);
         set.showWelcomeMessage = show;
+    }
+
+
+    boolean isWorldEnabled(UUID viewer, String worldName) {
+        if (worldName == null || worldName.isEmpty()) {
+            return true;
+        }
+        PreferenceSet set = getSet(viewer, "*", false);
+        if (set == null) {
+            return true;
+        }
+        return set.worldEnabled.getOrDefault(worldName, true);
+    }
+
+    void setWorldEnabled(UUID viewer, String worldName, boolean enabled) {
+        PreferenceSet set = getSet(viewer, "*", true);
+        if (enabled) {
+            set.worldEnabled.remove(worldName);
+        } else {
+            set.worldEnabled.put(worldName, false);
+        }
+    }
+
+    Map<String, Boolean> getPlayerWorldEnabled(UUID viewer) {
+        PreferenceSet set = getSet(viewer, "*", false);
+        if (set == null) {
+            return Map.of();
+        }
+        return Collections.unmodifiableMap(set.worldEnabled);
     }
 
 
@@ -364,20 +416,39 @@ final class NameplatePreferenceStore {
             return List.of();
         }
         PreferenceSet set = getSet(viewer, entityType, false);
+        if (set == null && !ADMIN_CHAIN_UUID.equals(viewer)) {
+            PreferenceSet adminSet = getSet(ADMIN_CHAIN_UUID, entityType, false);
+            if (adminSet != null) {
+                set = clonePreferenceSet(adminSet, viewer, entityType);
+            }
+        }
+        if (set == null) {
+            if (ADMIN_CHAIN_UUID.equals(viewer)) {
+                PreferenceSet adminSet = getSet(viewer, entityType, true);
+                for (SegmentKey key : available) {
+                    adminSet.enabled.put(key, false);
+                }
+                set = adminSet;
+            } else {
+                seedDefaultChain(viewer, entityType, available);
+                set = getSet(viewer, entityType, false);
+            }
+        }
         if (set == null) {
             List<SegmentKey> copy = new ArrayList<>(available);
             copy.sort(defaultComparator);
             return copy;
         }
+        final PreferenceSet resolved = set;
         List<SegmentKey> copy = new ArrayList<>();
         for (SegmentKey key : available) {
-            if (set.enabled.getOrDefault(key, true)) {
+            if (resolved.enabled.getOrDefault(key, true)) {
                 copy.add(key);
             }
         }
         copy.sort((a, b) -> {
-            int oa = set.order.getOrDefault(a, Integer.MAX_VALUE);
-            int ob = set.order.getOrDefault(b, Integer.MAX_VALUE);
+            int oa = resolved.order.getOrDefault(a, Integer.MAX_VALUE);
+            int ob = resolved.order.getOrDefault(b, Integer.MAX_VALUE);
             if (oa != ob) return Integer.compare(oa, ob);
             return defaultComparator.compare(a, b);
         });
@@ -508,6 +579,48 @@ final class NameplatePreferenceStore {
         }
     }
 
+    private void seedDefaultChain(UUID viewer, String entityType, List<SegmentKey> available) {
+        PreferenceSet set = getSet(viewer, entityType, true);
+        int order = 0;
+        for (SegmentKey key : available) {
+            if ("entity-name".equals(key.segmentId())) {
+                set.enabled.put(key, true);
+                set.order.put(key, order++);
+            }
+        }
+        for (SegmentKey key : available) {
+            if ("entity-name".equals(key.segmentId())) continue;
+            if (DEFAULT_ENABLED_BUILTINS.contains(key.segmentId())) continue;
+            if ("stamina".equals(key.segmentId()) || "mana".equals(key.segmentId())) continue;
+            set.enabled.put(key, true);
+            set.order.put(key, order++);
+        }
+        for (SegmentKey key : available) {
+            if (DEFAULT_ENABLED_BUILTINS.contains(key.segmentId()) && !"entity-name".equals(key.segmentId())) {
+                set.enabled.put(key, true);
+                set.order.put(key, order++);
+            }
+        }
+        for (SegmentKey key : available) {
+            if (!set.enabled.containsKey(key)) {
+                set.enabled.put(key, false);
+            }
+        }
+    }
+
+    private PreferenceSet clonePreferenceSet(PreferenceSet source, UUID viewer, String entityType) {
+        PreferenceSet target = getSet(viewer, entityType, true);
+        target.enabled.putAll(source.enabled);
+        target.order.putAll(source.order);
+        target.separatorAfter.putAll(source.separatorAfter);
+        target.selectedVariant.putAll(source.selectedVariant);
+        target.prefix.putAll(source.prefix);
+        target.suffix.putAll(source.suffix);
+        target.barEmptyChar.putAll(source.barEmptyChar);
+        target.separator = source.separator;
+        return target;
+    }
+
     private PreferenceSet getSet(UUID viewer, String entityType, boolean create) {
         Map<String, PreferenceSet> byEntity = data.get(viewer);
         if (byEntity == null && create) {
@@ -533,6 +646,7 @@ final class NameplatePreferenceStore {
         private final Map<SegmentKey, String> prefix = new HashMap<>();
         private final Map<SegmentKey, String> suffix = new HashMap<>();
         private final Map<SegmentKey, String> barEmptyChar = new HashMap<>();
+        private final Map<String, Boolean> worldEnabled = new HashMap<>();
         private boolean useGlobal = false;
         private boolean onlyShowWhenLooking = false;
         private boolean nameplatesEnabled = true;

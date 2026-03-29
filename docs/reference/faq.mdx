@@ -1,5 +1,6 @@
 ---
 title: FAQ
+icon: circle-question
 description: Frequently asked questions and troubleshooting.
 ---
 
@@ -83,11 +84,11 @@ No. NameplateBuilder automatically removes all segment descriptions when your pl
 
 ### Can two mods use the same segment ID?
 
-Yes. Segment IDs are scoped to your plugin. Two mods can both register a `"health"` segment without conflict — they are tracked as separate entries internally using `pluginId:segmentId`.
+Yes. Segment IDs are scoped to your plugin. Two mods can both register a `"health"` segment without conflict - they are tracked as separate entries internally using `pluginId:segmentId`.
 
 ### How do I update segment text efficiently?
 
-Call `data.setText()` — it's a `HashMap.put()` internally. Calling it every tick is safe and cheap. The aggregator reads the latest value when it composites the nameplate.
+Call `data.setText()` - it's a `HashMap.put()` internally. Calling it every tick is safe and cheap. The aggregator reads the latest value when it composites the nameplate.
 
 ### Can I register a PLAYERS-targeted segment on an NPC?
 

@@ -1,26 +1,21 @@
 package com.frotty27.nameplatebuilder.server;
 
-import com.hypixel.hytale.codec.Codec;
-import com.hypixel.hytale.codec.KeyedCodec;
-import com.hypixel.hytale.codec.builder.BuilderCodec;
+import com.frotty27.nameplatebuilder.api.SegmentTarget;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
+import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCustomUIPage;
+import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.npc.NPCPlugin;
 import org.jspecify.annotations.NonNull;
 
-import com.frotty27.nameplatebuilder.api.SegmentTarget;
-
-import com.hypixel.hytale.logger.HytaleLogger;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
@@ -38,6 +33,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
     static final String ENTITY_TYPE_PLAYERS = "_players";
 
+    private static final UUID ADMIN_CHAIN_UUID = new UUID(0L, 0L);
 
     private static final String COLOR_REQUIRED = "#3d3820";
 
@@ -53,10 +49,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
     private static final int MAX_VARIANT_OPTIONS = 4;
 
-    private static final String COLOR_DISABLED = "#3d2020";
-
     private static final int DISABLED_PAGE_SIZE = 16;
-
 
 
     private final NameplateRegistry registry;
@@ -64,6 +57,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     private final AdminConfigStore adminConfig;
     private final boolean isAdmin;
     private final UUID viewerUuid;
+    private final NameplateBuilderPlugin plugin;
 
     private ActiveTab activeTab = ActiveTab.NPCS;
     private String filter = "";
@@ -78,7 +72,14 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     private int adminDisLeftPage = 0;
     private int adminDisRightPage = 0;
     private int disabledPage = 0;
+    private ChainSubTab chainSubTab = ChainSubTab.CHAIN;
+    private boolean adminOrderIsNpc = true;
+    private int worldPage = 0;
+    private int instPage = 0;
+    private int adminWorldPage = 0;
+    private int adminInstPage = 0;
 
+    private int selectedPreviewTarget = 0;
 
     private String pendingOffsetInput = null;
 
@@ -117,6 +118,17 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
     private String pendingBarEmptyInput = null;
 
+    private boolean npcPickerOpen = false;
+    private boolean npcPickerDirty = false;
+    private String npcPickerFilter = "";
+    private int npcPickerPage = 0;
+    private String npcPickerSelectedItem = null;
+    private final List<String> npcPickerFiltered = new ArrayList<>();
+    private int blacklistPage = 0;
+    private static final int NPC_PICKER_ROW_COUNT = 10;
+    private static final int BLACKLIST_ROW_COUNT = 8;
+    private static volatile List<String> cachedNpcIds = null;
+
     private static final Map<UUID, UiState> UI_STATE = new ConcurrentHashMap<>();
 
     NameplateBuilderPage(PlayerRef playerRef,
@@ -124,15 +136,17 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                          NameplateRegistry registry,
                          NameplatePreferenceStore preferences,
                          AdminConfigStore adminConfig,
-                         boolean isAdmin) {
+                         boolean isAdmin,
+                         NameplateBuilderPlugin plugin) {
         super(playerRef,
-                com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime.CanDismiss,
+                CustomPageLifetime.CanDismiss,
                 SettingsData.CODEC);
         this.viewerUuid = viewerUuid;
         this.registry = registry;
         this.preferences = preferences;
         this.adminConfig = adminConfig;
         this.isAdmin = isAdmin;
+        this.plugin = plugin;
 
         UiState state = UI_STATE.get(viewerUuid);
         if (state != null) {
@@ -150,6 +164,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             this.adminDisLeftPage = state.adminDisLeftPage();
             this.adminDisRightPage = state.adminDisRightPage();
             this.disabledPage = state.disabledPage();
+            this.chainSubTab = state.chainSubTab() != null ? state.chainSubTab() : ChainSubTab.CHAIN;
         }
     }
 
@@ -161,31 +176,46 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
 
         events.addEventBinding(
-                com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
+                CustomUIEventBindingType.ValueChanged,
                 "#FilterField",
-                com.hypixel.hytale.server.core.ui.builder.EventData.of("@Filter", "#FilterField.Value"),
+                EventData.of("@Filter", "#FilterField.Value"),
                 false);
 
 
         events.addEventBinding(
-                com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
+                CustomUIEventBindingType.ValueChanged,
                 "#AdminFilterField",
-                com.hypixel.hytale.server.core.ui.builder.EventData.of("@AdminFilter", "#AdminFilterField.Value"),
+                EventData.of("@AdminFilter", "#AdminFilterField.Value"),
                 false);
 
 
         events.addEventBinding(
-                com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
+                CustomUIEventBindingType.ValueChanged,
                 "#OffsetField",
-                com.hypixel.hytale.server.core.ui.builder.EventData.of("@Offset", "#OffsetField.Value"),
+                EventData.of("@Offset", "#OffsetField.Value"),
                 false);
 
 
         bindAction(events, "#NavGeneral", "NavGeneral");
+        bindAction(events, "#NavGeneralActive", "NavGeneral");
         bindAction(events, "#NavNpcs", "NavNpcs");
+        bindAction(events, "#NavNpcsActive", "NavNpcs");
         bindAction(events, "#NavPlayers", "NavPlayers");
-        bindAction(events, "#NavAdmin", "NavAdmin");
-        bindAction(events, "#EnableToggle", "ToggleEnable");
+        bindAction(events, "#NavPlayersActive", "NavPlayers");
+        bindAction(events, "#NavAdminNpcs", "NavAdminNpcs");
+        bindAction(events, "#NavAdminNpcsActive", "NavAdminNpcs");
+        bindAction(events, "#NavAdminPlayers", "NavAdminPlayers");
+        bindAction(events, "#NavAdminPlayersActive", "NavAdminPlayers");
+        bindAction(events, "#EnableToggleOn", "ToggleEnable");
+        bindAction(events, "#EnableToggleOff", "ToggleEnable");
+        bindAction(events, "#AdminMasterToggleOn", "ToggleAdminMaster");
+        bindAction(events, "#AdminMasterToggleOff", "ToggleAdminMaster");
+        bindAction(events, "#AdminPlayerChainToggleOn", "ToggleAdminPlayerChain");
+        bindAction(events, "#AdminPlayerChainToggleOff", "ToggleAdminPlayerChain");
+        bindAction(events, "#AdminNpcChainToggleOn", "ToggleAdminNpcChain");
+        bindAction(events, "#AdminNpcChainToggleOff", "ToggleAdminNpcChain");
+        bindAction(events, "#LockChainOn", "ToggleLockChain");
+        bindAction(events, "#LockChainOff", "ToggleLockChain");
 
 
         bindAction(events, "#SaveButton", "Save");
@@ -210,8 +240,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
 
 
-
-
         for (int i = 0; i < CHAIN_PAGE_SIZE; i++) {
             bindAction(events, "#ChainSep" + i, "EditSep_" + i);
         }
@@ -233,30 +261,79 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
 
         events.addEventBinding(
-                com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
+                CustomUIEventBindingType.ValueChanged,
                 "#AdminDisFilterField",
-                com.hypixel.hytale.server.core.ui.builder.EventData.of("@AdminDisFilter", "#AdminDisFilterField.Value"),
+                EventData.of("@AdminDisFilter", "#AdminDisFilterField.Value"),
                 false);
 
 
         events.addEventBinding(
-                com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
+                CustomUIEventBindingType.ValueChanged,
                 "#AdminServerNameField",
-                com.hypixel.hytale.server.core.ui.builder.EventData.of("@AdminServerName", "#AdminServerNameField.Value"),
+                EventData.of("@AdminServerName", "#AdminServerNameField.Value"),
                 false);
 
 
-        bindAction(events, "#AdminSubRequired", "AdminSubRequired");
-        bindAction(events, "#AdminSubDisabled", "AdminSubDisabled");
-        bindAction(events, "#AdminSubSettings", "AdminSubSettings");
-        bindAction(events, "#NavAdminDisabled", "NavAdminDisabled");
-        bindAction(events, "#NavAdminSettings", "NavAdminSettings");
+        bindAction(events, "#AdminSubTab0", "AdminSubRequired");
+        bindAction(events, "#AdminSubTab0Active", "AdminSubRequired");
+        bindAction(events, "#AdminSubTab1", "AdminSubDisabled");
+        bindAction(events, "#AdminSubTab1Active", "AdminSubDisabled");
+        bindAction(events, "#AdminSubTab2", "AdminSubSettings");
+        bindAction(events, "#AdminSubTab2Active", "AdminSubSettings");
+        bindAction(events, "#NavAdminConfig", "NavAdminConfig");
+        bindAction(events, "#NavAdminConfigActive", "NavAdminConfig");
 
+        bindAction(events, "#AdminSubTab3", "AdminSubBlacklist");
+        bindAction(events, "#AdminSubTab3Active", "AdminSubBlacklist");
+        bindAction(events, "#BlacklistAddBtn", "BlacklistAdd");
+        bindAction(events, "#SaveButtonBlacklist", "SaveBlacklist");
+        for (int i = 0; i < BLACKLIST_ROW_COUNT; i++) {
+            bindAction(events, "#BlacklistRow" + i + "Remove", "BlacklistRemove_" + i);
+        }
+        bindAction(events, "#BlacklistFirst", "BlacklistFirst");
+        bindAction(events, "#BlacklistPrev", "BlacklistPrev");
+        bindAction(events, "#BlacklistNext", "BlacklistNext");
+        bindAction(events, "#BlacklistLast", "BlacklistLast");
+
+        bindAction(events, "#NpcPickerCancel", "NpcPickerCancel");
+        bindAction(events, "#NpcPickerBackdrop", "NpcPickerCancel");
+        bindAction(events, "#NpcPickerAdd", "NpcPickerAddConfirm");
+        for (int i = 0; i < NPC_PICKER_ROW_COUNT; i++) {
+            bindAction(events, "#NpcPickerRowBtn" + i, "NpcPickerRow_" + i);
+        }
+        bindAction(events, "#NpcPickerFirstPage", "NpcPickerFirstPage");
+        bindAction(events, "#NpcPickerPrevPage", "NpcPickerPrevPage");
+        bindAction(events, "#NpcPickerNextPage", "NpcPickerNextPage");
+        bindAction(events, "#NpcPickerLastPage", "NpcPickerLastPage");
+
+        events.addEventBinding(
+                CustomUIEventBindingType.ValueChanged,
+                "#NpcPickerFilter",
+                EventData.of("@NpcPickerFilter", "#NpcPickerFilter.Value"),
+                false);
 
         bindAction(events, "#SaveButtonAdminSettings", "SaveAdminSettings");
         bindAction(events, "#ResetButtonAdminSettings", "ResetAdminSettings");
-        bindAction(events, "#AdminWelcomeToggle", "ToggleAdminWelcome");
+        bindAction(events, "#AdminWelcomeToggleOn", "ToggleAdminWelcome");
+        bindAction(events, "#AdminWelcomeToggleOff", "ToggleAdminWelcome");
 
+        for (int i = 0; i < 5; i++) {
+            bindAction(events, "#AdminWorldRow" + i + "On", "AdminToggleWorld_" + i);
+            bindAction(events, "#AdminWorldRow" + i + "Off", "AdminToggleWorld_" + i);
+        }
+        bindAction(events, "#AdminWorldFirst", "AdminWorldFirst");
+        bindAction(events, "#AdminWorldPrev", "AdminWorldPrev");
+        bindAction(events, "#AdminWorldNext", "AdminWorldNext");
+        bindAction(events, "#AdminWorldLast", "AdminWorldLast");
+
+        for (int i = 0; i < 5; i++) {
+            bindAction(events, "#AdminInstRow" + i + "On", "AdminToggleInst_" + i);
+            bindAction(events, "#AdminInstRow" + i + "Off", "AdminToggleInst_" + i);
+        }
+        bindAction(events, "#AdminInstFirst", "AdminInstFirst");
+        bindAction(events, "#AdminInstPrev", "AdminInstPrev");
+        bindAction(events, "#AdminInstNext", "AdminInstNext");
+        bindAction(events, "#AdminInstLast", "AdminInstLast");
 
         for (int i = 0; i < ADMIN_PAGE_SIZE; i++) {
             bindAction(events, "#AdminDisDisable" + i, "AdminDisDisable_" + i);
@@ -275,23 +352,26 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
 
         bindAction(events, "#NavDisabled", "NavDisabled");
+        bindAction(events, "#NavDisabledActive", "NavDisabled");
         bindAction(events, "#PrevDisabled", "PrevDisabled");
         bindAction(events, "#NextDisabled", "NextDisabled");
 
 
-        bindAction(events, "#WelcomeToggle", "ToggleWelcome");
+        bindAction(events, "#WelcomeToggleOn", "ToggleWelcome");
+        bindAction(events, "#WelcomeToggleOff", "ToggleWelcome");
 
 
         bindAction(events, "#ClearChainButton", "ClearChain");
 
 
-        bindAction(events, "#LookToggle", "ToggleLook");
+        bindAction(events, "#LookToggleOn", "ToggleLook");
+        bindAction(events, "#LookToggleOff", "ToggleLook");
 
 
         events.addEventBinding(
-                com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
+                CustomUIEventBindingType.ValueChanged,
                 "#SepTextField",
-                com.hypixel.hytale.server.core.ui.builder.EventData.of("@SepText", "#SepTextField.Value"),
+                EventData.of("@SepText", "#SepTextField.Value"),
                 false);
         bindAction(events, "#SepConfirm", "SepConfirm");
         bindAction(events, "#SepCancel", "SepCancel");
@@ -308,21 +388,53 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         bindAction(events, "#VariantCancel", "VariantCancel");
         bindAction(events, "#VariantConfirm", "VariantConfirm");
 
+        bindAction(events, "#SubTabChain", "SubTabChain");
+        bindAction(events, "#SubTabChainActive", "SubTabChain");
+        bindAction(events, "#SubTabSettings", "SubTabSettings");
+        bindAction(events, "#SubTabSettingsActive", "SubTabSettings");
+        bindAction(events, "#ChainEnabledOn", "ToggleChainEnabled");
+        bindAction(events, "#ChainEnabledOff", "ToggleChainEnabled");
+        for (int i = 0; i < 8; i++) {
+            bindAction(events, "#ModRow" + i + "On", "ToggleMod_" + i);
+            bindAction(events, "#ModRow" + i + "Off", "ToggleMod_" + i);
+        }
+        for (int i = 0; i < 5; i++) {
+            bindAction(events, "#WorldRow" + i + "On", "ToggleWorld_" + i);
+            bindAction(events, "#WorldRow" + i + "Off", "ToggleWorld_" + i);
+        }
+        bindAction(events, "#WorldFirst", "WorldFirst");
+        bindAction(events, "#WorldPrev", "WorldPrev");
+        bindAction(events, "#WorldNext", "WorldNext");
+        bindAction(events, "#WorldLast", "WorldLast");
+        for (int i = 0; i < 5; i++) {
+            bindAction(events, "#InstRow" + i + "On", "ToggleInst_" + i);
+            bindAction(events, "#InstRow" + i + "Off", "ToggleInst_" + i);
+        }
+        bindAction(events, "#InstFirst", "InstFirst");
+        bindAction(events, "#InstPrev", "InstPrev");
+        bindAction(events, "#InstNext", "InstNext");
+        bindAction(events, "#InstLast", "InstLast");
+        bindAction(events, "#SaveButtonSettings", "SaveSettings");
+
+        for (int i = 0; i < 4; i++) {
+            bindAction(events, "#PreviewTargetBtn" + i, "PreviewTarget_" + i);
+            bindAction(events, "#PreviewTargetBtn" + i + "Active", "PreviewTarget_" + i);
+        }
 
         events.addEventBinding(
-                com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
+                CustomUIEventBindingType.ValueChanged,
                 "#PrefixField",
-                com.hypixel.hytale.server.core.ui.builder.EventData.of("@PrefixText", "#PrefixField.Value"),
+                EventData.of("@PrefixText", "#PrefixField.Value"),
                 false);
         events.addEventBinding(
-                com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
+                CustomUIEventBindingType.ValueChanged,
                 "#SuffixField",
-                com.hypixel.hytale.server.core.ui.builder.EventData.of("@SuffixText", "#SuffixField.Value"),
+                EventData.of("@SuffixText", "#SuffixField.Value"),
                 false);
         events.addEventBinding(
-                com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.ValueChanged,
+                CustomUIEventBindingType.ValueChanged,
                 "#BarEmptyField",
-                com.hypixel.hytale.server.core.ui.builder.EventData.of("@BarEmptyText", "#BarEmptyField.Value"),
+                EventData.of("@BarEmptyText", "#BarEmptyField.Value"),
                 false);
 
         populateCommands(commands);
@@ -330,9 +442,9 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
     private void bindAction(UIEventBuilder events, String selector, String action) {
         events.addEventBinding(
-                com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.Activating,
+                CustomUIEventBindingType.Activating,
                 selector,
-                com.hypixel.hytale.server.core.ui.builder.EventData.of("Action", action),
+                EventData.of("Action", action),
                 false);
     }
 
@@ -348,7 +460,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
 
 
-        if (data.action == null || (!"Save".equals(data.action) && !"SaveAdmin".equals(data.action))) {
+        if ((!"Save".equals(data.action) && !"SaveAdmin".equals(data.action) && !"SaveSettings".equals(data.action) && !"SaveBlacklist".equals(
+                data.action) && !"SaveAdminSettings".equals(data.action) && !"SaveAdminDis".equals(data.action))) {
             saveMessage = null;
         }
 
@@ -374,8 +487,18 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
             if (data.action == null && data.filter == null && data.offset == null && data.adminFilter == null
                     && data.adminDisFilter == null && data.sepText == null && data.prefixText == null
-                    && data.suffixText == null && data.barEmptyText == null) {
+                    && data.suffixText == null && data.barEmptyText == null && data.npcPickerFilter == null) {
                 return;
+            }
+        }
+
+        if (data.npcPickerFilter != null) {
+            String trimmed = data.npcPickerFilter.trim();
+            if (!trimmed.equals(npcPickerFilter)) {
+                npcPickerFilter = trimmed;
+                npcPickerPage = 0;
+                npcPickerSelectedItem = null;
+                npcPickerDirty = true;
             }
         }
 
@@ -395,17 +518,17 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             if (editingVariantKey != null) {
                 if (data.prefixText != null) {
                     pendingPrefixInput = data.prefixText;
-                    preferences.setPrefix(viewerUuid, tabEntityType(), editingVariantKey, data.prefixText);
+                    preferences.setPrefix(chainViewerUuid(), tabEntityType(), editingVariantKey, data.prefixText);
                 }
                 if (data.suffixText != null) {
                     pendingSuffixInput = data.suffixText;
-                    preferences.setSuffix(viewerUuid, tabEntityType(), editingVariantKey, data.suffixText);
+                    preferences.setSuffix(chainViewerUuid(), tabEntityType(), editingVariantKey, data.suffixText);
                 }
                 if (data.barEmptyText != null) {
                     String clamped = data.barEmptyText.length() > 1
                             ? data.barEmptyText.substring(0, 1) : data.barEmptyText;
                     pendingBarEmptyInput = clamped;
-                    preferences.setBarEmptyChar(viewerUuid, tabEntityType(), editingVariantKey, clamped);
+                    preferences.setBarEmptyChar(chainViewerUuid(), tabEntityType(), editingVariantKey, clamped);
                 }
             }
 
@@ -424,43 +547,91 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return;
         }
 
+        if (npcPickerOpen && !data.action.startsWith("NpcPicker") && !"BlacklistAdd".equals(data.action)) {
+            closeNpcPicker();
+        }
+
         switch (data.action) {
             case "NavGeneral" -> {
                 switchTab(ActiveTab.GENERAL);
                 sendUpdate(buildUpdate());
                 return;
             }
-            case "NavNpcs" -> {
-                switchTab(ActiveTab.NPCS);
-                sendUpdate(buildUpdate());
-                return;
-            }
             case "NavPlayers" -> {
                 switchTab(ActiveTab.PLAYERS);
+                chainSubTab = ChainSubTab.CHAIN;
                 sendUpdate(buildUpdate());
                 return;
             }
-            case "NavAdmin" -> {
+            case "NavNpcs" -> {
+                switchTab(ActiveTab.NPCS);
+                chainSubTab = ChainSubTab.CHAIN;
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "NavAdminNpcs" -> {
                 if (isAdmin) {
-                    switchTab(ActiveTab.ADMIN);
-                    adminSubTab = AdminSubTab.REQUIRED;
+                    activeTab = ActiveTab.ADMIN;
+                    adminSubTab = AdminSubTab.ORDER;
+                    adminOrderIsNpc = true;
+                    chainSubTab = ChainSubTab.CHAIN;
+                    chainPage = 0;
+                    availPage = 0;
                 }
                 sendUpdate(buildUpdate());
                 return;
             }
-            case "NavAdminDisabled" -> {
+            case "NavAdminPlayers" -> {
                 if (isAdmin) {
-                    switchTab(ActiveTab.ADMIN);
-                    adminSubTab = AdminSubTab.DISABLED;
+                    activeTab = ActiveTab.ADMIN;
+                    adminSubTab = AdminSubTab.ORDER;
+                    adminOrderIsNpc = false;
+                    chainSubTab = ChainSubTab.CHAIN;
+                    chainPage = 0;
+                    availPage = 0;
                 }
                 sendUpdate(buildUpdate());
                 return;
             }
-            case "NavAdminSettings" -> {
+            case "NavAdminConfig" -> {
                 if (isAdmin) {
                     switchTab(ActiveTab.ADMIN);
                     adminSubTab = AdminSubTab.SETTINGS;
                     adminServerName = adminConfig.getServerName();
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "ToggleAdminMaster" -> {
+                if (isAdmin) {
+                    adminConfig.setMasterEnabled(!adminConfig.isMasterEnabled());
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "ToggleAdminPlayerChain" -> {
+                if (isAdmin) {
+                    adminConfig.setPlayerChainEnabled(!adminConfig.isPlayerChainEnabled());
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "ToggleAdminNpcChain" -> {
+                if (isAdmin) {
+                    adminConfig.setNpcChainEnabled(!adminConfig.isNpcChainEnabled());
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "ToggleLockChain" -> {
+                if (isAdmin) {
+                    boolean isNpcTab = activeTab == ActiveTab.NPCS || (activeTab == ActiveTab.ADMIN && adminOrderIsNpc);
+                    if (isNpcTab) {
+                        adminConfig.setNpcChainLocked(!adminConfig.isNpcChainLocked());
+                    } else {
+                        adminConfig.setPlayerChainLocked(!adminConfig.isPlayerChainLocked());
+                    }
+                    adminConfig.save();
                 }
                 sendUpdate(buildUpdate());
                 return;
@@ -478,6 +649,66 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             case "AdminSubSettings" -> {
                 adminSubTab = AdminSubTab.SETTINGS;
                 adminServerName = adminConfig.getServerName();
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "AdminSubBlacklist" -> {
+                adminSubTab = AdminSubTab.BLACKLIST;
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "BlacklistAdd" -> {
+                openNpcPicker();
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "NpcPickerCancel" -> {
+                closeNpcPicker();
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "NpcPickerAddConfirm" -> {
+                if (npcPickerSelectedItem != null) {
+                    adminConfig.addBlacklistedNpc(npcPickerSelectedItem);
+                    adminConfig.save();
+                    closeNpcPicker();
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "SaveBlacklist" -> {
+                if (isAdmin) {
+                    try {
+                        adminConfig.save();
+                        persistUiState();
+                        saveMessage = "Blacklist saved!";
+                        saveMessageSuccess = true;
+                    } catch (Throwable e) {
+                        LOGGER.atWarning().withCause(e).log("Failed to save blacklist");
+                        saveMessage = "Could not save blacklist!";
+                        saveMessageSuccess = false;
+                    }
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "BlacklistFirst" -> { blacklistPage = 0; sendUpdate(buildUpdate()); return; }
+            case "BlacklistPrev" -> { blacklistPage = Math.max(0, blacklistPage - 1); sendUpdate(buildUpdate()); return; }
+            case "BlacklistNext" -> { blacklistPage++; sendUpdate(buildUpdate()); return; }
+            case "BlacklistLast" -> {
+                List<String> blacklist = new ArrayList<>(adminConfig.getBlacklistedNpcs());
+                int totalBlacklistPages = Math.max(1, (int) Math.ceil(blacklist.size() / (double) BLACKLIST_ROW_COUNT));
+                blacklistPage = totalBlacklistPages - 1;
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "NpcPickerFirstPage" -> { npcPickerPage = 0; sendUpdate(buildUpdate()); return; }
+            case "NpcPickerPrevPage" -> { npcPickerPage = Math.max(0, npcPickerPage - 1); sendUpdate(buildUpdate()); return; }
+            case "NpcPickerNextPage" -> { npcPickerPage++; sendUpdate(buildUpdate()); return; }
+            case "NpcPickerLastPage" -> {
+                rebuildNpcPickerFiltered();
+                int totalNpcPages = Math.max(1, (int) Math.ceil(npcPickerFiltered.size() / (double) NPC_PICKER_ROW_COUNT));
+                npcPickerPage = totalNpcPages - 1;
                 sendUpdate(buildUpdate());
                 return;
             }
@@ -514,13 +745,36 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 sendUpdate(buildUpdate());
                 return;
             }
+            case "AdminWorldFirst" -> { adminWorldPage = 0; sendUpdate(buildUpdate()); return; }
+            case "AdminWorldPrev" -> { adminWorldPage = Math.max(0, adminWorldPage - 1); sendUpdate(buildUpdate()); return; }
+            case "AdminWorldNext" -> { adminWorldPage++; sendUpdate(buildUpdate()); return; }
+            case "AdminWorldLast" -> {
+                List<String> worldNames = getWorldNames();
+                int totalPages = Math.max(1, (int) Math.ceil(worldNames.size() / 5.0));
+                adminWorldPage = totalPages - 1;
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "AdminInstFirst" -> { adminInstPage = 0; sendUpdate(buildUpdate()); return; }
+            case "AdminInstPrev" -> { adminInstPage = Math.max(0, adminInstPage - 1); sendUpdate(buildUpdate()); return; }
+            case "AdminInstNext" -> { adminInstPage++; sendUpdate(buildUpdate()); return; }
+            case "AdminInstLast" -> {
+                List<String> instanceNames = getInstanceNames();
+                int totalPages = Math.max(1, (int) Math.ceil(instanceNames.size() / 5.0));
+                adminInstPage = totalPages - 1;
+                sendUpdate(buildUpdate());
+                return;
+            }
             case "NavDisabled" -> {
                 switchTab(ActiveTab.DISABLED);
                 sendUpdate(buildUpdate());
                 return;
             }
             case "ToggleEnable" -> {
-
+                if (!isAdmin && !adminConfig.isMasterEnabled()) {
+                    sendUpdate(buildUpdate());
+                    return;
+                }
                 if (areAllSegmentsDisabled()) {
                     sendUpdate(buildUpdate());
                     return;
@@ -531,6 +785,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 return;
             }
             case "ToggleWelcome" -> {
+                if (!isAdmin && !adminConfig.isWelcomeMessagesEnabled()) {
+                    sendUpdate(buildUpdate());
+                    return;
+                }
                 boolean current = preferences.isShowWelcomeMessage(viewerUuid);
                 preferences.setShowWelcomeMessage(viewerUuid, !current);
                 sendUpdate(buildUpdate());
@@ -541,15 +799,15 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 return;
             }
             case "Save" -> {
-
-
-
                 try {
-                    List<SegmentKey> npcKeys = getFilteredKeysForEntityType(ENTITY_TYPE_NPCS);
-                    List<SegmentKey> playerKeys = getFilteredKeysForEntityType(ENTITY_TYPE_PLAYERS);
-                    preferences.snapshotChain(viewerUuid, ENTITY_TYPE_NPCS, npcKeys, getDefaultComparator());
-                    preferences.snapshotChain(viewerUuid, ENTITY_TYPE_PLAYERS, playerKeys, getDefaultComparator());
+                    UUID saveUuid = chainViewerUuid();
+                    String currentEntityType = tabEntityType();
+                    List<SegmentKey> keys = getFilteredKeys();
+                    preferences.snapshotChain(saveUuid, currentEntityType, keys, getDefaultComparator());
                     preferences.save();
+                    if (activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.ORDER) {
+                        adminConfig.save();
+                    }
                     persistUiState();
                     saveMessage = "Saved changes successfully!";
                     saveMessageSuccess = true;
@@ -561,7 +819,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 sendUpdate(buildUpdate());
                 return;
             }
-            case "SaveAdmin" -> {
+            case "SaveAdmin", "SaveAdminDis" -> {
                 if (isAdmin) {
                     try {
                         adminConfig.save();
@@ -580,22 +838,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             case "ResetAdmin" -> {
                 if (isAdmin) {
                     adminConfig.clearAllRequired();
-                }
-                sendUpdate(buildUpdate());
-                return;
-            }
-            case "SaveAdminDis" -> {
-                if (isAdmin) {
-                    try {
-                        adminConfig.save();
-                        persistUiState();
-                        saveMessage = "Admin config saved!";
-                        saveMessageSuccess = true;
-                    } catch (Throwable e) {
-                        LOGGER.atWarning().withCause(e).log("Failed to save admin config");
-                        saveMessage = "Could not save admin config!";
-                        saveMessageSuccess = false;
-                    }
                 }
                 sendUpdate(buildUpdate());
                 return;
@@ -665,8 +907,193 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 sendUpdate(buildUpdate());
                 return;
             }
+            case "SubTabChain" -> {
+                chainSubTab = ChainSubTab.CHAIN;
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "SubTabSettings" -> {
+                chainSubTab = ChainSubTab.SETTINGS;
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "ToggleChainEnabled" -> {
+                String chainType = tabEntityType();
+                boolean isNpcChain = ENTITY_TYPE_NPCS.equals(chainType);
+                boolean adminChainDisabled = isNpcChain
+                        ? !adminConfig.isNpcChainEnabled()
+                        : !adminConfig.isPlayerChainEnabled();
+                if (!isAdmin && adminChainDisabled) {
+                    sendUpdate(buildUpdate());
+                    return;
+                }
+                boolean current = preferences.isChainEnabled(viewerUuid, chainType);
+                preferences.setChainEnabled(viewerUuid, chainType, !current);
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "SaveSettings" -> {
+                try {
+                    preferences.save();
+                    persistUiState();
+                    saveMessage = "Settings saved!";
+                    saveMessageSuccess = true;
+                } catch (Throwable e) {
+                    LOGGER.atWarning().withCause(e).log("Failed to save settings for player %s", viewerUuid);
+                    saveMessage = "Could not save settings!";
+                    saveMessageSuccess = false;
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
         }
 
+        if (data.action.startsWith("NpcPickerRow_")) {
+            int rowIdx = parseRowIndex(data.action, "NpcPickerRow_");
+            int actualIdx = npcPickerPage * NPC_PICKER_ROW_COUNT + rowIdx;
+            rebuildNpcPickerFiltered();
+            if (actualIdx >= 0 && actualIdx < npcPickerFiltered.size()) {
+                npcPickerSelectedItem = npcPickerFiltered.get(actualIdx);
+            }
+            sendUpdate(buildUpdate());
+            return;
+        }
+
+        if (data.action.startsWith("BlacklistRemove_")) {
+            int row = parseRowIndex(data.action, "BlacklistRemove_");
+            List<String> blacklist = new ArrayList<>(adminConfig.getBlacklistedNpcs());
+            blacklist.sort(String.CASE_INSENSITIVE_ORDER);
+            int index = blacklistPage * BLACKLIST_ROW_COUNT + row;
+            if (index >= 0 && index <blacklist.size()) {
+                adminConfig.removeBlacklistedNpc(blacklist.get(index));
+                adminConfig.save();
+            }
+            sendUpdate(buildUpdate());
+            return;
+        }
+
+        if (data.action.startsWith("PreviewTarget_")) {
+            selectedPreviewTarget = parseRowIndex(data.action, "PreviewTarget_");
+            sendUpdate(buildUpdate());
+            return;
+        }
+
+        if (data.action.startsWith("ToggleMod_")) {
+            if (!isAdmin) {
+                sendUpdate(buildUpdate());
+                return;
+            }
+            int row = parseRowIndex(data.action, "ToggleMod_");
+            List<String> namespaces = getSortedNamespaces();
+            if (row >= 0 && row < namespaces.size()) {
+                String namespace = namespaces.get(row);
+                boolean current = adminConfig.isNamespaceEnabled(namespace);
+                adminConfig.setNamespaceEnabled(namespace, !current);
+                adminConfig.save();
+            }
+            sendUpdate(buildUpdate());
+            return;
+        }
+
+        if (data.action.startsWith("AdminToggleWorld_")) {
+            if (isAdmin) {
+                int row = parseRowIndex(data.action, "AdminToggleWorld_");
+                List<String> worldNames = getWorldNames();
+            int index = adminWorldPage * 5 + row;
+                if (index >= 0 && index <worldNames.size()) {
+                    String name = worldNames.get(index);
+                    boolean current = adminConfig.isWorldEnabled(name);
+                    adminConfig.setWorldEnabled(name, !current);
+                    adminConfig.save();
+                }
+            }
+            sendUpdate(buildUpdate());
+            return;
+        }
+
+        if (data.action.startsWith("AdminToggleInst_")) {
+            if (isAdmin) {
+                int row = parseRowIndex(data.action, "AdminToggleInst_");
+                List<String> instNames = getInstanceNames();
+            int index = adminInstPage * 5 + row;
+                if (index >= 0 && index <instNames.size()) {
+                    String name = instNames.get(index);
+                    boolean current = adminConfig.isWorldEnabled(name);
+                    adminConfig.setWorldEnabled(name, !current);
+                    adminConfig.save();
+                }
+            }
+            sendUpdate(buildUpdate());
+            return;
+        }
+
+        if (data.action.startsWith("ToggleWorld_")) {
+            int row = parseRowIndex(data.action, "ToggleWorld_");
+            List<String> worldNames = getWorldNames();
+            int index = worldPage * 5 + row;
+            if (index >= 0 && index <worldNames.size()) {
+                String worldName = worldNames.get(index);
+                if (!isAdmin && !adminConfig.isWorldEnabled(worldName)) {
+                    sendUpdate(buildUpdate());
+                    return;
+                }
+                if (isAdmin) {
+                    boolean current = adminConfig.isWorldEnabled(worldName);
+                    adminConfig.setWorldEnabled(worldName, !current);
+                    adminConfig.save();
+                } else {
+                    boolean current = preferences.isWorldEnabled(viewerUuid, worldName);
+                    preferences.setWorldEnabled(viewerUuid, worldName, !current);
+                }
+            }
+            sendUpdate(buildUpdate());
+            return;
+        }
+
+        if (data.action.startsWith("ToggleInst_")) {
+            int row = parseRowIndex(data.action, "ToggleInst_");
+            List<String> instNames = getInstanceNames();
+            int index = instPage * 5 + row;
+            if (index >= 0 && index <instNames.size()) {
+                String instName = instNames.get(index);
+                if (!isAdmin && !adminConfig.isWorldEnabled(instName)) {
+                    sendUpdate(buildUpdate());
+                    return;
+                }
+                if (isAdmin) {
+                    boolean current = adminConfig.isWorldEnabled(instName);
+                    adminConfig.setWorldEnabled(instName, !current);
+                    adminConfig.save();
+                } else {
+                    boolean current = preferences.isWorldEnabled(viewerUuid, instName);
+                    preferences.setWorldEnabled(viewerUuid, instName, !current);
+                }
+            }
+            sendUpdate(buildUpdate());
+            return;
+        }
+
+        switch (data.action) {
+            case "WorldFirst" -> { worldPage = 0; sendUpdate(buildUpdate()); return; }
+            case "WorldPrev" -> { worldPage = Math.max(0, worldPage - 1); sendUpdate(buildUpdate()); return; }
+            case "WorldNext" -> { worldPage++; sendUpdate(buildUpdate()); return; }
+            case "WorldLast" -> {
+                int totalWorldPages = Math.max(1, (int) Math.ceil(getWorldNames().size() / 5.0));
+                worldPage = totalWorldPages - 1;
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "InstFirst" -> { instPage = 0; sendUpdate(buildUpdate()); return; }
+            case "InstPrev" -> { instPage = Math.max(0, instPage - 1); sendUpdate(buildUpdate()); return; }
+            case "InstNext" -> { instPage++; sendUpdate(buildUpdate()); return; }
+            case "InstLast" -> {
+                int totalInstPages = Math.max(1, (int) Math.ceil(getInstanceNames().size() / 5.0));
+                instPage = totalInstPages - 1;
+                sendUpdate(buildUpdate());
+                return;
+            }
+            default -> {}
+        }
 
         if (data.action.startsWith("EditSep_")) {
             int sepIndex = parseRowIndex(data.action, "EditSep_");
@@ -675,7 +1102,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             if (absoluteIndex >= 0 && absoluteIndex < chain.size()) {
                 editingSepIndex = sepIndex;
                 SegmentKey blockKey = chain.get(absoluteIndex).key();
-                sepText = preferences.getSeparatorAfter(viewerUuid, tabEntityType(), blockKey);
+                sepText = preferences.getSeparatorAfter(chainViewerUuid(), tabEntityType(), blockKey);
 
                 pendingSepInput = null;
             }
@@ -693,21 +1120,19 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     String entityType = tabEntityType();
 
 
-
-                    String oldDefault = preferences.getSeparator(viewerUuid, entityType);
+                    UUID chainUuid = chainViewerUuid();
+                    String oldDefault = preferences.getSeparator(chainUuid, entityType);
                     for (SegmentView cv : chain) {
                         if (!cv.key().equals(blockKey)) {
-                            String existing = preferences.getSeparatorAfter(viewerUuid, entityType, cv.key());
+                            String existing = preferences.getSeparatorAfter(chainUuid, entityType, cv.key());
                             if (existing.equals(oldDefault)) {
-
-                                preferences.setSeparatorAfter(viewerUuid, entityType, cv.key(), existing);
+                                preferences.setSeparatorAfter(chainUuid, entityType, cv.key(), existing);
                             }
                         }
                     }
 
-                    preferences.setSeparatorAfter(viewerUuid, entityType, blockKey, sepText);
-
-                    preferences.setSeparator(viewerUuid, entityType, sepText);
+                    preferences.setSeparatorAfter(chainUuid, entityType, blockKey, sepText);
+                    preferences.setSeparator(chainUuid, entityType, sepText);
                 }
             }
             editingSepIndex = -1;
@@ -799,11 +1224,11 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 if (segment != null && segment.variants().size() > 1) {
                     editingVariantKey = view.key();
 
-                    originalVariant = preferences.getSelectedVariant(viewerUuid, tabEntityType(), view.key());
+                    originalVariant = preferences.getSelectedVariant(chainViewerUuid(), tabEntityType(), view.key());
                     pendingVariant = originalVariant;
-                    originalPrefix = preferences.getPrefix(viewerUuid, tabEntityType(), view.key());
-                    originalSuffix = preferences.getSuffix(viewerUuid, tabEntityType(), view.key());
-                    originalBarEmpty = preferences.getBarEmptyChar(viewerUuid, tabEntityType(), view.key());
+                    originalPrefix = preferences.getPrefix(chainViewerUuid(), tabEntityType(), view.key());
+                    originalSuffix = preferences.getSuffix(chainViewerUuid(), tabEntityType(), view.key());
+                    originalBarEmpty = preferences.getBarEmptyChar(chainViewerUuid(), tabEntityType(), view.key());
                     pendingPrefixInput = null;
                     pendingSuffixInput = null;
                     pendingBarEmptyInput = null;
@@ -831,7 +1256,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
         if ("VariantConfirm".equals(data.action)) {
             if (editingVariantKey != null) {
-                preferences.setSelectedVariant(viewerUuid, tabEntityType(), editingVariantKey, pendingVariant);
+                UUID uuid = chainViewerUuid();
+                preferences.setSelectedVariant(uuid, tabEntityType(), editingVariantKey, pendingVariant);
 
             }
             editingVariantKey = null;
@@ -846,10 +1272,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         if ("VariantCancel".equals(data.action)) {
             if (editingVariantKey != null) {
 
-                preferences.setSelectedVariant(viewerUuid, tabEntityType(), editingVariantKey, originalVariant);
-                preferences.setPrefix(viewerUuid, tabEntityType(), editingVariantKey, originalPrefix);
-                preferences.setSuffix(viewerUuid, tabEntityType(), editingVariantKey, originalSuffix);
-                preferences.setBarEmptyChar(viewerUuid, tabEntityType(), editingVariantKey, originalBarEmpty);
+                preferences.setSelectedVariant(chainViewerUuid(), tabEntityType(), editingVariantKey, originalVariant);
+                preferences.setPrefix(chainViewerUuid(), tabEntityType(), editingVariantKey, originalPrefix);
+                preferences.setSuffix(chainViewerUuid(), tabEntityType(), editingVariantKey, originalSuffix);
+                preferences.setBarEmptyChar(chainViewerUuid(), tabEntityType(), editingVariantKey, originalBarEmpty);
             }
             editingVariantKey = null;
             pendingPrefixInput = null;
@@ -867,7 +1293,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
 
         String normalized = rawOffset.replace(',', '.').trim();
-
 
 
         if (!normalized.isEmpty() && !isValidOffsetFragment(normalized)) {
@@ -890,7 +1315,26 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
 
     private String tabEntityType() {
-        return activeTab == ActiveTab.PLAYERS ? ENTITY_TYPE_PLAYERS : ENTITY_TYPE_NPCS;
+        if (activeTab == ActiveTab.PLAYERS) {
+            return ENTITY_TYPE_PLAYERS;
+        }
+        if (activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.ORDER && !adminOrderIsNpc) {
+            return ENTITY_TYPE_PLAYERS;
+        }
+        return ENTITY_TYPE_NPCS;
+    }
+
+    private UUID chainViewerUuid() {
+        if (activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.ORDER) {
+            return ADMIN_CHAIN_UUID;
+        }
+        if (activeTab == ActiveTab.NPCS && adminConfig.isNpcChainLocked()) {
+            return ADMIN_CHAIN_UUID;
+        }
+        if (activeTab == ActiveTab.PLAYERS && adminConfig.isPlayerChainLocked()) {
+            return ADMIN_CHAIN_UUID;
+        }
+        return viewerUuid;
     }
 
     private void switchTab(ActiveTab tab) {
@@ -909,7 +1353,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
 
-
     private boolean areAllSegmentsDisabled() {
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         if (segments.isEmpty()) return false;
@@ -922,11 +1365,20 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
     private boolean isSegmentVisibleForActiveTab(NameplateRegistry.Segment segment) {
-        if (activeTab == ActiveTab.GENERAL || activeTab == ActiveTab.ADMIN || activeTab == ActiveTab.DISABLED) return false;
+        if (activeTab == ActiveTab.GENERAL || activeTab == ActiveTab.DISABLED) return false;
+        if (activeTab == ActiveTab.ADMIN && adminSubTab != AdminSubTab.ORDER) return false;
         SegmentTarget target = segment.target();
-        if (target == SegmentTarget.ALL) return true;
-        if (activeTab == ActiveTab.NPCS) return target == SegmentTarget.NPCS;
-        if (activeTab == ActiveTab.PLAYERS) return target == SegmentTarget.PLAYERS;
+        if (activeTab == ActiveTab.PLAYERS) return target == SegmentTarget.ALL || target == SegmentTarget.PLAYERS;
+        if (activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.ORDER) {
+            if (adminOrderIsNpc) {
+                return target == SegmentTarget.ALL || target == SegmentTarget.NPCS;
+            } else {
+                return target == SegmentTarget.ALL || target == SegmentTarget.PLAYERS;
+            }
+        }
+        if (activeTab == ActiveTab.NPCS) {
+            return target == SegmentTarget.ALL || target == SegmentTarget.NPCS;
+        }
         return false;
     }
 
@@ -960,47 +1412,67 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
         commands.set("#SepPopupOverlay.Visible", false);
         commands.set("#VariantPopupOverlay.Visible", false);
-
-
-        commands.set("#NavGeneral.Text", activeTab == ActiveTab.GENERAL ? "> Settings" : "  Settings");
-        commands.set("#NavNpcs.Text", activeTab == ActiveTab.NPCS ? "> NPCs" : "  NPCs");
-        commands.set("#NavPlayers.Text", activeTab == ActiveTab.PLAYERS ? "> Players" : "  Players");
-        commands.set("#NavDisabled.Text", activeTab == ActiveTab.DISABLED ? "> Disabled" : "  Disabled");
-
-
-        commands.set("#AdminSection.Visible", isAdmin);
-        if (isAdmin) {
-            boolean adminReq = activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.REQUIRED;
-            boolean adminDis = activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.DISABLED;
-            boolean adminSet = activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.SETTINGS;
-            commands.set("#NavAdmin.Text", adminReq ? "> Required" : "  Required");
-            commands.set("#NavAdminDisabled.Text", adminDis ? "> Disabled" : "  Disabled");
-            commands.set("#NavAdminSettings.Text", adminSet ? "> Settings" : "  Settings");
+        if (!npcPickerOpen) {
+            commands.set("#NpcPickerPopup.Visible", false);
         }
 
 
+        setSidebarNav2State(commands, "#NavGeneral", activeTab == ActiveTab.GENERAL);
+        setSidebarNav2State(commands, "#NavDisabled", activeTab == ActiveTab.DISABLED);
+        setSidebarNav2State(commands, "#NavNpcs", activeTab == ActiveTab.NPCS);
+        setSidebarNav2State(commands, "#NavPlayers", activeTab == ActiveTab.PLAYERS);
+
+        boolean showNameplates = adminConfig.isMasterEnabled() && preferences.isNameplatesEnabled(viewerUuid);
+        commands.set("#NameplatesHeader.Visible", showNameplates);
+        commands.set("#NavNpcsGroup.Visible", showNameplates);
+        commands.set("#NavPlayersGroup.Visible", showNameplates);
+
+        commands.set("#AdminSection.Visible", isAdmin);
+        if (isAdmin) {
+            boolean adminConfig_ = activeTab == ActiveTab.ADMIN && adminSubTab != AdminSubTab.ORDER;
+            boolean adminOrderNpc = activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.ORDER && adminOrderIsNpc;
+            boolean adminOrderPlayer = activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.ORDER && !adminOrderIsNpc;
+            setSidebarNav2State(commands, "#NavAdminNpcs", adminOrderNpc);
+            setSidebarNav2State(commands, "#NavAdminPlayers", adminOrderPlayer);
+            setSidebarNav2State(commands, "#NavAdminConfig", adminConfig_);
+        }
+
+        boolean isAdminOrder = activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.ORDER;
+
         commands.set("#TabGeneral.Visible", activeTab == ActiveTab.GENERAL);
-        commands.set("#TabEditor.Visible", activeTab == ActiveTab.NPCS || activeTab == ActiveTab.PLAYERS);
-        commands.set("#TabAdmin.Visible", activeTab == ActiveTab.ADMIN);
+        commands.set("#TabEditor.Visible", activeTab == ActiveTab.NPCS || activeTab == ActiveTab.PLAYERS || isAdminOrder);
+        commands.set("#TabAdmin.Visible", activeTab == ActiveTab.ADMIN && !isAdminOrder);
         commands.set("#TabDisabled.Visible", activeTab == ActiveTab.DISABLED);
 
 
         if (activeTab == ActiveTab.GENERAL) {
 
             boolean allDisabled = areAllSegmentsDisabled();
+            boolean adminMasterDisabled = !adminConfig.isMasterEnabled();
 
-            boolean enabled = !allDisabled && preferences.isNameplatesEnabled(viewerUuid);
-            commands.set("#EnableToggle.Text", enabled ? "  [X]  " : "  [ ]  ");
+            if (adminMasterDisabled && !isAdmin) {
+                commands.set("#EnableToggleLabel.Text", "Enable Nameplates (Disabled by Admin)");
+                renderToggle(commands, "#EnableToggle", false);
+            } else {
+                commands.set("#EnableToggleLabel.Text", "Enable Nameplates");
+                boolean enabled = !allDisabled && preferences.isNameplatesEnabled(viewerUuid);
+                renderToggle(commands, "#EnableToggle", enabled);
+            }
 
-            commands.set("#EnableToggle.Style.Default.Background", allDisabled ? "#1a1a1a" : "#1a2840");
-            commands.set("#EnableToggle.Style.Hovered.Background", allDisabled ? "#1a1a1a" : "#253a55");
-            commands.set("#AllDisabledNotice.Visible", allDisabled);
+            commands.set("#AllDisabledNotice.Visible", allDisabled && !adminMasterDisabled);
 
             boolean lookOnly = preferences.isOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE_GLOBAL);
-            commands.set("#LookToggle.Text", lookOnly ? "  [X]  " : "  [ ]  ");
+            renderToggle(commands, "#LookToggle", lookOnly);
 
-            boolean welcome = preferences.isShowWelcomeMessage(viewerUuid);
-            commands.set("#WelcomeToggle.Text", welcome ? "  [X]  " : "  [ ]  ");
+            boolean adminWelcomeDisabled = !adminConfig.isWelcomeMessagesEnabled();
+            if (adminWelcomeDisabled && !isAdmin) {
+                commands.set("#WelcomeToggleLabel.Text", "Show Welcome Message (Disabled by Admin)");
+                renderToggle(commands, "#WelcomeToggle", false);
+            } else {
+                commands.set("#WelcomeToggleLabel.Text", "Show Welcome Message");
+                boolean welcome = preferences.isShowWelcomeMessage(viewerUuid);
+                renderToggle(commands, "#WelcomeToggle", welcome);
+            }
 
 
             if (pendingOffsetInput != null) {
@@ -1020,31 +1492,31 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
 
 
-        if (activeTab == ActiveTab.ADMIN) {
+        if (activeTab == ActiveTab.ADMIN && adminSubTab != AdminSubTab.ORDER) {
             commands.set("#AdminFilterField.Value", adminFilter);
 
 
             commands.set("#AdminRequiredContent.Visible", adminSubTab == AdminSubTab.REQUIRED);
             commands.set("#AdminDisabledContent.Visible", adminSubTab == AdminSubTab.DISABLED);
             commands.set("#AdminSettingsContent.Visible", adminSubTab == AdminSubTab.SETTINGS);
+            commands.set("#AdminBlacklistContent.Visible", adminSubTab == AdminSubTab.BLACKLIST);
 
 
             boolean reqActive = adminSubTab == AdminSubTab.REQUIRED;
-            commands.set("#AdminSubRequired.Style.Default.Background", reqActive ? "#8b6b2f" : "#1a2840");
-            commands.set("#AdminSubRequired.Style.Hovered.Background", reqActive ? "#8b6b2f" : "#a07038");
-            commands.set("#AdminSubRequired.Style.Pressed.Background", reqActive ? "#8b6b2f" : "#704b24");
-
+            commands.set("#AdminSubTab0.Visible", !reqActive);
+            commands.set("#AdminSubTab0Active.Visible", reqActive);
 
             boolean disActive = adminSubTab == AdminSubTab.DISABLED;
-            commands.set("#AdminSubDisabled.Style.Default.Background", disActive ? "#8b3a3a" : "#1a2840");
-            commands.set("#AdminSubDisabled.Style.Hovered.Background", disActive ? "#8b3a3a" : "#9b4a4a");
-            commands.set("#AdminSubDisabled.Style.Pressed.Background", disActive ? "#8b3a3a" : "#7b2a2a");
-
+            commands.set("#AdminSubTab1.Visible", !disActive);
+            commands.set("#AdminSubTab1Active.Visible", disActive);
 
             boolean setActive = adminSubTab == AdminSubTab.SETTINGS;
-            commands.set("#AdminSubSettings.Style.Default.Background", setActive ? "#2a4a6b" : "#1a2840");
-            commands.set("#AdminSubSettings.Style.Hovered.Background", setActive ? "#2a4a6b" : "#3a5a7b");
-            commands.set("#AdminSubSettings.Style.Pressed.Background", setActive ? "#2a4a6b" : "#1a3a5b");
+            commands.set("#AdminSubTab2.Visible", !setActive);
+            commands.set("#AdminSubTab2Active.Visible", setActive);
+
+            boolean blActive = adminSubTab == AdminSubTab.BLACKLIST;
+            commands.set("#AdminSubTab3.Visible", !blActive);
+            commands.set("#AdminSubTab3Active.Visible", blActive);
 
             if (adminSubTab == AdminSubTab.REQUIRED) {
                 fillAdmin(commands);
@@ -1053,15 +1525,23 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 fillAdminDisabled(commands);
             } else if (adminSubTab == AdminSubTab.SETTINGS) {
                 commands.set("#AdminServerNameField.Value", adminServerName);
-                boolean welcomeEnabled = adminConfig.isWelcomeMessagesEnabled();
-                commands.set("#AdminWelcomeToggle.Text", welcomeEnabled ? "  [X]  " : "  [ ]  ");
+                renderToggle(commands, "#AdminWelcomeToggle", adminConfig.isWelcomeMessagesEnabled());
+                renderToggle(commands, "#AdminMasterToggle", adminConfig.isMasterEnabled());
+                renderToggle(commands, "#AdminPlayerChainToggle", adminConfig.isPlayerChainEnabled());
+                renderToggle(commands, "#AdminNpcChainToggle", adminConfig.isNpcChainEnabled());
+                fillAdminWorldSettings(commands);
+            } else if (adminSubTab == AdminSubTab.BLACKLIST) {
+                fillBlacklist(commands);
             }
 
+            fillNpcPicker(commands);
 
             String saveMsgId = switch (adminSubTab) {
                 case REQUIRED -> "#SaveMessageAdmin";
                 case DISABLED -> "#SaveMessageAdminDis";
                 case SETTINGS -> "#SaveMessageAdminSettings";
+                case BLACKLIST -> "#SaveMessageBlacklist";
+                case ORDER -> "#SaveMessageEditor";
             };
             commands.set(saveMsgId + ".Visible", saveMessage != null);
             if (saveMessage != null) {
@@ -1078,7 +1558,61 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
 
 
-        commands.set("#EditorTitle.Text", activeTab == ActiveTab.NPCS ? "YOUR NPC NAMEPLATE" : "YOUR PLAYER NAMEPLATE");
+        boolean showChainSubTabs = activeTab == ActiveTab.NPCS || activeTab == ActiveTab.PLAYERS
+                || (activeTab == ActiveTab.ADMIN && adminSubTab == AdminSubTab.ORDER);
+        boolean isChainTab = chainSubTab == ChainSubTab.CHAIN || !showChainSubTabs;
+        boolean isSettingsTab = chainSubTab == ChainSubTab.SETTINGS && showChainSubTabs;
+
+        commands.set("#EditorContent.Visible", isChainTab);
+        commands.set("#ChainSettingsContent.Visible", isSettingsTab);
+
+        commands.set("#SaveButtonSettings.Visible", isSettingsTab);
+        commands.set("#SaveButton.Visible", isChainTab);
+
+        if (showChainSubTabs) {
+            updateSubTabStyles(commands);
+        }
+
+        if (isSettingsTab) {
+            fillSettings(commands);
+
+            commands.set("#SaveMessageSettings.Visible", saveMessage != null);
+            if (saveMessage != null) {
+                commands.set("#SaveMessageSettings.Text", saveMessage);
+                commands.set("#SaveMessageSettings.Style.TextColor", saveMessageSuccess ? "#4ade80" : "#f87171");
+            }
+            return;
+        }
+
+        if (isAdminOrder) {
+            commands.set("#EditorTitle.Text", adminOrderIsNpc ? "NPC ORDER (ADMIN)" : "PLAYER ORDER (ADMIN)");
+        } else if (activeTab == ActiveTab.NPCS) {
+            commands.set("#EditorTitle.Text", "YOUR NPC NAMEPLATE");
+        } else {
+            commands.set("#EditorTitle.Text", "YOUR PLAYER NAMEPLATE");
+        }
+
+        commands.set("#NonIntegratedInfo.Visible", false);
+
+        boolean isNpcTab = activeTab == ActiveTab.NPCS || (activeTab == ActiveTab.ADMIN && adminOrderIsNpc);
+        boolean adminChainDisabled = isNpcTab ? !adminConfig.isNpcChainEnabled() : !adminConfig.isPlayerChainEnabled();
+        if (!isAdmin && adminChainDisabled) {
+            commands.set("#AdminChainDisabledNotice.Visible", true);
+            commands.set("#AdminChainDisabledNotice.Text",
+                    isNpcTab ? "NPC Nameplates are disabled by the server admin."
+                             : "Player Nameplates are disabled by the server admin.");
+            commands.set("#ChainStrip.Visible", false);
+            commands.set("#ChainEmpty.Visible", false);
+            commands.set("#ChainPagination.Visible", false);
+            commands.set("#PreviewContainer.Visible", false);
+            commands.set("#ClearChainButton.Visible", false);
+            commands.set("#FilterField.Visible", false);
+            commands.set("#AvailRow1.Visible", false);
+            commands.set("#AvailRow2.Visible", false);
+            commands.set("#AvailEmpty.Visible", false);
+            return;
+        }
+        commands.set("#AdminChainDisabledNotice.Visible", false);
 
         commands.set("#FilterField.Value", filter);
 
@@ -1090,9 +1624,23 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         if (availPage >= totalAvailPages) availPage = totalAvailPages - 1;
         if (chainPage >= totalChainPages) chainPage = totalChainPages - 1;
 
-        fillChain(commands, chain, totalChainPages);
-        fillAvailable(commands, available, totalAvailPages);
+        boolean isNpcContext = isAdminOrder ? adminOrderIsNpc : (activeTab == ActiveTab.NPCS);
+        boolean chainLocked = isNpcContext ? adminConfig.isNpcChainLocked() : adminConfig.isPlayerChainLocked();
 
+        commands.set("#LockChainBar.Visible", isAdminOrder);
+        if (isAdminOrder) {
+            renderToggle(commands, "#LockChain", chainLocked);
+            commands.set("#LockChainHint.Text", chainLocked
+                ? "Unlock Chain to make changes."
+                : "When locked, all players see this exact chain.");
+        }
+
+        commands.set("#ChainLockedNotice.Visible", !isAdmin && chainLocked);
+
+        fillChain(commands, chain, totalChainPages, chainLocked);
+        fillAvailable(commands, available, totalAvailPages, chainLocked);
+
+        fillPreviewTargets(commands);
         commands.set("#PreviewText.Text", buildPreview(chain));
 
 
@@ -1122,23 +1670,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
                 String barEmptyChar = pendingBarEmptyInput != null
                         ? pendingBarEmptyInput
-                        : preferences.getBarEmptyChar(viewerUuid, tabEntityType(), editingVariantKey);
+                        : preferences.getBarEmptyChar(chainViewerUuid(), tabEntityType(), editingVariantKey);
 
                 for (int vi = 0; vi < MAX_VARIANT_OPTIONS; vi++) {
                     boolean vVisible = vi < variants.size();
                     commands.set("#Variant" + vi + ".Visible", vVisible);
                     if (vVisible) {
-                        String variantName = variants.get(vi);
-
-                        if (barEmptyChar.length() == 1) {
-                            int pStart = variantName.indexOf('(');
-                            int pEnd = variantName.lastIndexOf(')');
-                            if (pStart >= 0 && pEnd > pStart) {
-                                String inside = variantName.substring(pStart + 1, pEnd);
-                                inside = inside.replace('-', barEmptyChar.charAt(0));
-                                variantName = variantName.substring(0, pStart + 1) + inside + variantName.substring(pEnd);
-                            }
-                        }
+                        String variantName = getVariantName(variants, vi, barEmptyChar);
                         boolean selected = vi == pendingVariant;
                         commands.set("#Variant" + vi + ".Text", selected ? "> " + variantName : "  " + variantName);
 
@@ -1155,15 +1693,14 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 if (showPrefixSuffix) {
 
                     if (pendingPrefixInput == null) {
-                        String pfx = preferences.getPrefix(viewerUuid, tabEntityType(), editingVariantKey);
+                        String pfx = preferences.getPrefix(chainViewerUuid(), tabEntityType(), editingVariantKey);
                         commands.set("#PrefixField.Value", pfx);
                     }
                     if (pendingSuffixInput == null) {
-                        String sfx = preferences.getSuffix(viewerUuid, tabEntityType(), editingVariantKey);
+                        String sfx = preferences.getSuffix(chainViewerUuid(), tabEntityType(), editingVariantKey);
                         commands.set("#SuffixField.Value", sfx);
                     }
                 }
-
 
 
                 boolean isBarVariant = showPrefixSuffix && pendingVariant >= 0
@@ -1173,23 +1710,238 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 if (isBarVariant) {
                     String barEmpty = pendingBarEmptyInput != null
                             ? pendingBarEmptyInput
-                            : preferences.getBarEmptyChar(viewerUuid, tabEntityType(), editingVariantKey);
+                            : preferences.getBarEmptyChar(chainViewerUuid(), tabEntityType(), editingVariantKey);
                     commands.set("#BarEmptyField.Value", barEmpty);
                 }
+
             }
         }
     }
 
+    private static String getVariantName(List<String> variants, int vi, String barEmptyChar) {
+        String variantName = variants.get(vi);
+
+        if (barEmptyChar.length() == 1) {
+            int pStart = variantName.indexOf('(');
+            int pEnd = variantName.lastIndexOf(')');
+            if (pStart >= 0 && pEnd > pStart) {
+                String inside = variantName.substring(pStart + 1, pEnd);
+                inside = inside.replace('-', barEmptyChar.charAt(0));
+                variantName = variantName.substring(0, pStart + 1) + inside + variantName.substring(pEnd);
+            }
+        }
+        return variantName;
+    }
+
+    private void updateSubTabStyles(UICommandBuilder commands) {
+        boolean chainActive = chainSubTab == ChainSubTab.CHAIN;
+        commands.set("#SubTabChain.Visible", !chainActive);
+        commands.set("#SubTabChainActive.Visible", chainActive);
+
+        boolean settingsActive = chainSubTab == ChainSubTab.SETTINGS;
+        commands.set("#SubTabSettings.Visible", !settingsActive);
+        commands.set("#SubTabSettingsActive.Visible", settingsActive);
+    }
+
+    private void fillSettings(UICommandBuilder commands) {
+        plugin.discoverWorlds();
+
+        boolean isNpcTab = activeTab == ActiveTab.NPCS || (activeTab == ActiveTab.ADMIN && adminOrderIsNpc);
+
+        boolean adminChainDisabled = isNpcTab ? !adminConfig.isNpcChainEnabled() : !adminConfig.isPlayerChainEnabled();
+
+        if (adminChainDisabled && !isAdmin) {
+            String msg = isNpcTab
+                    ? "NPC Nameplates are disabled by the server admin."
+                    : "Player Nameplates are disabled by the server admin.";
+            commands.set("#AdminDisabledNotice.Visible", true);
+            commands.set("#AdminDisabledNotice.Text", msg);
+            commands.set("#ChainEnabledOn.Visible", false);
+            commands.set("#ChainEnabledOff.Visible", false);
+            commands.set("#ModSectionSep.Visible", false);
+            commands.set("#ModSectionHeader.Visible", false);
+            commands.set("#ModSectionDesc.Visible", false);
+            for (int i = 0; i < 8; i++) {
+                commands.set("#ModRow" + i + ".Visible", false);
+            }
+            commands.set("#WorldSectionSep.Visible", false);
+            commands.set("#WorldSectionHeader.Visible", false);
+            commands.set("#WorldSectionDesc.Visible", false);
+            commands.set("#WorldsContainer.Visible", false);
+            commands.set("#WorldPagination.Visible", false);
+            commands.set("#InstPagination.Visible", false);
+            return;
+        } else {
+            commands.set("#AdminDisabledNotice.Visible", false);
+        }
+
+        commands.set("#ChainEnabledLabel.Text", isNpcTab ? "NPC Nameplates" : "Player Nameplates");
+        commands.set("#ChainEnabledDesc.Text", isNpcTab
+                ? "When disabled, NameplateBuilder will not apply or update NPC nameplates. Other mods may still display their own."
+                : "When disabled, NameplateBuilder will not apply or update player nameplates. Other mods may still display their own.");
+
+        boolean enabled = preferences.isChainEnabled(viewerUuid, tabEntityType());
+        renderToggle(commands, "#ChainEnabled", enabled);
+
+        if (!enabled) {
+            commands.set("#ModSectionSep.Visible", false);
+            commands.set("#ModSectionHeader.Visible", false);
+            commands.set("#ModSectionDesc.Visible", false);
+            for (int i = 0; i < 8; i++) {
+                commands.set("#ModRow" + i + ".Visible", false);
+            }
+            commands.set("#WorldSectionSep.Visible", false);
+            commands.set("#WorldSectionHeader.Visible", false);
+            commands.set("#WorldSectionDesc.Visible", false);
+            commands.set("#WorldsContainer.Visible", false);
+            commands.set("#WorldPagination.Visible", false);
+            commands.set("#InstPagination.Visible", false);
+            return;
+        }
+        commands.set("#ModSectionSep.Visible", true);
+        commands.set("#ModSectionHeader.Visible", true);
+        commands.set("#ModSectionDesc.Visible", true);
+        commands.set("#WorldSectionSep.Visible", true);
+        commands.set("#WorldSectionHeader.Visible", true);
+        commands.set("#WorldSectionDesc.Visible", true);
+        commands.set("#WorldsContainer.Visible", true);
+
+
+        List<String> mods = getSortedNamespaces();
+        for (int i = 0; i < 8; i++) {
+            String rowId = "#ModRow" + i;
+            if (i < mods.size()) {
+                String namespace = mods.get(i);
+                String displayName = adminConfig.getNamespaceDisplayName(namespace);
+                boolean adminModLocked = !adminConfig.isNamespaceEnabled(namespace);
+                if (adminModLocked && !isAdmin) {
+                    commands.set(rowId + ".Visible", true);
+                    commands.set(rowId + "Label.Text", displayName + " (Disabled by Admin)");
+                    renderToggle(commands, rowId, false);
+                } else {
+                    commands.set(rowId + ".Visible", true);
+                    commands.set(rowId + "Label.Text", displayName);
+                    renderToggle(commands, rowId, adminConfig.isNamespaceEnabled(namespace));
+                }
+            } else {
+                commands.set(rowId + ".Visible", false);
+            }
+        }
+
+        List<String> worldNames = getWorldNames();
+        int totalWorldPages = Math.max(1, (int) Math.ceil(worldNames.size() / 5.0));
+        if (worldPage >= totalWorldPages) worldPage = totalWorldPages - 1;
+        int worldStart = worldPage * 5;
+        int worldEnd = Math.min(worldNames.size(), worldStart + 5);
+        for (int i = 0; i < 5; i++) {
+            String rowId = "#WorldRow" + i;
+            int index = worldStart + i;
+            if (index < worldEnd) {
+                String worldName = worldNames.get(index);
+                boolean adminWorldLocked = !adminConfig.isWorldEnabled(worldName);
+                if (adminWorldLocked && !isAdmin) {
+                    commands.set(rowId + ".Visible", true);
+                    commands.set(rowId + "Label.Text", worldName + " (Disabled by Admin)");
+                    renderToggle(commands, rowId, false);
+                } else {
+                    boolean worldEnabled = isAdmin
+                            ? adminConfig.isWorldEnabled(worldName)
+                            : preferences.isWorldEnabled(viewerUuid, worldName);
+                    commands.set(rowId + ".Visible", true);
+                    commands.set(rowId + "Label.Text", worldName);
+                    renderToggle(commands, rowId, worldEnabled);
+                }
+            } else {
+                commands.set(rowId + ".Visible", false);
+            }
+        }
+        boolean showWorldPagination = totalWorldPages > 1;
+        commands.set("#WorldPagination.Visible", showWorldPagination);
+        if (showWorldPagination) {
+            commands.set("#WorldPageLabel.Text", (worldPage + 1) + "/" + totalWorldPages);
+        }
+
+        List<String> instNames = getInstanceNames();
+        int totalInstPages = Math.max(1, (int) Math.ceil(instNames.size() / 5.0));
+        if (instPage >= totalInstPages) instPage = totalInstPages - 1;
+        int instStart = instPage * 5;
+        int instEnd = Math.min(instNames.size(), instStart + 5);
+        for (int i = 0; i < 5; i++) {
+            String rowId = "#InstRow" + i;
+            int index = instStart + i;
+            if (index < instEnd) {
+                String instanceName = instNames.get(index);
+                boolean adminInstLocked = !adminConfig.isWorldEnabled(instanceName);
+                if (adminInstLocked && !isAdmin) {
+                    commands.set(rowId + ".Visible", true);
+                    commands.set(rowId + "Label.Text", instanceName + " (Disabled by Admin)");
+                    renderToggle(commands, rowId, false);
+                } else {
+                    boolean instEnabled = isAdmin
+                            ? adminConfig.isWorldEnabled(instanceName)
+                            : preferences.isWorldEnabled(viewerUuid, instanceName);
+                    commands.set(rowId + ".Visible", true);
+                    commands.set(rowId + "Label.Text", instanceName);
+                    renderToggle(commands, rowId, instEnabled);
+                }
+            } else {
+                commands.set(rowId + ".Visible", false);
+            }
+        }
+        boolean showInstPagination = totalInstPages > 1;
+        commands.set("#InstPagination.Visible", showInstPagination);
+        if (showInstPagination) {
+            commands.set("#InstPageLabel.Text", (instPage + 1) + "/" + totalInstPages);
+        }
+    }
+
+    private void renderToggle(UICommandBuilder commands, String prefix, boolean value) {
+        commands.set(prefix + "On.Visible", value);
+        commands.set(prefix + "Off.Visible", !value);
+    }
+
+    private List<String> getWorldNames() {
+        java.util.TreeSet<String> names = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        names.addAll(plugin.getDiscoveredWorldNames());
+        names.addAll(adminConfig.getWorldEnabled().keySet());
+        names.addAll(preferences.getPlayerWorldEnabled(viewerUuid).keySet());
+        return new ArrayList<>(names);
+    }
+
+    private List<String> getInstanceNames() {
+        java.util.TreeSet<String> names = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        names.addAll(plugin.getDiscoveredInstanceNames());
+        return new ArrayList<>(names);
+    }
+
     private void persistUiState() {
         UI_STATE.put(viewerUuid, new UiState(activeTab, filter, availPage, chainPage,
-                adminLeftPage, adminRightPage, adminSubTab, adminDisLeftPage, adminDisRightPage, disabledPage));
+                adminLeftPage, adminRightPage, adminSubTab, adminDisLeftPage, adminDisRightPage, disabledPage,
+                "", chainSubTab));
     }
 
 
+    private static final Set<String> INTERNAL_NAMESPACES = Set.of(
+            "nameplatebuilder", "npc", "_unknown", "unknown", ""
+    );
 
-    private void fillChain(UICommandBuilder commands, List<SegmentView> chain, int totalPages) {
+    private List<String> getSortedNamespaces() {
+        List<String> namespaces = new ArrayList<>(adminConfig.getSegmentsByNamespace().keySet());
+        namespaces.removeIf(namespace -> namespace == null || INTERNAL_NAMESPACES.contains(namespace.toLowerCase(java.util.Locale.ROOT)));
+        namespaces.sort(String.CASE_INSENSITIVE_ORDER);
+        return namespaces;
+    }
+
+
+    private static void setSidebarNav2State(UICommandBuilder commands, String base, boolean active) {
+        commands.set(base + ".Visible", !active);
+        commands.set(base + "Active.Visible", active);
+    }
+
+    private void fillChain(UICommandBuilder commands, List<SegmentView> chain, int totalPages, boolean chainLocked) {
         boolean hasChain = !chain.isEmpty();
         boolean singleBlock = chain.size() <= 1;
+        boolean editable = !chainLocked;
         commands.set("#ChainEmpty.Visible", !hasChain);
         commands.set("#ChainStrip.Visible", hasChain);
 
@@ -1214,12 +1966,12 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
                 boolean required = adminConfig.isRequired(view.key());
                 NameplateRegistry.Segment chainSeg = registry.getSegments().get(view.key());
-                commands.set(prefix + ".Background.Color", required ? COLOR_REQUIRED : COLOR_CHAIN_ACTIVE);
+                commands.set(prefix + ".Background.Color", (chainLocked || required) ? COLOR_REQUIRED : COLOR_CHAIN_ACTIVE);
 
 
                 boolean hasVariants = chainSeg != null && chainSeg.variants().size() > 1;
                 int selectedVariant = hasVariants
-                        ? preferences.getSelectedVariant(viewerUuid, tabEntityType(), view.key())
+                        ? preferences.getSelectedVariant(chainViewerUuid(), tabEntityType(), view.key())
                         : 0;
 
 
@@ -1236,7 +1988,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     }
 
                     if (chainSeg.supportsPrefixSuffix()) {
-                        String emptyChar = preferences.getBarEmptyChar(viewerUuid, tabEntityType(), view.key());
+                        String emptyChar = preferences.getBarEmptyChar(chainViewerUuid(), tabEntityType(), view.key());
                         if (emptyChar.length() == 1) {
                             example = example.replace('-', emptyChar.charAt(0));
                         }
@@ -1249,13 +2001,11 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 }
 
 
-                commands.set(prefix + "Remove.Visible", !required);
+                commands.set(prefix + "Remove.Visible", editable && !required);
 
 
-                commands.set(prefix + "Left.Visible", !singleBlock);
-                commands.set(prefix + "Right.Visible", !singleBlock);
-
-
+                commands.set(prefix + "Left.Visible", editable && !singleBlock);
+                commands.set(prefix + "Right.Visible", editable && !singleBlock);
 
 
                 boolean centerButtons = (required && !singleBlock) || (!required && singleBlock);
@@ -1264,14 +2014,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 commands.set(prefix + "BtnRightSpacer.Visible", centerButtons);
 
 
-
                 commands.set(prefix + "Format.Visible", hasVariants);
                 if (hasVariants) {
                     boolean variantActive = selectedVariant > 0;
                     commands.set(prefix + "Format.Text", variantActive ? "Formatted" : "Format");
                     commands.set(prefix + "Format.Style.Default.Background", variantActive ? "#2d6b3f" : "#1a2840");
                     commands.set(prefix + "Format.Style.Hovered.Background", variantActive ? "#3a8a50" : "#2d6b3f");
-                    commands.set(prefix + "Format.Style.Pressed.Background", variantActive ? "#225530" : "#225530");
+                    commands.set(prefix + "Format.Style.Pressed.Background", "#225530");
                 }
             } else {
 
@@ -1293,13 +2042,12 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 commands.set(sepId + ".Visible", sepVisible);
                 if (sepVisible) {
                     SegmentKey blockKey = chain.get(index).key();
-                    String sep = preferences.getSeparatorAfter(viewerUuid, tabEntityType(), blockKey);
+                    String sep = preferences.getSeparatorAfter(chainViewerUuid(), tabEntityType(), blockKey);
                     String displaySep = sep.isEmpty() ? "." : sep;
                     commands.set(sepId + ".Text", displaySep);
                 }
             }
         }
-
 
 
         {
@@ -1308,7 +2056,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             commands.set("#ChainSep3.Visible", trailingSepVisible);
             if (trailingSepVisible) {
                 SegmentKey blockKey = chain.get(lastOnPage).key();
-                String sep = preferences.getSeparatorAfter(viewerUuid, tabEntityType(), blockKey);
+                String sep = preferences.getSeparatorAfter(chainViewerUuid(), tabEntityType(), blockKey);
                 String displaySep = sep.isEmpty() ? "." : sep;
                 commands.set("#ChainSep3.Text", displaySep);
             }
@@ -1325,8 +2073,23 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
 
+    private void fillAvailable(UICommandBuilder commands, List<SegmentView> available, int totalPages, boolean chainLocked) {
+        if (chainLocked) {
+            commands.set("#ClearChainButton.Visible", false);
+            commands.set("#FilterField.Visible", false);
+            commands.set("#AvailRow1.Visible", false);
+            commands.set("#AvailRow2.Visible", false);
+            commands.set("#AvailEmpty.Visible", false);
+            commands.set("#PrevAvail.Visible", false);
+            commands.set("#AvailPaginationLabel.Visible", false);
+            commands.set("#NextAvail.Visible", false);
+            commands.set("#SaveButton.Visible", false);
+            return;
+        }
+        commands.set("#ClearChainButton.Visible", true);
+        commands.set("#FilterField.Visible", true);
+        commands.set("#SaveButton.Visible", true);
 
-    private void fillAvailable(UICommandBuilder commands, List<SegmentView> available, int totalPages) {
         boolean hasAvailable = !available.isEmpty();
         commands.set("#AvailEmpty.Visible", !hasAvailable);
 
@@ -1377,12 +2140,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
 
-
     private void fillAdmin(UICommandBuilder commands) {
         List<SegmentView> allSegments = getAllSegmentViews();
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         String lowerAdminFilter = adminFilter.isBlank() ? null : adminFilter.toLowerCase();
-
 
 
         List<SegmentView> leftList = new ArrayList<>();
@@ -1488,12 +2249,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
 
-
     private void fillAdminDisabled(UICommandBuilder commands) {
         List<SegmentView> allSegments = getAllSegmentViews();
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         String lowerAdminFilter = adminDisFilter.isBlank() ? null : adminDisFilter.toLowerCase();
-
 
 
         List<SegmentView> leftList = new ArrayList<>();
@@ -1599,11 +2358,9 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
 
-
     private void fillDisabledTab(UICommandBuilder commands) {
 
         List<SegmentView> disabledViews = new ArrayList<>();
-        Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         for (SegmentView view : getAllSegmentViews()) {
             if (adminConfig.isDisabled(view.key())) {
                 disabledViews.add(view);
@@ -1652,7 +2409,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
 
-
     private void addRow(int row) {
         SegmentView view = getAvailableRow(row);
         if (view == null) {
@@ -1660,8 +2416,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
 
 
-
-        preferences.enable(viewerUuid, tabEntityType(), view.key());
+        preferences.enable(chainViewerUuid(), tabEntityType(), view.key());
     }
 
     private void removeRow(int row) {
@@ -1673,16 +2428,16 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         if (adminConfig.isRequired(view.key())) {
             return;
         }
-        preferences.disable(viewerUuid, tabEntityType(), view.key());
+        preferences.disable(chainViewerUuid(), tabEntityType(), view.key());
     }
 
     private void clearChain() {
         List<SegmentKey> filteredKeys = getFilteredKeys();
-        preferences.disableAll(viewerUuid, tabEntityType(), filteredKeys);
+        preferences.disableAll(chainViewerUuid(), tabEntityType(), filteredKeys);
 
         for (SegmentKey key : filteredKeys) {
             if (adminConfig.isRequired(key)) {
-                preferences.enable(viewerUuid, tabEntityType(), key);
+                preferences.enable(chainViewerUuid(), tabEntityType(), key);
             }
         }
     }
@@ -1693,7 +2448,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return;
         }
         List<SegmentKey> filteredKeys = getFilteredKeys();
-        preferences.move(viewerUuid, tabEntityType(), view.key(), delta, filteredKeys, getDefaultComparator());
+        preferences.move(chainViewerUuid(), tabEntityType(), view.key(), delta, filteredKeys, getDefaultComparator());
     }
 
 
@@ -1847,8 +2602,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
 
-
-
     private List<SegmentKey> getFilteredKeys() {
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         List<SegmentKey> filtered = new ArrayList<>();
@@ -1865,33 +2618,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
 
-    private List<SegmentKey> getFilteredKeysForEntityType(String entityType) {
-        Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
-        List<SegmentKey> filtered = new ArrayList<>();
-        for (Map.Entry<SegmentKey, NameplateRegistry.Segment> entry : segments.entrySet()) {
-
-            if (adminConfig.isDisabled(entry.getKey())) {
-                continue;
-            }
-            SegmentTarget target = entry.getValue().target();
-            if (target == SegmentTarget.ALL) {
-                filtered.add(entry.getKey());
-            } else if (ENTITY_TYPE_NPCS.equals(entityType) && target == SegmentTarget.NPCS) {
-                filtered.add(entry.getKey());
-            } else if (ENTITY_TYPE_PLAYERS.equals(entityType) && target == SegmentTarget.PLAYERS) {
-                filtered.add(entry.getKey());
-            }
-        }
-        return filtered;
-    }
-
     private List<SegmentView> getAvailableViews() {
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
         if (segments.isEmpty()) {
             return List.of();
         }
         List<SegmentKey> filteredKeys = getFilteredKeys();
-        List<SegmentKey> ordered = preferences.getAvailable(viewerUuid, tabEntityType(), filteredKeys, getDefaultComparator());
+        List<SegmentKey> ordered = preferences.getAvailable(chainViewerUuid(), tabEntityType(), filteredKeys, getDefaultComparator());
         List<SegmentView> views = new ArrayList<>();
         String lowerFilter = filter.isBlank() ? null : filter.toLowerCase();
         for (SegmentKey key : ordered) {
@@ -1914,19 +2647,19 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return List.of();
         }
         List<SegmentKey> filteredKeys = getFilteredKeys();
-        List<SegmentKey> ordered = preferences.getChain(viewerUuid, tabEntityType(), filteredKeys, getDefaultComparator());
+        List<SegmentKey> ordered = preferences.getChain(chainViewerUuid(), tabEntityType(), filteredKeys, getDefaultComparator());
 
 
         boolean chainChanged = false;
         for (SegmentKey key : filteredKeys) {
             if (adminConfig.isRequired(key) && !ordered.contains(key)) {
 
-                preferences.enable(viewerUuid, tabEntityType(), key);
+                preferences.enable(chainViewerUuid(), tabEntityType(), key);
                 chainChanged = true;
             }
         }
         if (chainChanged) {
-            ordered = preferences.getChain(viewerUuid, tabEntityType(), filteredKeys, getDefaultComparator());
+            ordered = preferences.getChain(chainViewerUuid(), tabEntityType(), filteredKeys, getDefaultComparator());
         }
 
         List<SegmentView> views = new ArrayList<>();
@@ -1990,18 +2723,240 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 .thenComparing(k -> segments.get(k).displayName());
     }
 
+    private static List<String> getRuntimeNpcIds() {
+        if (cachedNpcIds == null) {
+            try {
+                var npcPlugin = NPCPlugin.get();
+                if (npcPlugin != null) {
+                    var names = npcPlugin.getRoleTemplateNames(false);
+                    if (names != null) {
+                        var filtered = new ArrayList<String>();
+                        for (var name : names) {
+                            if (name.startsWith("Template_") || name.startsWith("Component_") || name.startsWith("Test_")) continue;
+                            filtered.add(name);
+                        }
+                        filtered.sort(String.CASE_INSENSITIVE_ORDER);
+                        cachedNpcIds = filtered;
+                    }
+                }
+            } catch (Exception _) {
+            }
+            if (cachedNpcIds == null) cachedNpcIds = List.of();
+        }
+        return cachedNpcIds;
+    }
+
+    private void rebuildNpcPickerFiltered() {
+        npcPickerFiltered.clear();
+        Set<String> alreadyBlacklisted = adminConfig.getBlacklistedNpcs();
+        String lowerFilter = npcPickerFilter.toLowerCase(java.util.Locale.ROOT);
+        for (String id : getRuntimeNpcIds()) {
+            if (alreadyBlacklisted.contains(id)) continue;
+            if (lowerFilter.isEmpty() || id.toLowerCase(java.util.Locale.ROOT).contains(lowerFilter)) {
+                npcPickerFiltered.add(id);
+            }
+        }
+    }
+
+    private void openNpcPicker() {
+        npcPickerOpen = true;
+        npcPickerDirty = true;
+        npcPickerFilter = "";
+        npcPickerPage = 0;
+        npcPickerSelectedItem = null;
+        rebuildNpcPickerFiltered();
+    }
+
+    private void closeNpcPicker() {
+        npcPickerOpen = false;
+        npcPickerFilter = "";
+        npcPickerPage = 0;
+        npcPickerSelectedItem = null;
+        npcPickerFiltered.clear();
+    }
+
+    private void fillAdminWorldSettings(UICommandBuilder commands) {
+        plugin.discoverWorlds();
+
+        List<String> worldNames = getWorldNames();
+        int totalWorldPages = Math.max(1, (int) Math.ceil(worldNames.size() / 5.0));
+        if (adminWorldPage >= totalWorldPages) adminWorldPage = totalWorldPages - 1;
+        int worldStart = adminWorldPage * 5;
+
+        for (int i = 0; i < 5; i++) {
+            String rowId = "#AdminWorldRow" + i;
+            int index = worldStart + i;
+            if (index < worldNames.size()) {
+                String name = worldNames.get(index);
+                commands.set(rowId + ".Visible", true);
+                commands.set(rowId + "Label.Text", name);
+                renderToggle(commands, rowId, adminConfig.isWorldEnabled(name));
+            } else {
+                commands.set(rowId + ".Visible", false);
+            }
+        }
+
+        boolean showWorldPag = totalWorldPages > 1;
+        commands.set("#AdminWorldPagination.Visible", showWorldPag);
+        if (showWorldPag) {
+            commands.set("#AdminWorldPageLabel.Text", (adminWorldPage + 1) + "/" + totalWorldPages);
+        }
+
+        List<String> instNames = getInstanceNames();
+        int totalInstPages = Math.max(1, (int) Math.ceil(instNames.size() / 5.0));
+        if (adminInstPage >= totalInstPages) adminInstPage = totalInstPages - 1;
+        int instStart = adminInstPage * 5;
+
+        for (int i = 0; i < 5; i++) {
+            String rowId = "#AdminInstRow" + i;
+            int index = instStart + i;
+            if (index < instNames.size()) {
+                String name = instNames.get(index);
+                commands.set(rowId + ".Visible", true);
+                commands.set(rowId + "Label.Text", name);
+                renderToggle(commands, rowId, adminConfig.isWorldEnabled(name));
+            } else {
+                commands.set(rowId + ".Visible", false);
+            }
+        }
+
+        boolean showInstPag = totalInstPages > 1;
+        commands.set("#AdminInstPagination.Visible", showInstPag);
+        if (showInstPag) {
+            commands.set("#AdminInstPageLabel.Text", (adminInstPage + 1) + "/" + totalInstPages);
+        }
+
+        commands.set("#AdminWorldEmpty.Visible", worldNames.isEmpty() && instNames.isEmpty());
+    }
+
+    private void fillBlacklist(UICommandBuilder commands) {
+        List<String> blacklist = new ArrayList<>(adminConfig.getBlacklistedNpcs());
+        blacklist.sort(String.CASE_INSENSITIVE_ORDER);
+
+        int start = blacklistPage * BLACKLIST_ROW_COUNT;
+        int totalPages = Math.max(1, (int) Math.ceil(blacklist.size() / (double) BLACKLIST_ROW_COUNT));
+        if (blacklistPage >= totalPages) blacklistPage = totalPages - 1;
+
+        commands.set("#BlacklistEmpty.Visible", blacklist.isEmpty());
+
+        for (int i = 0; i < BLACKLIST_ROW_COUNT; i++) {
+            int index = start + i;
+            if (index < blacklist.size()) {
+                commands.set("#BlacklistRow" + i + ".Visible", true);
+                commands.set("#BlacklistRow" + i + "Label.Text", blacklist.get(index));
+            } else {
+                commands.set("#BlacklistRow" + i + ".Visible", false);
+            }
+        }
+
+        boolean showPagination = totalPages > 1;
+        commands.set("#BlacklistPagination.Visible", showPagination);
+        if (showPagination) {
+            commands.set("#BlacklistPageLabel.Text", (blacklistPage + 1) + "/" + totalPages);
+        }
+    }
+
+    private void fillNpcPicker(UICommandBuilder commands) {
+        commands.set("#NpcPickerPopup.Visible", npcPickerOpen);
+        if (!npcPickerOpen) return;
+
+        commands.set("#NpcPickerFilter.Value", npcPickerFilter);
+
+        if (npcPickerDirty) {
+            rebuildNpcPickerFiltered();
+            npcPickerDirty = false;
+        }
+
+        int start = npcPickerPage * NPC_PICKER_ROW_COUNT;
+        int totalPages = Math.max(1, (int) Math.ceil(npcPickerFiltered.size() / (double) NPC_PICKER_ROW_COUNT));
+
+        commands.set("#NpcPickerEmpty.Visible", npcPickerFiltered.isEmpty());
+
+        for (int i = 0; i < NPC_PICKER_ROW_COUNT; i++) {
+            int index = start + i;
+            if (index < npcPickerFiltered.size()) {
+                String name = npcPickerFiltered.get(index);
+                boolean selected = name.equals(npcPickerSelectedItem);
+                commands.set("#NpcPickerRow" + i + ".Visible", true);
+                commands.set("#NpcPickerRowBtn" + i + ".Text", (selected ? "> " : "  ") + name);
+            } else {
+                commands.set("#NpcPickerRow" + i + ".Visible", false);
+            }
+        }
+
+        boolean showPagination = totalPages > 1;
+        commands.set("#NpcPickerPagination.Visible", showPagination);
+        if (showPagination) {
+            commands.set("#NpcPickerPageInfo.Text", (npcPickerPage + 1) + "/" + totalPages);
+        }
+
+        commands.set("#NpcPickerSelectedLabel.Text", npcPickerSelectedItem != null ? npcPickerSelectedItem : "None");
+        commands.set("#NpcPickerAdd.Visible", npcPickerSelectedItem != null);
+    }
+
+    private void fillPreviewTargets(UICommandBuilder commands) {
+        Map<String, Set<String>> profiles = adminConfig.getSegmentProfiles();
+        List<String> profileNames = new ArrayList<>(profiles.keySet());
+
+        boolean hasMultiple = profileNames.size() > 1;
+        commands.set("#PreviewTargetBar.Visible", hasMultiple);
+
+        if (!hasMultiple) {
+            selectedPreviewTarget = 0;
+            return;
+        }
+
+        for (int i = 0; i < 4; i++) {
+            if (i < profileNames.size()) {
+                commands.set("#PreviewTarget" + i + ".Visible", true);
+                String name = profileNames.get(i);
+                boolean active = (i == selectedPreviewTarget);
+                commands.set("#PreviewTargetBtn" + i + ".Text", "  " + name + "  ");
+                commands.set("#PreviewTargetBtn" + i + "Active.Text", "  " + name + "  ");
+                setSidebarNav2State(commands, "#PreviewTargetBtn" + i, active);
+            } else {
+                commands.set("#PreviewTarget" + i + ".Visible", false);
+            }
+        }
+    }
+
     private String buildPreview(List<SegmentView> views) {
         if (views.isEmpty()) {
             return "(no blocks enabled)";
         }
 
+        Map<String, Set<String>> profiles = adminConfig.getSegmentProfiles();
+        List<String> profileNames = new ArrayList<>(profiles.keySet());
 
+        if (profiles.isEmpty() || profileNames.isEmpty()) {
+            return buildSinglePreviewLine(views);
+        }
 
+        int targetIdx = Math.min(selectedPreviewTarget, profileNames.size() - 1);
+        if (targetIdx < 0) targetIdx = 0;
+        String targetName = profileNames.get(targetIdx);
+        Set<String> targetSegments = profiles.get(targetName);
+
+        if (targetSegments == null || profiles.size() <= 1) {
+            return buildSinglePreviewLine(views);
+        }
+
+        List<SegmentView> filtered = new ArrayList<>();
+        for (SegmentView view : views) {
+            if (targetSegments.contains(view.key().segmentId())) {
+                filtered.add(view);
+            }
+        }
+
+        return buildSinglePreviewLine(filtered.isEmpty() ? views : filtered);
+    }
+
+    private String buildSinglePreviewLine(List<SegmentView> views) {
         StringBuilder builder = new StringBuilder();
         SegmentView prevView = null;
         for (SegmentView view : views) {
             if (prevView != null) {
-                builder.append(preferences.getSeparatorAfter(viewerUuid, tabEntityType(), prevView.key()));
+                builder.append(preferences.getSeparatorAfter(chainViewerUuid(), tabEntityType(), prevView.key()));
             }
             builder.append('[').append(view.displayName()).append(']');
             prevView = view;
@@ -2023,7 +2978,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return -1;
         }
     }
-
 
 
 }

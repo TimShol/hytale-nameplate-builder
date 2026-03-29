@@ -2,6 +2,11 @@
 
 All notable changes to NameplateBuilder Example Mod will be documented in this file.
 
+## [4.260326.0] - 2026-03-30
+
+### Changed
+- Updated server version to 2026.03.26-89796e57b
+
 ## [3.260219.0] - 2026-02-20
 
 ### Changed

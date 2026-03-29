@@ -1,13 +1,10 @@
 package com.frotty27.nameplatebuilder.server;
 
 import com.frotty27.nameplatebuilder.api.NameplateData;
-import com.hypixel.hytale.component.Archetype;
-import com.hypixel.hytale.component.ArchetypeChunk;
-import com.hypixel.hytale.component.CommandBuffer;
-import com.hypixel.hytale.component.ComponentType;
-import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
+import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.math.shape.Box;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.protocol.ComponentUpdate;
@@ -26,13 +23,13 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.NonNull;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
+
+    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
+
+    static final UUID ADMIN_CHAIN_UUID = new UUID(0L, 0L);
 
     private static final double VIEW_RANGE = 30.0;
     private static final double VIEW_CONE_THRESHOLD = 0.9;
@@ -79,7 +76,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     }
 
     @Override
-    public com.hypixel.hytale.component.SystemGroup<EntityStore> getGroup() {
+    public SystemGroup<EntityStore> getGroup() {
         return EntityTrackerSystems.QUEUE_UPDATE_GROUP;
     }
 
@@ -87,8 +84,10 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk, @NonNull Store<EntityStore> store, @NonNull CommandBuffer<EntityStore> commandBuffer) {
 
 
-
-        List<Ref<EntityStore>> orphanedAnchors = anchorManager.cleanupOrphanedAnchors(commandBuffer);
+        World cleanupWorld = resolveWorld(store, chunk.getReferenceTo(index));
+        List<Ref<EntityStore>> orphanedAnchors = cleanupWorld != null
+                ? anchorManager.cleanupOrphanedAnchors(cleanupWorld)
+                : List.of();
         if (!orphanedAnchors.isEmpty()) {
             ComponentUpdate blankUpdate = nameplateUpdate("");
             for (Ref<EntityStore> orphanRef : orphanedAnchors) {
@@ -102,15 +101,18 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         }
 
         EntityTrackerSystems.Visible visible = chunk.getComponent(index, visibleComponentType);
-        if (visible == null || visible.visibleTo == null) {
+        if (visible == null) {
             return;
         }
 
         Ref<EntityStore> entityRef = chunk.getReferenceTo(index);
 
+        if (!adminConfig.isMasterEnabled()) {
+            sendEmptyToAll(visible, entityRef);
+            return;
+        }
 
-
-
+        PlaceholderAPIHook.cleanupCache();
 
 
         DeathComponent deathComponent = store.getComponent(entityRef, deathComponentType);
@@ -130,21 +132,57 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         }
 
         String entityTypeId = resolveEntityTypeId(chunk);
+        String namespace = AdminConfigStore.extractNamespace(entityTypeId);
+        if ("*".equals(namespace) || namespace.isEmpty()) {
+            namespace = "hytale";
+        }
+        boolean isPlayer = store.getComponent(entityRef, playerType) != null;
 
+        if (isPlayer && !adminConfig.isPlayerChainEnabled()) {
+            sendEmptyToAll(visible, entityRef);
+            return;
+        }
+        if (!isPlayer && !adminConfig.isNpcChainEnabled()) {
+            sendEmptyToAll(visible, entityRef);
+            return;
+        }
+        if (!isPlayer && !adminConfig.isNamespaceEnabled(namespace)) {
+            sendEmptyToAll(visible, entityRef);
+            return;
+        }
+        if (!isPlayer) {
+            NPCEntity blacklistNpc = store.getComponent(entityRef, npcEntityType);
+            if (blacklistNpc != null) {
+                String roleName = blacklistNpc.getRoleName();
+                if (roleName != null && adminConfig.isNpcBlacklisted(roleName)) {
+                    sendEmptyToAll(visible, entityRef);
+                    return;
+                }
+            }
+        }
 
-
+        World entityWorld = resolveWorld(store, entityRef);
+        if (entityWorld != null) {
+            String worldName = entityWorld.getName();
+            if (!adminConfig.isWorldEnabled(worldName)) {
+                sendEmptyToAll(visible, entityRef);
+                return;
+            }
+        }
 
         NameplateData entityData = store.getComponent(entityRef, nameplateDataType);
         if (entityData == null) {
 
             if (anchorManager.hasAnchor(entityRef)) {
-                anchorManager.removeAnchor(entityRef, commandBuffer);
+                World removeWorld = resolveWorld(store, entityRef);
+                if (removeWorld != null) {
+                    anchorManager.removeAnchor(entityRef, removeWorld);
+                }
             }
             return;
         }
 
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
-
 
 
         if (!segments.isEmpty() && segments.keySet().stream().allMatch(adminConfig::isDisabled)) {
@@ -163,14 +201,49 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 ? List.of()
                 : resolveAvailableKeys(entityData, segments);
 
+        for (SegmentKey key : available) {
+            NameplateRegistry.Segment segment = segments.get(key);
+            boolean builtIn = segment != null && segment.builtIn();
+            if (builtIn) {
+                adminConfig.trackNamespaceSegment("hytale", key.segmentId(), true);
+            } else {
+                String modId = segment != null ? segment.pluginId() : key.pluginId();
+                String modNamespace = AdminConfigStore.extractModName(modId);
+                if (modNamespace.isEmpty()) {
+                    modNamespace = AdminConfigStore.extractNamespace(modId);
+                }
+                if (modNamespace.isEmpty()) continue;
+                adminConfig.trackNamespaceSegment(modNamespace, key.segmentId(), false);
+                if (segment != null && segment.pluginName() != null) {
+                    adminConfig.trackNamespaceDisplayName(modNamespace, segment.pluginName());
+                    adminConfig.trackModEntityType(modNamespace, entityTypeId);
+                }
+            }
+        }
+
+        available = new ArrayList<>(available);
+        available.removeIf(key -> {
+            NameplateRegistry.Segment segment = segments.get(key);
+            if (segment == null) return false;
+            if (segment.builtIn()) {
+                return !adminConfig.isNamespaceEnabled("hytale");
+            }
+            String modId = segment.pluginId();
+            String modNamespace = AdminConfigStore.extractModName(modId);
+            if (modNamespace.isEmpty()) {
+                modNamespace = AdminConfigStore.extractNamespace(modId);
+            }
+            return !adminConfig.isNamespaceEnabled(modNamespace);
+        });
+
         Comparator<SegmentKey> defaultComparator = Comparator
-                .comparing((SegmentKey k) -> {
-                    NameplateRegistry.Segment s = segments.get(k);
-                    return s != null ? s.pluginName() : k.pluginId();
+                .comparing((SegmentKey key) -> {
+                    NameplateRegistry.Segment segment = segments.get(key);
+                    return segment != null ? segment.pluginName() : key.pluginId();
                 })
-                .thenComparing(k -> {
-                    NameplateRegistry.Segment s = segments.get(k);
-                    return s != null ? s.displayName() : k.segmentId();
+                .thenComparing(key -> {
+                    NameplateRegistry.Segment segment = segments.get(key);
+                    return segment != null ? segment.displayName() : key.segmentId();
                 });
 
 
@@ -178,56 +251,39 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         Vector3d realPosition = realTransform != null ? realTransform.getPosition() : null;
 
 
-
         double entityHeight = resolveEntityHeight(store, entityRef);
 
 
-
-        String tabEntityType = resolveTabEntityType(store, entityRef);
-
-
-
-
-        boolean isPlayer = store.getComponent(entityRef, playerType) != null;
-
-
+        String preferenceEntityType = isPlayer
+                ? NameplateBuilderPage.ENTITY_TYPE_PLAYERS
+                : NameplateBuilderPage.ENTITY_TYPE_NPCS;
 
         int viewerCount = visible.visibleTo.size();
-        double[] viewerOffsets = new double[viewerCount];
         boolean[] viewerWantsAnchor = new boolean[viewerCount];
-        String[] viewerPreferenceTypes = new String[viewerCount];
         UUID[] viewerUuids = new UUID[viewerCount];
         double maxOffset = 0.0;
         boolean anyViewerNeedsAnchor = false;
 
-        int vi = 0;
+        int viewerIndex = 0;
         for (Map.Entry<Ref<EntityStore>, EntityTrackerSystems.EntityViewer> viewerEntry : visible.visibleTo.entrySet()) {
             Ref<EntityStore> viewerRef = viewerEntry.getKey();
             UUID viewerUuid = getUuid(store, viewerRef);
-            viewerUuids[vi] = viewerUuid;
+            viewerUuids[viewerIndex] = viewerUuid;
 
-
-
-            viewerPreferenceTypes[vi] = tabEntityType;
 
             double userOffset = preferences.getOffset(viewerUuid, "*");
 
 
             double totalOffset = entityHeight + userOffset;
-            viewerOffsets[vi] = totalOffset;
-
-            viewerWantsAnchor[vi] = !isPlayer && userOffset != 0.0;
+            viewerWantsAnchor[viewerIndex] = !isPlayer && userOffset != 0.0;
             if (!isPlayer && userOffset != 0.0) {
                 anyViewerNeedsAnchor = true;
                 if (Math.abs(totalOffset) > Math.abs(maxOffset)) {
                     maxOffset = totalOffset;
                 }
             }
-            vi++;
+            viewerIndex++;
         }
-
-
-
 
 
         if (anyViewerNeedsAnchor && !isPlayer && realPosition != null) {
@@ -237,26 +293,26 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                         world, store, transformComponentType, commandBuffer);
             }
         } else if (anchorManager.hasAnchor(entityRef)) {
-
-            anchorManager.removeAnchor(entityRef, commandBuffer);
+            World anchorWorld = resolveWorld(store, entityRef);
+            if (anchorWorld != null) {
+                anchorManager.removeAnchor(entityRef, anchorWorld);
+            }
         }
 
         Ref<EntityStore> anchorRef = anchorManager.getAnchorRef(entityRef);
 
 
-
-        vi = 0;
+        viewerIndex = 0;
         for (Map.Entry<Ref<EntityStore>, EntityTrackerSystems.EntityViewer> viewerEntry : visible.visibleTo.entrySet()) {
             Ref<EntityStore> viewerRef = viewerEntry.getKey();
             EntityTrackerSystems.EntityViewer viewer = viewerEntry.getValue();
-            UUID viewerUuid = viewerUuids[vi];
-            String preferenceEntityType = viewerPreferenceTypes[vi];
-            double viewerOffset = viewerOffsets[vi];
-            boolean wantsAnchor = viewerWantsAnchor[vi];
-            vi++;
+            UUID viewerUuid = viewerUuids[viewerIndex];
+            boolean wantsAnchor = viewerWantsAnchor[viewerIndex];
+            viewerIndex++;
 
 
-            if (!preferences.isNameplatesEnabled(viewerUuid)) {
+            String viewerChainType = isPlayer ? "_players" : "_npcs";
+            if (!preferences.isChainEnabled(viewerUuid, viewerChainType)) {
                 ComponentUpdate emptyUpdate = nameplateUpdate("");
                 viewer.queueUpdate(entityRef, emptyUpdate);
                 if (anchorRef != null) {
@@ -265,7 +321,14 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 continue;
             }
 
-
+            if (entityWorld != null && !preferences.isWorldEnabled(viewerUuid, entityWorld.getName())) {
+                ComponentUpdate emptyUpdate = nameplateUpdate("");
+                viewer.queueUpdate(entityRef, emptyUpdate);
+                if (anchorRef != null) {
+                    safeAnchorUpdate(viewer, anchorRef, emptyUpdate);
+                }
+                continue;
+            }
 
             if (preferences.isOnlyShowWhenLooking(viewerUuid, "*")
                     && !isLookingAt(store, viewerRef, entityRef)) {
@@ -277,22 +340,26 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 continue;
             }
 
+            boolean locked = isPlayer ? adminConfig.isPlayerChainLocked() : adminConfig.isNpcChainLocked();
+            UUID chainUuid = locked ? ADMIN_CHAIN_UUID : viewerUuid;
+
             String text;
             if (available.isEmpty()) {
-
-
-
                 text = ALL_HIDDEN_HINT;
             } else {
-                List<SegmentKey> chain = preferences.getChain(viewerUuid, preferenceEntityType, available, defaultComparator);
-                text = buildText(chain, entityData, viewerUuid, preferenceEntityType);
+                List<SegmentKey> chain = preferences.getChain(chainUuid, preferenceEntityType, available, defaultComparator);
+                text = buildText(chain, entityData, chainUuid, preferenceEntityType);
                 if (text.isEmpty()) {
-
-
                     text = NO_DATA_HINT;
                 }
             }
 
+            if (PlaceholderAPIHook.isAvailable() && text.contains("%")) {
+                Player viewerPlayer = store.getComponent(viewerRef, playerType);
+                if (viewerPlayer != null) {
+                    text = PlaceholderAPIHook.parse(text, viewerPlayer.getPlayerRef());
+                }
+            }
 
             if (wantsAnchor && anchorRef != null) {
 
@@ -315,16 +382,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     }
 
 
-    private String resolveTabEntityType(Store<EntityStore> store, Ref<EntityStore> entityRef) {
-        Player player = store.getComponent(entityRef, playerType);
-        return player != null
-                ? NameplateBuilderPage.ENTITY_TYPE_PLAYERS
-                : NameplateBuilderPage.ENTITY_TYPE_NPCS;
-    }
-
-
-
-
     private World resolveWorld(Store<EntityStore> store, Ref<EntityStore> entityRef) {
         NPCEntity npc = store.getComponent(entityRef, npcEntityType);
         if (npc != null) {
@@ -338,15 +395,12 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     }
 
 
-
-
     private double resolveEntityHeight(Store<EntityStore> store, Ref<EntityStore> entityRef) {
         try {
             BoundingBox bb = store.getComponent(entityRef, boundingBoxType);
             if (bb == null) return 0.0;
-            com.hypixel.hytale.math.shape.Box box = bb.getBoundingBox();
+            Box box = bb.getBoundingBox();
             if (box == null) return 0.0;
-
 
 
             double h = box.max.getY();
@@ -356,8 +410,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             return 0.0;
         }
     }
-
-
 
 
     private List<SegmentKey> resolveAvailableKeys(NameplateData entityData,
@@ -421,8 +473,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     }
 
 
-
-
     private String buildText(List<SegmentKey> ordered,
                              NameplateData entityData,
                              UUID viewerUuid,
@@ -454,19 +504,18 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             }
 
 
-
-            NameplateRegistry.Segment segDef = registry.getSegments().get(key);
-            if (segDef != null && segDef.supportsPrefixSuffix() && variantIndex > 0) {
+            NameplateRegistry.Segment segmentDefinition = registry.getSegments().get(key);
+            if (segmentDefinition != null && segmentDefinition.supportsPrefixSuffix() && variantIndex > 0) {
                 String barEmpty = preferences.getBarEmptyChar(viewerUuid, entityTypeId, key);
                 if (barEmpty.length() == 1) {
                     text = text.replace('.', barEmpty.charAt(0));
                 }
             }
 
-            String pfx = preferences.getPrefix(viewerUuid, entityTypeId, key);
-            String sfx = preferences.getSuffix(viewerUuid, entityTypeId, key);
-            if (!pfx.isEmpty() || !sfx.isEmpty()) {
-                text = pfx + text + sfx;
+            String prefix = preferences.getPrefix(viewerUuid, entityTypeId, key);
+            String suffix = preferences.getSuffix(viewerUuid, entityTypeId, key);
+            if (!prefix.isEmpty() || !suffix.isEmpty()) {
+                text = prefix + text + suffix;
             }
             if (!builder.isEmpty() && prevKey != null) {
                 builder.append(preferences.getSeparatorAfter(viewerUuid, entityTypeId, prevKey));
@@ -476,8 +525,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         }
         return builder.toString();
     }
-
-
 
 
     private boolean isLookingAt(Store<EntityStore> store,
@@ -535,7 +582,17 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     }
 
 
-
+    private void sendEmptyToAll(EntityTrackerSystems.Visible visible,
+                               Ref<EntityStore> entityRef) {
+        ComponentUpdate emptyUpdate = nameplateUpdate("");
+        Ref<EntityStore> anchorRef = anchorManager.getAnchorRef(entityRef);
+        for (Map.Entry<Ref<EntityStore>, EntityTrackerSystems.EntityViewer> viewerEntry : visible.visibleTo.entrySet()) {
+            viewerEntry.getValue().queueUpdate(entityRef, emptyUpdate);
+            if (anchorRef != null) {
+                safeAnchorUpdate(viewerEntry.getValue(), anchorRef, emptyUpdate);
+            }
+        }
+    }
 
     private static NameplateUpdate nameplateUpdate(String text) {
         return new NameplateUpdate(text == null || text.isEmpty() ? " " : text);
@@ -580,6 +637,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 }
             }
         }
-        return "*";
+        return "hytale";
     }
 }

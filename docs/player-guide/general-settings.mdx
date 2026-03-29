@@ -1,6 +1,7 @@
 ---
 title: General Settings
 description: Master toggles, offset, and welcome message settings.
+icon: gear
 ---
 
 The **General** tab is the first tab in the sidebar, under the GENERAL section.
@@ -10,6 +11,10 @@ The **General** tab is the first tab in the sidebar, under the GENERAL section.
 ### Enable Nameplates
 
 Master toggle to show or hide all nameplates. When disabled, entities display no nameplate text at all.
+
+<Note>
+If the server admin has disabled the master killswitch, this toggle shows **(Disabled by Admin)** and cannot be re-enabled by the player.
+</Note>
 
 ### Only Show When Looking
 
@@ -21,8 +26,12 @@ Entities outside the cone receive an empty nameplate update to prevent the defau
 
 Toggle the coloured join message on or off. When enabled, you see a message every time you join the server:
 
-* **Green** — `[ServerName] - Use /npb to customize your nameplates.`
-* **Red** (when all segments are disabled) — `[ServerName] - Nameplates are disabled on this server.`
+* **Green** - `[ServerName] - Use /npb to customize your nameplates.`
+* **Red** (when all segments are disabled) - `[ServerName] - Nameplates are disabled on this server.`
+
+<Note>
+If the server admin has disabled welcome messages, this toggle shows **(Disabled by Admin)** and cannot be re-enabled by the player.
+</Note>
 
 ### Offset
 

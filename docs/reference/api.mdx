@@ -1,9 +1,10 @@
 ---
 title: API Reference
+icon: terminal
 description: Complete method tables for NameplateAPI, NameplateData, and related types.
 ---
 
-## NameplateAPI — Static Methods
+## NameplateAPI - Static Methods
 
 | Method | Description |
 | :--- | :--- |
@@ -37,7 +38,7 @@ description: Complete method tables for NameplateAPI, NameplateData, and related
 | `segmentId` | `String` | The segment key (must match what you passed to `describe()`) |
 | `text` | `String` | The text value to display |
 
-## NameplateData — Instance Methods
+## NameplateData - Instance Methods
 
 | Method | Return | Description |
 | :--- | :--- | :--- |
@@ -47,7 +48,7 @@ description: Complete method tables for NameplateAPI, NameplateData, and related
 | `getEntries()` | `Set<Map.Entry>` | Unmodifiable view of all key-value entries. |
 | `isEmpty()` | `boolean` | Returns `true` if no entries exist. |
 
-## SegmentTarget — Enum
+## SegmentTarget - Enum
 
 | Value | UI Tag | Description |
 | :--- | :--- | :--- |
@@ -61,7 +62,7 @@ The target is a **UI hint only**. It does not restrict which entity types you ca
 
 | Exception | Parent | When It's Thrown |
 | :--- | :--- | :--- |
-| `NameplateException` | `RuntimeException` | Base class — not thrown directly |
+| `NameplateException` | `RuntimeException` | Base class - not thrown directly |
 | `NameplateNotInitializedException` | `NameplateException` | API called before NameplateBuilder loaded. Check `manifest.json` dependency. |
 | `NameplateArgumentException` | `NameplateException` | `null` or blank passed to a required parameter. |
 
@@ -70,7 +71,7 @@ The target is a **UI hint only**. It does not restrict which entity types you ca
 ### Segment IDs
 
 * Must be non-null and non-blank
-* Scoped to your plugin — two mods can both use `"health"` without conflict
+* Scoped to your plugin - two mods can both use `"health"` without conflict
 * Used as the key in `NameplateData.setText()` and `NameplateData.getText()`
 
 ### Variant Key Suffixes

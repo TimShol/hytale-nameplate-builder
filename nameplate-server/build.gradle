@@ -13,6 +13,7 @@ dependencies {
     implementation project(':nameplate-api')
     compileOnly files(rootProject.ext.hytaleJar)
     compileOnly 'org.jspecify:jspecify:0.3.0'
+    compileOnly files("${rootProject.projectDir}/../Examples/PlaceholderAPI-1.0.8-CurseForge.jar")
 }
 
 tasks.processResources {

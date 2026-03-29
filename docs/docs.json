@@ -1,11 +1,10 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "name": "NameplateBuilder",
-  "theme": "willow",
+  "theme": "palm",
   "logo": {
     "dark": "/images/logo-dark.svg",
-    "light": "/images/logo-light.svg",
-    "height": 60
+    "light": "/images/logo-light.svg"
   },
   "favicon": "/images/favicon.svg",
   "colors": {
@@ -25,6 +24,7 @@
       },
       {
         "group": "Player Guide",
+        "icon": "gamepad",
         "pages": [
           "player-guide/ui-overview",
           "player-guide/general-settings",
@@ -35,6 +35,7 @@
       },
       {
         "group": "Modding Guide",
+        "icon": "code",
         "pages": [
           "modding/quick-start",
           "modding/describe-segments",
@@ -46,6 +47,7 @@
       },
       {
         "group": "Reference",
+        "icon": "book",
         "pages": [
           "reference/api",
           "reference/persistence",

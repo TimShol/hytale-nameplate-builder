@@ -1,12 +1,6 @@
 package com.frotty27.nameplatebuilder.server;
 
-import com.hypixel.hytale.component.AddReason;
-import com.hypixel.hytale.component.CommandBuffer;
-import com.hypixel.hytale.component.ComponentType;
-import com.hypixel.hytale.component.Holder;
-import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.component.RemoveReason;
-import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.server.core.entity.entities.ProjectileComponent;
@@ -16,11 +10,7 @@ import com.hypixel.hytale.server.core.modules.entity.tracker.NetworkId;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 final class AnchorEntityManager {
 
@@ -58,17 +48,9 @@ final class AnchorEntityManager {
         return ref;
     }
 
-
-    boolean isSpawnPending(Ref<EntityStore> realEntityRef) {
-        AnchorState state = anchors.get(realEntityRef);
-        return state != null && state.spawnPending;
-    }
-
-
     boolean hasAnchor(Ref<EntityStore> realEntityRef) {
         return anchors.containsKey(realEntityRef);
     }
-
 
     void ensureAnchor(Ref<EntityStore> realEntityRef,
                       Vector3d realPosition,
@@ -112,14 +94,25 @@ final class AnchorEntityManager {
 
 
     void removeAnchor(Ref<EntityStore> realEntityRef,
-                      CommandBuffer<EntityStore> commandBuffer) {
+                      World world) {
 
-
-        anchors.remove(realEntityRef);
+        AnchorState state = anchors.remove(realEntityRef);
+        if (state != null && !state.spawnPending && state.anchorRef != null && state.anchorRef.isValid()) {
+            Ref<EntityStore> anchorRef = state.anchorRef;
+            world.execute(() -> {
+                EntityStore entityStore = world.getEntityStore();
+                if (entityStore == null) {
+                    return;
+                }
+                if (anchorRef.isValid()) {
+                    entityStore.getStore().removeEntity(anchorRef, RemoveReason.UNLOAD);
+                }
+            });
+        }
     }
 
 
-    List<Ref<EntityStore>> cleanupOrphanedAnchors(CommandBuffer<EntityStore> commandBuffer) {
+    List<Ref<EntityStore>> cleanupOrphanedAnchors(World world) {
         if (anchors.isEmpty()) {
             return List.of();
         }
@@ -137,6 +130,16 @@ final class AnchorEntityManager {
                         orphanedAnchors = new ArrayList<>();
                     }
                     orphanedAnchors.add(state.anchorRef);
+                    Ref<EntityStore> anchorRef = state.anchorRef;
+                    world.execute(() -> {
+                        EntityStore entityStore = world.getEntityStore();
+                        if (entityStore == null) {
+                            return;
+                        }
+                        if (anchorRef.isValid()) {
+                            entityStore.getStore().removeEntity(anchorRef, RemoveReason.UNLOAD);
+                        }
+                    });
                 }
             }
         }
@@ -148,8 +151,6 @@ final class AnchorEntityManager {
         anchors.clear();
         pendingRemovals.clear();
     }
-
-
 
 
     private void queueSpawn(Vector3d realPosition,
@@ -188,9 +189,7 @@ final class AnchorEntityManager {
                     new NetworkId(entityStore.takeNextNetworkId()));
 
 
-
-            Ref<EntityStore> anchorRef = store.addEntity(holder, AddReason.LOAD);
-            state.anchorRef = anchorRef;
+            state.anchorRef = store.addEntity(holder, AddReason.LOAD);
             state.spawnPending = false;
         });
     }
@@ -226,7 +225,6 @@ final class AnchorEntityManager {
             }
 
             state.velocity = new Vector3d(dx, dy, dz);
-
 
 
             targetPosition = new Vector3d(

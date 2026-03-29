@@ -1,5 +1,6 @@
 ---
 title: Architecture
+icon: sitemap
 description: Internal systems, data flow, and project structure.
 ---
 
@@ -115,7 +116,7 @@ When enabled per-viewer:
 
 `NameplateData` is a standard Hytale ECS component. This means:
 
-* It participates in archetype queries — the aggregator only ticks entities that have nameplate data
+* It participates in archetype queries - the aggregator only ticks entities that have nameplate data
 * It's automatically cleaned up when entities are destroyed
 * Multiple mods can read/write to it without coordination
 * The `CommandBuffer` pattern handles structural changes safely
