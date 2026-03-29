@@ -17,20 +17,9 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 - **PlaceholderAPI support** - Segment text containing placeholders is now parsed per viewer
 - **Admin override indicators** - When an admin disables a feature, players see "(Disabled by Admin)" and cannot re-enable it
 
-### Changed
-- **Simplified to one chain per type** - There is now one NPC chain and one Player chain. All segments from all mods appear in a single list that you can freely reorder
-- **NameplateBuilder no longer overwrites other mods** - Only vanilla Hytale NPCs get nameplates automatically. Other mods must opt in via the API
-- **Disabling the master toggle now clears existing nameplates** - Previously, nameplates stayed visible until entities went out of range
-- **Cleaner UI layout** - Consistent spacing, properly stretched sub-tabs, scrollable admin settings, and compact pagination buttons
-- **All save buttons now show feedback** - Every save button displays a success or error message
-- **Removed "Apply to All Namespaces" from format popup** - No longer needed with the one-chain model
-
 ### Fixed
-- NPC picker search field losing focus after typing one character
-- NPC picker background flickering on hover
-- Blacklist save button not showing success message
-- Players being able to toggle settings that the admin had disabled
-- Pagination buttons being too far apart in world/instance columns
+- World crash when chunks unload while anchor entities are active
+- Nameplates from other mods being overwritten by NameplateBuilder on non-vanilla NPCs
 
 ## [3.260219.0] - 2026-02-20
 
