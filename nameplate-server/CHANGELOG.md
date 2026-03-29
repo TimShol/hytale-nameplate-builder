@@ -2,40 +2,35 @@
 
 All notable changes to NameplateBuilder Server will be documented in this file.
 
-## [4.260326.0] - 2026-03-29
+## [4.260326.0] - 2026-03-30
 
 ### Added
-- **One-chain model** - Single NPC chain and single Player chain per player, replacing per-namespace chains. Full cross-mod segment interleaving
-- **Opt-in NPC model** - Only Hytale-namespace NPCs are auto-seeded. Other mods call `NameplateAPI.register()` to opt in. Prevents overwriting other mods' nameplates
-- **Built-in entity-name segment** - `entity-name` segment for NPCs, resolved from entity type ID (e.g. "Archaeopteryx")
-- **Admin killswitches** - Master enable, per-chain enable (NPC/Player), per-namespace mod killswitch, per-world/instance killswitch
-- **Admin chain locking** - Lock NPC and/or Player chain order so all players see the admin's configured order (read-only)
-- **Admin world/instance killswitches** - Two-column layout in Admin Settings with independent pagination for worlds and instances
-- **Admin NPC blacklist** - Blacklist specific NPC types from ever receiving nameplates. NPC picker popup with filter, pagination, and selection
-- **Per-world/instance enable** - Players can toggle nameplates per world and per instance. Admin overrides take precedence
-- **Chain/Settings sub-tabs** - Horizontal sub-tabs on NPC/Player editor pages for chain editing and per-chain settings
-- **Mod killswitches in Settings tab** - ON/OFF toggles per mod namespace with display names from plugin manifests
-- **Multi-profile preview** - Preview bar shows different entity profiles auto-generated from runtime observation
-- **Runtime entity-type tracking** - Tracks which mods contribute segments to which entity types
-- **PlaceholderAPI consumer integration** - Soft dependency on PlaceholderAPI. Parses `%placeholder%` tokens in segment text with 500ms TTL cache
-- **Admin override indicators** - All admin-disabled features show "(Disabled by Admin)" to players with blocked toggles
-- **NPC picker popup** - Modal overlay with transparent backdrop, filter search, pagination, Cancel/Add buttons (Cancel left, Add right)
-- **Scrollable admin settings** - Admin Settings tab uses TopScrolling with styled scrollbar
+- **NPC entity name segment** - NPCs now display their name (e.g. "Archaeopteryx") as a built-in segment
+- **Admin killswitches** - Admins can now disable nameplates server-wide, per chain type (NPC/Player), per mod, and per world or instance
+- **Admin chain locking** - Admins can lock the segment order so all players see the same chain
+- **Admin world/instance controls** - New two-column section in Admin Settings to enable or disable nameplates per world and instance
+- **Admin NPC blacklist** - Prevent specific NPC types from ever showing nameplates. Searchable popup with filter and pagination
+- **Per-world/instance settings for players** - Players can now toggle nameplates on or off for individual worlds and instances
+- **Chain and Settings sub-tabs** - NPC and Player pages now have a Chain tab for ordering segments and a Settings tab for toggles, mod controls, and world settings
+- **Per-mod ON/OFF toggles** - Enable or disable all segments from a specific mod, including NameplateBuilder's own built-in segments
+- **Multi-profile preview** - The preview bar now shows how nameplates look on different entity types (e.g. vanilla vs RPG Mobs NPCs)
+- **PlaceholderAPI support** - Segment text containing placeholders is now parsed per viewer
+- **Admin override indicators** - When an admin disables a feature, players see "(Disabled by Admin)" and cannot re-enable it
 
 ### Changed
-- **Master toggle now clears nameplates** - Disabling the master toggle actively sends empty updates to clear existing nameplates, instead of silently stopping updates
-- **Consistent top padding** - All content areas have uniform top margin for visual consistency
-- **Sub-tab bars** - Removed dark background from sub-tab bars, tabs stretch properly across content area
-- **Save message system** - All save buttons show success/error feedback. Each tab targets its own save message element
-- **Code quality** - Replaced all abbreviated variable names (`idx`, `ns`, `wn`, `in`, `vi`, `seg`, `pfx`, `sfx`) with full descriptive names
+- **Simplified to one chain per type** - There is now one NPC chain and one Player chain. All segments from all mods appear in a single list that you can freely reorder
+- **NameplateBuilder no longer overwrites other mods** - Only vanilla Hytale NPCs get nameplates automatically. Other mods must opt in via the API
+- **Disabling the master toggle now clears existing nameplates** - Previously, nameplates stayed visible until entities went out of range
+- **Cleaner UI layout** - Consistent spacing, properly stretched sub-tabs, scrollable admin settings, and compact pagination buttons
+- **All save buttons now show feedback** - Every save button displays a success or error message
+- **Removed "Apply to All Namespaces" from format popup** - No longer needed with the one-chain model
 
 ### Fixed
-- NPC picker filter typing stops after one character (visibility toggle was resetting text field focus)
-- NPC picker row backgrounds changing on hover (now uses dialog background color)
-- Blacklist save message targeting hidden element in wrong content section
-- Chain enable toggle not checking admin killswitch state in handler
-- Enable Nameplates toggle not checking master killswitch state in handler
-- Pagination buttons stretched too far apart in two-column layouts (fixed-width pagination groups)
+- NPC picker search field losing focus after typing one character
+- NPC picker background flickering on hover
+- Blacklist save button not showing success message
+- Players being able to toggle settings that the admin had disabled
+- Pagination buttons being too far apart in world/instance columns
 
 ## [3.260219.0] - 2026-02-20
 
