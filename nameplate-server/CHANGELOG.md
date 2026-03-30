@@ -2,6 +2,16 @@
 
 All notable changes to NameplateBuilder Server will be documented in this file.
 
+## [4.260326.2] - 2026-03-31
+
+### Added
+- **Resolver pattern** - Mods can now register resolver functions that compute segment values per entity, replacing the need for manual tick systems
+- Built-in segments (health, stamina, mana, entity name, player name) now use resolvers with archetype-based optimization
+
+### Changed
+- API methods renamed for clarity: `define()`, `defineVariants()`, `undefine()`, `setText()`, `clearText()`
+- Requires NameplateBuilder API v2.0.0
+
 ## [4.260326.1] - 2026-03-30
 
 ### Added

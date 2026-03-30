@@ -5,13 +5,20 @@ import com.frotty27.nameplatebuilder.api.NameplateData;
 import com.frotty27.nameplatebuilder.api.SegmentTarget;
 import com.hypixel.hytale.builtin.instances.InstancesPlugin;
 import com.hypixel.hytale.component.ComponentType;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.Universe;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
+import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
+import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.npc.entities.NPCEntity;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,25 +59,62 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
 
 
         String pluginId = NameplateRegistry.toPluginId(this);
-        registry.describeBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_ENTITY_NAME,
-                "Entity Name", SegmentTarget.NPCS, "Archaeopteryx");
-        registry.describeBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_PLAYER_NAME,
-                "Player Name", SegmentTarget.PLAYERS, "Frotty27");
-        registry.describeVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_PLAYER_NAME,
+        ComponentType<EntityStore, NPCEntity> npcEntityType = NPCEntity.getComponentType();
+        ComponentType<EntityStore, Player> playerType = Player.getComponentType();
+        ComponentType<EntityStore, EntityStatMap> statMapType = EntityStatMap.getComponentType();
+
+        registry.defineBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_ENTITY_NAME,
+                "Entity Name", SegmentTarget.NPCS, "Archaeopteryx")
+                .requires(npcEntityType)
+                .resolver((store, entityRef, variant) -> {
+                    NPCEntity npcEntity = store.getComponent(entityRef, npcEntityType);
+                    if (npcEntity == null) return null;
+                    String roleName = npcEntity.getRoleName();
+                    if (roleName == null || roleName.isBlank()) return null;
+                    return roleName.replace('_', ' ');
+                });
+
+        registry.defineBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_PLAYER_NAME,
+                "Player Name", SegmentTarget.PLAYERS, "Frotty27")
+                .requires(playerType)
+                .resolver((store, entityRef, variant) -> {
+                    Player player = store.getComponent(entityRef, playerType);
+                    if (player == null) return null;
+                    return variant == 1 ? "Player" : player.getDisplayName();
+                });
+        registry.defineVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_PLAYER_NAME,
                 List.of("Real Name", "Anonymized (Player)"));
-        registry.describeBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_HEALTH,
-                "Health", SegmentTarget.ALL, "67/69");
-        registry.describeVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_HEALTH,
+
+        registry.defineBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_HEALTH,
+                "Health", SegmentTarget.ALL, "67/69")
+                .requires(statMapType)
+                .resolver((store, entityRef, variant) -> {
+                    EntityStatMap statMap = store.getComponent(entityRef, statMapType);
+                    return statMap != null ? formatStat(statMap.get(DefaultEntityStatTypes.getHealth()), variant) : null;
+                });
+        registry.defineVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_HEALTH,
                 List.of("Current/Max (67/69)", "Percentage (69%)", "Bar (||||||-----)"));
         registry.setSupportsPrefixSuffix(pluginId, DefaultSegmentSystem.SEGMENT_HEALTH);
-        registry.describeBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_STAMINA,
-                "Stamina", SegmentTarget.ALL, "42/100");
-        registry.describeVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_STAMINA,
+
+        registry.defineBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_STAMINA,
+                "Stamina", SegmentTarget.ALL, "42/100")
+                .requires(statMapType)
+                .resolver((store, entityRef, variant) -> {
+                    EntityStatMap statMap = store.getComponent(entityRef, statMapType);
+                    return statMap != null ? formatStat(statMap.get(DefaultEntityStatTypes.getStamina()), variant) : null;
+                });
+        registry.defineVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_STAMINA,
                 List.of("Current/Max (42/100)", "Percentage (42%)", "Bar (||||||||-----)"));
         registry.setSupportsPrefixSuffix(pluginId, DefaultSegmentSystem.SEGMENT_STAMINA);
-        registry.describeBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_MANA,
-                "Mana", SegmentTarget.ALL, "30/50");
-        registry.describeVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_MANA,
+
+        registry.defineBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_MANA,
+                "Mana", SegmentTarget.ALL, "30/50")
+                .requires(statMapType)
+                .resolver((store, entityRef, variant) -> {
+                    EntityStatMap statMap = store.getComponent(entityRef, statMapType);
+                    return statMap != null ? formatStat(statMap.get(DefaultEntityStatTypes.getMana()), variant) : null;
+                });
+        registry.defineVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_MANA,
                 List.of("Current/Max (30/50)", "Percentage (60%)", "Bar (||||||||||||-----)"));
         registry.setSupportsPrefixSuffix(pluginId, DefaultSegmentSystem.SEGMENT_MANA);
 
@@ -159,5 +203,21 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
 
     List<String> getDiscoveredInstanceNames() {
         return Collections.unmodifiableList(discoveredInstanceNames);
+    }
+
+    private static final int BAR_LENGTH = 20;
+
+    private static String formatStat(EntityStatValue stat, int variant) {
+        if (stat == null) return null;
+        int current = Math.round(stat.get());
+        int max = Math.round(stat.getMax());
+        return switch (variant) {
+            case 1 -> (max > 0 ? Math.round(100f * current / max) : 0) + "%";
+            case 2 -> {
+                int filled = max > 0 ? Math.round((float) current / max * BAR_LENGTH) : 0;
+                yield "|".repeat(Math.max(0, filled)) + ".".repeat(Math.max(0, BAR_LENGTH - filled));
+            }
+            default -> current + "/" + max;
+        };
     }
 }

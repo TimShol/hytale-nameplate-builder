@@ -2,6 +2,12 @@
 
 All notable changes to NameplateBuilder Example Mod will be documented in this file.
 
+## [4.260326.2] - 2026-03-31
+
+### Changed
+- Updated to NameplateBuilder API v2.0.0
+- Uses `define()` and `setText()` instead of `describe()` and `register()`
+
 ## [4.260326.0] - 2026-03-30
 
 ### Changed

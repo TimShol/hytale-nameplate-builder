@@ -3,7 +3,7 @@ plugins {
     id 'com.gradleup.shadow' version '9.3.0'
 }
 
-def mod_build = 1
+def mod_build = 2
 
 group = rootProject.property('group')
 version = rootProject.ext.computeVersion(mod_build)

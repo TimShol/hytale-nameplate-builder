@@ -197,9 +197,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
-        List<SegmentKey> available = entityData.isEmpty()
-                ? List.of()
-                : resolveAvailableKeys(entityData, segments);
+        List<SegmentKey> available = resolveAvailableKeys(entityData, segments, store, entityRef, chunk);
 
         for (SegmentKey key : available) {
             NameplateRegistry.Segment segment = segments.get(key);
@@ -348,7 +346,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 text = ALL_HIDDEN_HINT;
             } else {
                 List<SegmentKey> chain = preferences.getChain(chainUuid, preferenceEntityType, available, defaultComparator);
-                text = buildText(chain, entityData, chainUuid, preferenceEntityType);
+                text = buildText(chain, entityData, chainUuid, preferenceEntityType, store, entityRef);
                 if (text.isEmpty()) {
                     text = NO_DATA_HINT;
                 }
@@ -413,15 +411,16 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
 
     private List<SegmentKey> resolveAvailableKeys(NameplateData entityData,
-                                                   Map<SegmentKey, NameplateRegistry.Segment> segments) {
+                                                   Map<SegmentKey, NameplateRegistry.Segment> segments,
+                                                   Store<EntityStore> store,
+                                                   Ref<EntityStore> entityRef,
+                                                   ArchetypeChunk<EntityStore> chunk) {
         List<SegmentKey> keys = new ArrayList<>();
-        for (String entryKey : entityData.getEntries().keySet()) {
 
+        for (String entryKey : entityData.getEntries().keySet()) {
             if (entryKey.startsWith("_")) {
                 continue;
             }
-
-
             if (entryKey.contains(".")) {
                 continue;
             }
@@ -434,13 +433,34 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                     keys.add(matched);
                 }
             } else {
-
                 SegmentKey synthetic = new SegmentKey("_unknown", entryKey);
                 if (!keys.contains(synthetic)) {
                     keys.add(synthetic);
                 }
             }
         }
+
+        Archetype<EntityStore> archetype = chunk.getArchetype();
+        for (Map.Entry<SegmentKey, NameplateRegistry.Segment> entry : segments.entrySet()) {
+            NameplateRegistry.Segment segment = entry.getValue();
+            if (segment.resolver() == null) continue;
+            if (adminConfig.isDisabled(entry.getKey())) continue;
+            if (keys.contains(entry.getKey())) continue;
+
+            if (segment.requiredComponent() != null) {
+                boolean hasComponent = false;
+                for (int i = 0; i < archetype.length(); i++) {
+                    if (archetype.get(i) == segment.requiredComponent()) {
+                        hasComponent = true;
+                        break;
+                    }
+                }
+                if (!hasComponent) continue;
+            }
+
+            keys.add(entry.getKey());
+        }
+
         return keys;
     }
 
@@ -476,7 +496,9 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     private String buildText(List<SegmentKey> ordered,
                              NameplateData entityData,
                              UUID viewerUuid,
-                             String entityTypeId) {
+                             String entityTypeId,
+                             Store<EntityStore> store,
+                             Ref<EntityStore> entityRef) {
         StringBuilder builder = new StringBuilder();
         SegmentKey prevKey = null;
         for (SegmentKey key : ordered) {
@@ -489,16 +511,26 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 continue;
             }
 
-
             int variantIndex = preferences.getSelectedVariant(viewerUuid, entityTypeId, key);
             String text;
             if (variantIndex > 0) {
-
                 String variantText = entityData.getText(key.segmentId() + "." + variantIndex);
                 text = variantText != null && !variantText.isBlank() ? variantText : entityData.getText(key.segmentId());
             } else {
                 text = entityData.getText(key.segmentId());
             }
+
+            if (text == null || text.isBlank()) {
+                NameplateRegistry.Segment segment = registry.getSegments().get(key);
+                if (segment != null && segment.resolver() != null) {
+                    try {
+                        text = segment.resolver().resolve(store, entityRef, variantIndex);
+                    } catch (Throwable _) {
+                        text = null;
+                    }
+                }
+            }
+
             if (text == null || text.isBlank()) {
                 continue;
             }

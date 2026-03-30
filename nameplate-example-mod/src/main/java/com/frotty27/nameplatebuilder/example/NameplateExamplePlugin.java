@@ -18,24 +18,24 @@ import java.util.List;
  * <p>This plugin shows the three main patterns that modders need:</p>
  *
  * <h3>1. Describe segments (UI metadata)</h3>
- * <p>In {@code setup()}, call {@link NameplateAPI#describe} to register a
+ * <p>In {@code setup()}, call {@link NameplateAPI#define} to register a
  * human-readable display name for each segment. This is optional but
- * recommended — without it the player UI shows the raw segment ID.</p>
+ * recommended - without it the player UI shows the raw segment ID.</p>
  *
  * <h3>2. Attach nameplates to NPCs on spawn</h3>
  * <p>The {@link ArchaeopteryxNameplateSystem} demonstrates how to detect newly
  * spawned NPCs by role name and seed their initial nameplate data. It extends
  * {@code EntityTickingSystem}, queries for the {@code NPCEntity} component,
  * checks that the entity doesn't already have {@link NameplateData}, and
- * calls {@link NameplateAPI#register} to create the component with default
- * segment values. This pattern works for any NPC role — just change the
+ * calls {@link NameplateAPI#setText} to create the component with default
+ * segment values. This pattern works for any NPC role - just change the
  * role name constant.</p>
  *
  * <h3>3. Update segments every tick</h3>
  * <p>The {@link LifetimeNameplateSystem} updates the "lifetime" segment text
- * every server tick, showing that calling {@link NameplateAPI#register} (or
+ * every server tick, showing that calling {@link NameplateAPI#setText} (or
  * {@link NameplateData#setText} directly) each tick does <b>not</b> cause
- * flashing — the component stays on the entity and only its internal map
+ * flashing - the component stays on the entity and only its internal map
  * value changes in place.</p>
  *
  * <h3>Additional runtime examples</h3>
@@ -56,34 +56,31 @@ public final class NameplateExamplePlugin extends JavaPlugin {
     @Override
     protected void setup() {
 
-        // ── Describe segments for the UI ──
-        // Each describe() call registers a human-readable name and target
-        // for the Nameplate Builder UI. The SegmentTarget enum tells players
-        // which entity types the segment applies to (shown as a tag in the UI).
-        // This is optional — undescribed segments still work but show the raw ID.
+        // Each define() call registers a human-readable name and target
+        // for the Nameplate Builder UI. This is optional but recommended.
 
         // Segments applicable to all entities (shown in both NPC and Player tabs)
         // Note: "health" and "player-name" are built-in segments provided by NameplateBuilder
         // and do not need to be described here. They appear automatically in the UI.
-        NameplateAPI.describe(this, "level", "Level", SegmentTarget.ALL, "Lv. 42");
-        NameplateAPI.describeVariants(this, "level", List.of("Compact", "Full", "Number Only"));
-        NameplateAPI.describe(this, "title", "Title", SegmentTarget.ALL, "The Brave");
-        NameplateAPI.describe(this, "custom-tag", "Custom Tag", SegmentTarget.ALL, "[Custom]");
+        NameplateAPI.define(this, "level", "Level", SegmentTarget.ALL, "Lv. 42");
+        NameplateAPI.defineVariants(this, "level", List.of("Compact", "Full", "Number Only"));
+        NameplateAPI.define(this, "title", "Title", SegmentTarget.ALL, "The Brave");
+        NameplateAPI.define(this, "custom-tag", "Custom Tag", SegmentTarget.ALL, "[Custom]");
 
         // NPC-only segments
-        NameplateAPI.describe(this, "buff", "Active Buff", SegmentTarget.NPCS, "Burning");
-        NameplateAPI.describe(this, "faction", "Faction", SegmentTarget.NPCS, "<Undead>");
-        NameplateAPI.describe(this, "mood", "Mood", SegmentTarget.NPCS, "Aggressive");
-        NameplateAPI.describe(this, "quest", "Active Quest", SegmentTarget.NPCS, "[!!] Slay 10");
-        NameplateAPI.describe(this, "bounty", "Bounty", SegmentTarget.NPCS, "500g");
-        NameplateAPI.describe(this, "lifetime", "Lifetime", SegmentTarget.NPCS, "3m 24s");
+        NameplateAPI.define(this, "buff", "Active Buff", SegmentTarget.NPCS, "Burning");
+        NameplateAPI.define(this, "faction", "Faction", SegmentTarget.NPCS, "<Undead>");
+        NameplateAPI.define(this, "mood", "Mood", SegmentTarget.NPCS, "Aggressive");
+        NameplateAPI.define(this, "quest", "Active Quest", SegmentTarget.NPCS, "[!!] Slay 10");
+        NameplateAPI.define(this, "bounty", "Bounty", SegmentTarget.NPCS, "500g");
+        NameplateAPI.define(this, "lifetime", "Lifetime", SegmentTarget.NPCS, "3m 24s");
 
         // Player-only segments
-        NameplateAPI.describe(this, "guild", "Guild Tag", SegmentTarget.PLAYERS, "[Warriors]");
-        NameplateAPI.describe(this, "score", "Score", SegmentTarget.PLAYERS, "1,250");
-        NameplateAPI.describe(this, "rank", "Server Rank", SegmentTarget.PLAYERS, "VIP+");
-        NameplateAPI.describe(this, "clan", "Clan", SegmentTarget.PLAYERS, "<Phoenix>");
-        NameplateAPI.describe(this, "vip-label", "VIP Label", SegmentTarget.PLAYERS, "VIP");
+        NameplateAPI.define(this, "guild", "Guild Tag", SegmentTarget.PLAYERS, "[Warriors]");
+        NameplateAPI.define(this, "score", "Score", SegmentTarget.PLAYERS, "1,250");
+        NameplateAPI.define(this, "rank", "Server Rank", SegmentTarget.PLAYERS, "VIP+");
+        NameplateAPI.define(this, "clan", "Clan", SegmentTarget.PLAYERS, "<Phoenix>");
+        NameplateAPI.define(this, "vip-label", "VIP Label", SegmentTarget.PLAYERS, "VIP");
 
         // ── Register tick-based systems ──
         ComponentType<EntityStore, NameplateData> nameplateDataType = NameplateAPI.getComponentType();
@@ -97,14 +94,14 @@ public final class NameplateExamplePlugin extends JavaPlugin {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    //  Runtime examples — call these from your systems / event handlers
+    //  Runtime examples - call these from your systems / event handlers
     // ═══════════════════════════════════════════════════════════════════════
 
     /**
      * Set up default nameplate text on an entity (e.g. on spawn).
      *
      * <p>Call this once when an entity enters the world. The component
-     * persists — no need to re-register every tick.</p>
+     * persists - no need to re-register every tick.</p>
      *
      * <p>The "lifetime" segment is seeded with "0s" here; the
      * {@link LifetimeNameplateSystem} will update it every tick.</p>
@@ -113,21 +110,21 @@ public final class NameplateExamplePlugin extends JavaPlugin {
      * @param entityRef reference to the entity
      */
     public void initializeEntity(Store<EntityStore> store, Ref<EntityStore> entityRef) {
-        NameplateAPI.register(store, entityRef, "health", "67/67");
-        NameplateAPI.register(store, entityRef, "guild", "[Warriors]");
-        NameplateAPI.register(store, entityRef, "title", "The Brave");
-        NameplateAPI.register(store, entityRef, "rank", "VIP");
-        NameplateAPI.register(store, entityRef, "lifetime", "0s");
+        NameplateAPI.setText(store, entityRef, "health", "67/67");
+        NameplateAPI.setText(store, entityRef, "guild", "[Warriors]");
+        NameplateAPI.setText(store, entityRef, "title", "The Brave");
+        NameplateAPI.setText(store, entityRef, "rank", "VIP");
+        NameplateAPI.setText(store, entityRef, "lifetime", "0s");
     }
 
     /**
-     * Mark an entity as elite — updates just the "tier" segment.
+     * Mark an entity as elite - updates just the "tier" segment.
      *
      * @param store     the entity store
      * @param entityRef reference to the entity
      */
     public void markElite(Store<EntityStore> store, Ref<EntityStore> entityRef) {
-        NameplateAPI.register(store, entityRef, "tier", "[Elite]");
+        NameplateAPI.setText(store, entityRef, "tier", "[Elite]");
     }
 
     /**
@@ -137,7 +134,7 @@ public final class NameplateExamplePlugin extends JavaPlugin {
      * @param entityRef reference to the entity
      */
     public void removeElite(Store<EntityStore> store, Ref<EntityStore> entityRef) {
-        NameplateAPI.remove(store, entityRef, "tier");
+        NameplateAPI.clearText(store, entityRef, "tier");
     }
 
     /**
@@ -149,22 +146,22 @@ public final class NameplateExamplePlugin extends JavaPlugin {
      * @param max       max health
      */
     public void updateHealth(Store<EntityStore> store, Ref<EntityStore> entityRef, int current, int max) {
-        NameplateAPI.register(store, entityRef, "health", current + "/" + max);
+        NameplateAPI.setText(store, entityRef, "health", current + "/" + max);
     }
 
     /**
-     * Apply boss overrides — multiple segments on the same entity.
+     * Apply boss overrides - multiple segments on the same entity.
      *
      * <p>Different systems can independently set their own segments.
-     * The component holds all entries in a single map — no conflicts.</p>
+     * The component holds all entries in a single map - no conflicts.</p>
      *
      * @param store     the entity store
      * @param entityRef reference to the entity
      */
     public void applyBossOverrides(Store<EntityStore> store, Ref<EntityStore> entityRef) {
-        NameplateAPI.register(store, entityRef, "health", "1000/1000");
-        NameplateAPI.register(store, entityRef, "tier", "[World Boss]");
-        NameplateAPI.register(store, entityRef, "quest", "[!!] Final Boss");
+        NameplateAPI.setText(store, entityRef, "health", "1000/1000");
+        NameplateAPI.setText(store, entityRef, "tier", "[World Boss]");
+        NameplateAPI.setText(store, entityRef, "quest", "[!!] Final Boss");
     }
 
     /**
@@ -174,7 +171,7 @@ public final class NameplateExamplePlugin extends JavaPlugin {
      * @param entityRef reference to the entity
      */
     public void removeBuff(Store<EntityStore> store, Ref<EntityStore> entityRef) {
-        NameplateAPI.remove(store, entityRef, "buff");
+        NameplateAPI.clearText(store, entityRef, "buff");
     }
 
     /**

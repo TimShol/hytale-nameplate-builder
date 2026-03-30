@@ -11,54 +11,46 @@ import java.util.List;
 /**
  * Static entry point for the Nameplate Builder API.
  *
- * <p>Mods use this class to describe their nameplate segments (for the player UI)
- * and to register/remove nameplate text on individual entities.</p>
+ * <p>Mods use this class to define nameplate segments and optionally provide
+ * resolver functions that compute segment values per entity. For segments that
+ * need per-entity state or event-driven updates, use {@link #setText} to push
+ * values manually.</p>
  *
- * <h3>Quick start</h3>
+ * <h3>Resolver pattern (preferred)</h3>
  * <pre>{@code
- * // In setup() — describe your segment for the UI (optional but recommended)
- * NameplateAPI.describe(this, "health", "Health Bar");
- *
- * // At runtime — register nameplate text to an entity
- * NameplateAPI.register(store, entityRef, "health", "67/67");
- *
- * // Update when value changes — just call register() again
- * NameplateAPI.register(store, entityRef, "health", "23/67");
- *
- * // Remove a single segment from an entity
- * NameplateAPI.remove(store, entityRef, "health");
- *
- * // Remove all nameplate data from an entity
- * store.tryRemoveComponent(entityRef, NameplateAPI.getComponentType());
+ * // In setup() - define your segment with a resolver
+ * NameplateAPI.define(this, "health", "Health", SegmentTarget.ALL, "67/69")
+ *     .requires(EntityStatMap.getComponentType())
+ *     .resolver((store, entityRef, variant) -> {
+ *         EntityStatMap stats = store.getComponent(entityRef, statMapType);
+ *         if (stats == null) return null;
+ *         return Math.round(stats.get(health).get()) + "/" + Math.round(stats.get(health).getMax());
+ *     });
  * }</pre>
  *
- * <h3>Attaching nameplates to NPCs on spawn</h3>
- * <p>The recommended approach is an {@code EntityTickingSystem} that queries for
- * {@code NPCEntity}, checks the role name, and calls {@link #register} on entities
- * that don't yet have a {@link NameplateData} component. The first {@code register()}
- * call creates and attaches the component automatically, so subsequent ticks skip
- * the entity. See {@code ArchaeopteryxNameplateSystem} in the example mod for a
- * full working implementation.</p>
+ * <h3>Manual pattern (for stateful or event-driven segments)</h3>
+ * <pre>{@code
+ * // In setup() - define the segment for the UI
+ * NameplateAPI.define(this, "buff", "Active Buff", SegmentTarget.NPCS, "Shield +5");
  *
- * <h3>Tick-based updates</h3>
- * <p>Calling {@link #register} every tick is safe — it updates the internal map
- * value in place without adding or removing the component, so there is no
- * flashing. For direct access inside a tick system, use
- * {@link NameplateData#setText} on the component instance instead.</p>
+ * // At runtime - push text to a specific entity
+ * NameplateAPI.setText(store, entityRef, "buff", "Shield +5");
+ *
+ * // Clear when the buff expires
+ * NameplateAPI.clearText(store, entityRef, "buff");
+ * }</pre>
  *
  * <h3>Death cleanup</h3>
  * <p>When an entity receives a {@code DeathComponent}, the aggregator
  * automatically sends an empty nameplate to all viewers and removes the
- * {@link NameplateData} component. Mods do not need to handle death cleanup
- * themselves — nameplates are cleared as soon as the entity dies.</p>
+ * {@link NameplateData} component. Mods do not need to handle death cleanup.</p>
  *
  * <p><b>Dependency:</b> your mod's {@code manifest.json} must declare
- * {@code "Frotty27:NameplateBuilder": "*"} in its Dependencies to ensure
- * the API is available before your plugin loads.</p>
+ * {@code "Frotty27:NameplateBuilder": "*"} in its Dependencies.</p>
  *
+ * @see SegmentResolver
+ * @see SegmentBuilder
  * @see NameplateData
- * @see NameplateNotInitializedException
- * @see NameplateArgumentException
  */
 public final class NameplateAPI {
 
@@ -68,14 +60,10 @@ public final class NameplateAPI {
     private NameplateAPI() {
     }
 
-    // ── Internal setters (called by NameplateBuilder server plugin) ──
-    // These must be public for cross-module access but are NOT part of the mod API.
-    // External mods should never call these — doing so will break the system.
-
     /**
      * Called internally by the NameplateBuilder server plugin during startup.
      *
-     * <p><b>Internal — do not call from external mods.</b></p>
+     * <p><b>Internal - do not call from external mods.</b></p>
      */
     public static void setRegistry(INameplateRegistry registry) {
         NameplateAPI.registry = registry;
@@ -84,76 +72,62 @@ public final class NameplateAPI {
     /**
      * Called internally after registering the {@link NameplateData} component.
      *
-     * <p><b>Internal — do not call from external mods.</b></p>
+     * <p><b>Internal - do not call from external mods.</b></p>
      */
     public static void setComponentType(ComponentType<EntityStore, NameplateData> type) {
         NameplateAPI.componentType = type;
     }
 
-    // ── Describe (UI metadata) ──
+    // ── Define (segment registration) ──
 
     /**
-     * Describe a nameplate segment for the player UI.
-     *
-     * <p>This registers UI metadata (display name, author) so the Nameplate Builder
-     * UI can show a human-readable block for this segment. Calling this is
-     * <b>optional</b> — if skipped, the UI will show the raw segment ID instead.</p>
-     *
-     * <p>Defaults the target to {@link SegmentTarget#ALL} and no example text. Use
-     * {@link #describe(JavaPlugin, String, String, SegmentTarget, String)} to specify
-     * a more specific target and an example.</p>
-     *
-     * <p>Call once during your plugin's {@code setup()} method:</p>
-     * <pre>{@code
-     * NameplateAPI.describe(this, "health", "Health Bar");
-     * }</pre>
+     * Define a nameplate segment with default target ({@link SegmentTarget#ALL})
+     * and no example text.
      *
      * @param plugin      the plugin owning this segment
      * @param segmentId   a unique identifier for this segment within your plugin
      * @param displayName human-readable name shown in the Nameplate Builder UI
+     * @return a {@link SegmentBuilder} to configure resolver, requirements, and caching
      * @throws NameplateArgumentException       if any parameter is null or blank
      * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
      */
-    public static void describe(JavaPlugin plugin, String segmentId, String displayName) {
-        describe(plugin, segmentId, displayName, SegmentTarget.ALL, null);
+    public static SegmentBuilder define(JavaPlugin plugin, String segmentId, String displayName) {
+        return define(plugin, segmentId, displayName, SegmentTarget.ALL, null);
     }
 
     /**
-     * Describe a nameplate segment for the player UI, with an entity target hint.
-     *
-     * <p>Defaults to no example text. Use
-     * {@link #describe(JavaPlugin, String, String, SegmentTarget, String)} to also
-     * provide an example.</p>
+     * Define a nameplate segment with an entity target hint.
      *
      * @param plugin      the plugin owning this segment
      * @param segmentId   a unique identifier for this segment within your plugin
      * @param displayName human-readable name shown in the Nameplate Builder UI
      * @param target      the entity target hint shown as a tag in the UI
+     * @return a {@link SegmentBuilder} to configure resolver, requirements, and caching
      * @throws NameplateArgumentException       if any parameter is null or blank
      * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
      * @see SegmentTarget
      */
-    public static void describe(JavaPlugin plugin, String segmentId, String displayName, SegmentTarget target) {
-        describe(plugin, segmentId, displayName, target, null);
+    public static SegmentBuilder define(JavaPlugin plugin, String segmentId, String displayName, SegmentTarget target) {
+        return define(plugin, segmentId, displayName, target, null);
     }
 
     /**
-     * Describe a nameplate segment for the player UI, with an entity target hint
-     * and an example value.
+     * Define a nameplate segment with an entity target hint and example value.
      *
      * <p>The {@link SegmentTarget} is shown as a tag in the UI (e.g. {@code [Players]},
-     * {@code [NPCs]}) so players know which entities the segment is relevant to.
-     * This is purely informational — it does not restrict which entities the segment
-     * can be registered on at runtime.</p>
+     * {@code [NPCs]}) so players know which entities the segment is relevant to.</p>
      *
-     * <p>The {@code example} is shown in the Nameplate Builder UI as a preview of
-     * what this segment typically looks like at runtime. It helps players understand
-     * what the segment shows before they enable it. Pass {@code null} for no example.</p>
+     * <p>The {@code example} is shown as a preview in the UI. Pass {@code null}
+     * for no example.</p>
      *
+     * <p>Chain {@link SegmentBuilder#resolver} to provide a value function:</p>
      * <pre>{@code
-     * NameplateAPI.describe(this, "health", "Health Bar", SegmentTarget.ALL, "67/67");
-     * NameplateAPI.describe(this, "tier", "Elite Tier", SegmentTarget.NPCS, "(Common, ...)");
-     * NameplateAPI.describe(this, "guild", "Guild Tag", SegmentTarget.PLAYERS, "[Warriors]");
+     * NameplateAPI.define(this, "tier", "Elite Tier", SegmentTarget.NPCS, "Legendary")
+     *     .requires(TierComponent.getComponentType())
+     *     .resolver((store, ref, variant) -> {
+     *         TierComponent tier = store.getComponent(ref, tierType);
+     *         return tier != null ? tier.getName() : null;
+     *     });
      * }</pre>
      *
      * @param plugin      the plugin owning this segment
@@ -161,33 +135,35 @@ public final class NameplateAPI {
      * @param displayName human-readable name shown in the Nameplate Builder UI
      * @param target      the entity target hint shown as a tag in the UI
      * @param example     example value shown in the UI (nullable)
+     * @return a {@link SegmentBuilder} to configure resolver, requirements, and caching
      * @throws NameplateArgumentException       if any parameter is null or blank
      * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
+     * @see SegmentBuilder
      * @see SegmentTarget
      */
-    public static void describe(JavaPlugin plugin, String segmentId, String displayName, SegmentTarget target, String example) {
+    public static SegmentBuilder define(JavaPlugin plugin, String segmentId, String displayName, SegmentTarget target, String example) {
         requireNonNull(plugin, "plugin");
         requireNonBlank(segmentId, "segmentId");
         requireNonBlank(displayName, "displayName");
         requireNonNull(target, "target");
-        getRegistry().describe(plugin, segmentId, displayName, target, example);
+        return getRegistry().define(plugin, segmentId, displayName, target, example);
     }
 
     /**
-     * Remove a segment description from the UI.
+     * Remove a segment definition from the UI.
      *
      * <p>After this call the segment will no longer appear in the Nameplate Builder UI.
      * Existing {@link NameplateData} components on entities are <b>not</b> affected.</p>
      *
-     * @param plugin    the plugin that described the segment
+     * @param plugin    the plugin that defined the segment
      * @param segmentId the segment identifier
      * @throws NameplateArgumentException       if any parameter is null or blank
      * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
      */
-    public static void undescribe(JavaPlugin plugin, String segmentId) {
+    public static void undefine(JavaPlugin plugin, String segmentId) {
         requireNonNull(plugin, "plugin");
         requireNonBlank(segmentId, "segmentId");
-        getRegistry().undescribe(plugin, segmentId);
+        getRegistry().undefine(plugin, segmentId);
     }
 
     // ── Format Variants ──
@@ -199,78 +175,66 @@ public final class NameplateAPI {
      * a health segment might offer {@code ["Current/Max", "Percentage"]} so the
      * player can toggle between {@code "42/67"} and {@code "63%"}.</p>
      *
-     * <p>The {@code variantNames} list describes all variants including the default
-     * (index 0). At runtime, push variant texts using suffixed keys in
-     * {@link NameplateData}:</p>
-     * <pre>{@code
-     * // In your tick system:
-     * data.setText("health",   "42/67");  // variant 0 (default)
-     * data.setText("health.1", "63%");    // variant 1
-     * }</pre>
+     * <p>When using resolvers, the {@code variantIndex} parameter passed to
+     * {@link SegmentResolver#resolve} corresponds to these variant names.</p>
      *
-     * <p>The player UI shows a "Format" button on segments that have variants.
-     * The aggregator automatically reads the correct variant key based on the
-     * viewer's selection.</p>
+     * <p>When using manual text ({@link #setText}), push variant texts using
+     * suffixed keys: {@code "health"} for variant 0, {@code "health.1"} for
+     * variant 1, etc.</p>
      *
      * @param plugin       the plugin owning this segment
-     * @param segmentId    the segment identifier (must match a previously described segment)
+     * @param segmentId    the segment identifier (must match a previously defined segment)
      * @param variantNames human-readable variant names (index 0 = default)
      * @throws NameplateArgumentException       if any parameter is null/blank or list is empty
      * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
      */
-    public static void describeVariants(JavaPlugin plugin, String segmentId, List<String> variantNames) {
+    public static void defineVariants(JavaPlugin plugin, String segmentId, List<String> variantNames) {
         requireNonNull(plugin, "plugin");
         requireNonBlank(segmentId, "segmentId");
         requireNonNull(variantNames, "variantNames");
         if (variantNames.isEmpty()) {
             throw new NameplateArgumentException("variantNames", "'variantNames' must not be empty");
         }
-        getRegistry().describeVariants(plugin, segmentId, variantNames);
+        getRegistry().defineVariants(plugin, segmentId, variantNames);
     }
 
-    // ── Register / Remove (per-entity text) ──
+    // ── setText / clearText (per-entity text) ──
 
     /**
-     * Register (or update) nameplate text for a segment on an entity.
+     * Set (or update) nameplate text for a segment on a specific entity.
+     *
+     * <p>Use this for segments that need per-entity state tracking or event-driven
+     * updates. For segments whose values can be computed from entity components,
+     * prefer {@link SegmentBuilder#resolver} instead.</p>
      *
      * <p>If the entity does not yet have a {@link NameplateData} component,
      * one is created and attached automatically. If the segment already has
      * text on this entity, it is overwritten.</p>
      *
-     * <pre>{@code
-     * NameplateAPI.register(store, entityRef, "health", "67/67");
-     * }</pre>
+     * <p>Manual text set via this method takes precedence over resolver values
+     * for the same segment on the same entity.</p>
      *
      * <p><b>Important:</b> this method calls {@code store.addComponent()} internally
      * when the entity doesn't already have a {@link NameplateData} component. This
-     * means it <b>cannot</b> be called from inside an {@code EntityTickingSystem}
-     * (the store is locked for writes during system processing). For tick-system
-     * initialization, build a {@link NameplateData} manually and use
-     * {@code commandBuffer.putComponent()} instead ({@code putComponent} is an
-     * upsert — safe even if another system adds the component between the read
-     * and the command buffer executing). See
-     * {@code ArchaeopteryxNameplateSystem} in the example mod.</p>
-     *
-     * <p>However, if the entity <b>already has</b> the component, this method only
-     * mutates the existing map in place — which is safe from tick systems.</p>
+     * means it <b>cannot</b> be called from inside an {@code EntityTickingSystem}.
+     * For tick-system initialization, build a {@link NameplateData} manually and use
+     * {@code commandBuffer.putComponent()} instead.</p>
      *
      * @param store     the entity store
      * @param entityRef reference to the entity
-     * @param segmentId the segment identifier (should match what was passed to {@link #describe})
+     * @param segmentId the segment identifier (should match what was passed to {@link #define})
      * @param text      the text to display
      * @throws NameplateArgumentException       if any parameter is null or blank
      * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
-     * @throws IllegalStateException            if the entity has no NameplateData and this is called
-     *                                          from inside an EntityTickingSystem (store is locked)
      */
-    public static void register(Store<EntityStore> store,
-                                Ref<EntityStore> entityRef,
-                                String segmentId,
-                                String text) {
+    public static void setText(Store<EntityStore> store,
+                               Ref<EntityStore> entityRef,
+                               String segmentId,
+                               String text) {
         requireNonNull(store, "store");
         requireNonNull(entityRef, "entityRef");
         requireNonBlank(segmentId, "segmentId");
-        requireNonBlank(text, "text", "must not be blank — use remove() to clear");
+        requireNonBlank(text, "text", "must not be blank - use clearText() to clear");
 
         ComponentType<EntityStore, NameplateData> type = getComponentType();
         NameplateData data = store.getComponent(entityRef, type);
@@ -284,24 +248,20 @@ public final class NameplateAPI {
     }
 
     /**
-     * Remove a single segment's text from an entity.
+     * Clear a single segment's text from an entity.
      *
      * <p>If the entity's {@link NameplateData} component becomes empty after
-     * removal, the component is automatically removed from the entity.</p>
-     *
-     * <pre>{@code
-     * NameplateAPI.remove(store, entityRef, "health");
-     * }</pre>
+     * removal and no resolvers apply, the component is automatically removed.</p>
      *
      * @param store     the entity store
      * @param entityRef reference to the entity
-     * @param segmentId the segment identifier to remove
+     * @param segmentId the segment identifier to clear
      * @throws NameplateArgumentException       if any parameter is null or blank
      * @throws NameplateNotInitializedException if NameplateBuilder has not loaded
      */
-    public static void remove(Store<EntityStore> store,
-                              Ref<EntityStore> entityRef,
-                              String segmentId) {
+    public static void clearText(Store<EntityStore> store,
+                                 Ref<EntityStore> entityRef,
+                                 String segmentId) {
         requireNonNull(store, "store");
         requireNonNull(entityRef, "entityRef");
         requireNonBlank(segmentId, "segmentId");
@@ -321,7 +281,7 @@ public final class NameplateAPI {
     /**
      * Returns the {@link ComponentType} for {@link NameplateData}.
      *
-     * <p>Most mods should use {@link #register} and {@link #remove} instead.
+     * <p>Most mods should use {@link #setText} and {@link #clearText} instead.
      * This is exposed for advanced use cases like bulk removal via
      * {@code store.tryRemoveComponent(ref, NameplateAPI.getComponentType())}.</p>
      *
@@ -339,7 +299,6 @@ public final class NameplateAPI {
         return current;
     }
 
-    /** Returns the backing registry, or throws if NameplateBuilder is not loaded. */
     static INameplateRegistry getRegistry() {
         INameplateRegistry current = registry;
         if (current == null) {
@@ -350,8 +309,6 @@ public final class NameplateAPI {
         }
         return current;
     }
-
-    // ── Validation helpers ──
 
     private static void requireNonNull(Object value, String parameterName) {
         if (value == null) {
