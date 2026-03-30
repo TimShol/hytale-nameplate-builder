@@ -465,6 +465,10 @@ final class AdminConfigStore {
         blacklistedNpcs.remove(npcTypeId);
     }
 
+    void clearBlacklistedNpcs() {
+        blacklistedNpcs.clear();
+    }
+
     boolean isBuiltInSegmentId(String segmentId) {
         return BUILT_IN_SEGMENT_IDS.contains(segmentId);
     }

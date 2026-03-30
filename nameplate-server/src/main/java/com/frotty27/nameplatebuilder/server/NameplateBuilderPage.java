@@ -125,8 +125,9 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     private String npcPickerSelectedItem = null;
     private final List<String> npcPickerFiltered = new ArrayList<>();
     private int blacklistPage = 0;
+    private String blacklistFilter = "";
     private static final int NPC_PICKER_ROW_COUNT = 10;
-    private static final int BLACKLIST_ROW_COUNT = 8;
+    private static final int BLACKLIST_ROW_COUNT = 18;
     private static volatile List<String> cachedNpcIds = null;
 
     private static final Map<UUID, UiState> UI_STATE = new ConcurrentHashMap<>();
@@ -286,11 +287,18 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         bindAction(events, "#AdminSubTab3", "AdminSubBlacklist");
         bindAction(events, "#AdminSubTab3Active", "AdminSubBlacklist");
         bindAction(events, "#BlacklistAddBtn", "BlacklistAdd");
+        bindAction(events, "#BlacklistRemoveFiltered", "BlacklistRemoveFiltered");
         bindAction(events, "#SaveButtonBlacklist", "SaveBlacklist");
         for (int i = 0; i < BLACKLIST_ROW_COUNT; i++) {
             bindAction(events, "#BlacklistRow" + i + "Remove", "BlacklistRemove_" + i);
         }
         bindAction(events, "#BlacklistFirst", "BlacklistFirst");
+
+        events.addEventBinding(
+                CustomUIEventBindingType.ValueChanged,
+                "#BlacklistFilterField",
+                EventData.of("@BlacklistFilter", "#BlacklistFilterField.Value"),
+                false);
         bindAction(events, "#BlacklistPrev", "BlacklistPrev");
         bindAction(events, "#BlacklistNext", "BlacklistNext");
         bindAction(events, "#BlacklistLast", "BlacklistLast");
@@ -298,6 +306,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         bindAction(events, "#NpcPickerCancel", "NpcPickerCancel");
         bindAction(events, "#NpcPickerBackdrop", "NpcPickerCancel");
         bindAction(events, "#NpcPickerAdd", "NpcPickerAddConfirm");
+        bindAction(events, "#NpcPickerAddAllFiltered", "NpcPickerAddAllFiltered");
+        bindAction(events, "#BlacklistClearAll", "BlacklistClearAll");
         for (int i = 0; i < NPC_PICKER_ROW_COUNT; i++) {
             bindAction(events, "#NpcPickerRowBtn" + i, "NpcPickerRow_" + i);
         }
@@ -461,7 +471,9 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
 
         if ((!"Save".equals(data.action) && !"SaveAdmin".equals(data.action) && !"SaveSettings".equals(data.action) && !"SaveBlacklist".equals(
-                data.action) && !"SaveAdminSettings".equals(data.action) && !"SaveAdminDis".equals(data.action))) {
+                data.action) && !"SaveAdminSettings".equals(data.action) && !"SaveAdminDis".equals(data.action)
+                && !"NpcPickerAddAllFiltered".equals(data.action) && !"BlacklistClearAll".equals(data.action)
+                && !"BlacklistRemoveFiltered".equals(data.action))) {
             saveMessage = null;
         }
 
@@ -500,6 +512,11 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 npcPickerSelectedItem = null;
                 npcPickerDirty = true;
             }
+        }
+
+        if (data.blacklistFilter != null) {
+            blacklistFilter = data.blacklistFilter.trim();
+            blacklistPage = 0;
         }
 
         if (data.sepText != null) {
@@ -672,6 +689,52 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     adminConfig.addBlacklistedNpc(npcPickerSelectedItem);
                     adminConfig.save();
                     closeNpcPicker();
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "NpcPickerAddAllFiltered" -> {
+                if (isAdmin && !npcPickerFilter.isEmpty() && !npcPickerFiltered.isEmpty()) {
+                    int count = npcPickerFiltered.size();
+                    for (String npcId : npcPickerFiltered) {
+                        adminConfig.addBlacklistedNpc(npcId);
+                    }
+                    adminConfig.save();
+                    closeNpcPicker();
+                    saveMessage = "Added " + count + " NPCs to blacklist!";
+                    saveMessageSuccess = true;
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "BlacklistClearAll" -> {
+                if (isAdmin) {
+                    adminConfig.clearBlacklistedNpcs();
+                    adminConfig.save();
+                    blacklistPage = 0;
+                    blacklistFilter = "";
+                    saveMessage = "Blacklist cleared!";
+                    saveMessageSuccess = true;
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            case "BlacklistRemoveFiltered" -> {
+                if (isAdmin && !blacklistFilter.isEmpty()) {
+                    String lowerFilter = blacklistFilter.toLowerCase(java.util.Locale.ROOT);
+                    List<String> toRemove = new ArrayList<>();
+                    for (String npcId : adminConfig.getBlacklistedNpcs()) {
+                        if (npcId.toLowerCase(java.util.Locale.ROOT).contains(lowerFilter)) {
+                            toRemove.add(npcId);
+                        }
+                    }
+                    for (String npcId : toRemove) {
+                        adminConfig.removeBlacklistedNpc(npcId);
+                    }
+                    adminConfig.save();
+                    blacklistPage = 0;
+                    saveMessage = "Removed " + toRemove.size() + " NPCs from blacklist!";
+                    saveMessageSuccess = true;
                 }
                 sendUpdate(buildUpdate());
                 return;
@@ -963,8 +1026,12 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             int row = parseRowIndex(data.action, "BlacklistRemove_");
             List<String> blacklist = new ArrayList<>(adminConfig.getBlacklistedNpcs());
             blacklist.sort(String.CASE_INSENSITIVE_ORDER);
+            if (!blacklistFilter.isEmpty()) {
+                String lowerFilter = blacklistFilter.toLowerCase(java.util.Locale.ROOT);
+                blacklist.removeIf(npcId -> !npcId.toLowerCase(java.util.Locale.ROOT).contains(lowerFilter));
+            }
             int index = blacklistPage * BLACKLIST_ROW_COUNT + row;
-            if (index >= 0 && index <blacklist.size()) {
+            if (index >= 0 && index < blacklist.size()) {
                 adminConfig.removeBlacklistedNpc(blacklist.get(index));
                 adminConfig.save();
             }
@@ -2830,20 +2897,36 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
     private void fillBlacklist(UICommandBuilder commands) {
-        List<String> blacklist = new ArrayList<>(adminConfig.getBlacklistedNpcs());
-        blacklist.sort(String.CASE_INSENSITIVE_ORDER);
+        List<String> allBlacklisted = new ArrayList<>(adminConfig.getBlacklistedNpcs());
+        allBlacklisted.sort(String.CASE_INSENSITIVE_ORDER);
+
+        List<String> filtered;
+        if (blacklistFilter.isEmpty()) {
+            filtered = allBlacklisted;
+        } else {
+            String lowerFilter = blacklistFilter.toLowerCase(java.util.Locale.ROOT);
+            filtered = new ArrayList<>();
+            for (String npcId : allBlacklisted) {
+                if (npcId.toLowerCase(java.util.Locale.ROOT).contains(lowerFilter)) {
+                    filtered.add(npcId);
+                }
+            }
+        }
+
+        commands.set("#BlacklistFilterField.Value", blacklistFilter);
+        commands.set("#BlacklistRemoveFiltered.Visible", !blacklistFilter.isEmpty() && !filtered.isEmpty());
 
         int start = blacklistPage * BLACKLIST_ROW_COUNT;
-        int totalPages = Math.max(1, (int) Math.ceil(blacklist.size() / (double) BLACKLIST_ROW_COUNT));
+        int totalPages = Math.max(1, (int) Math.ceil(filtered.size() / (double) BLACKLIST_ROW_COUNT));
         if (blacklistPage >= totalPages) blacklistPage = totalPages - 1;
 
-        commands.set("#BlacklistEmpty.Visible", blacklist.isEmpty());
+        commands.set("#BlacklistEmpty.Visible", filtered.isEmpty());
 
         for (int i = 0; i < BLACKLIST_ROW_COUNT; i++) {
             int index = start + i;
-            if (index < blacklist.size()) {
+            if (index < filtered.size()) {
                 commands.set("#BlacklistRow" + i + ".Visible", true);
-                commands.set("#BlacklistRow" + i + "Label.Text", blacklist.get(index));
+                commands.set("#BlacklistRow" + i + "Label.Text", filtered.get(index));
             } else {
                 commands.set("#BlacklistRow" + i + ".Visible", false);
             }
@@ -2892,6 +2975,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
         commands.set("#NpcPickerSelectedLabel.Text", npcPickerSelectedItem != null ? npcPickerSelectedItem : "None");
         commands.set("#NpcPickerAdd.Visible", npcPickerSelectedItem != null);
+        commands.set("#NpcPickerAddAllFiltered.Visible", !npcPickerFilter.isEmpty() && !npcPickerFiltered.isEmpty());
     }
 
     private void fillPreviewTargets(UICommandBuilder commands) {

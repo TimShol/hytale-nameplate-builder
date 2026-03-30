@@ -2,6 +2,15 @@
 
 All notable changes to NameplateBuilder Server will be documented in this file.
 
+## [4.260326.1] - 2026-03-30
+
+### Added
+- **Blacklist filter** - Filter the blacklist by name to quickly find specific NPCs
+- **Add All Filtered** - Add all NPCs matching the current filter to the blacklist at once from the NPC picker
+- **Remove Filtered** - Remove all blacklisted NPCs matching the current filter
+- **Clear Blacklist** - Remove all blacklisted NPCs at once
+- **Blacklist now shows 18 entries per page** - Up from 8, with compact row spacing
+
 ## [4.260326.0] - 2026-03-30
 
 ### Added

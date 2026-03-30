@@ -53,6 +53,10 @@ final class SettingsData {
                     (SettingsData data, String value) -> data.npcPickerFilter = value,
                     (SettingsData data) -> data.npcPickerFilter)
             .add()
+            .append(new KeyedCodec<>("@BlacklistFilter", Codec.STRING),
+                    (SettingsData data, String value) -> data.blacklistFilter = value,
+                    (SettingsData data) -> data.blacklistFilter)
+            .add()
             .build();
 
 
@@ -77,4 +81,6 @@ final class SettingsData {
     String barEmptyText;
 
     String npcPickerFilter;
+
+    String blacklistFilter;
 }
