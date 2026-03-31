@@ -111,12 +111,38 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
 
             EntityStatMap statMap = store.getComponent(entityRef, statMapType);
 
-            if (debugEnabled) {
-                String roleName = npcEntity != null ? npcEntity.getRoleName() : "null";
+            if (debugEnabled && npcEntity != null) {
+                String roleName = npcEntity.getRoleName();
+                String npcTypeId = npcEntity.getNPCTypeId();
+                int roleIndex = npcEntity.getRoleIndex();
                 boolean hasStatMap = statMap != null;
                 boolean hasHealth = hasStatMap && statMap.get(DefaultEntityStatTypes.getHealth()) != null;
-                LOGGER.atInfo().log("[Seed] NPC: roleName=%s hasStatMap=%s health=%s hasNPCEntity=%s",
-                        roleName, hasStatMap, hasHealth, npcEntity != null);
+
+                String assetOwner = "unknown";
+                try {
+                    var builderInfo = com.hypixel.hytale.server.npc.NPCPlugin.get().getRoleBuilderInfo(roleIndex);
+                    if (builderInfo != null) {
+                        assetOwner = "path=" + builderInfo.getPath() + " key=" + builderInfo.getKeyName();
+                    }
+                } catch (Throwable t) {
+                    assetOwner = "error: " + t.getMessage();
+                }
+
+                String pluginGroups = "n/a";
+                try {
+                    var plugins = com.hypixel.hytale.server.core.plugin.PluginManager.get().getPlugins();
+                    StringBuilder groups = new StringBuilder();
+                    for (var plugin : plugins) {
+                        if (!groups.isEmpty()) groups.append(", ");
+                        groups.append(plugin.getIdentifier().getGroup()).append(":").append(plugin.getIdentifier().getName());
+                    }
+                    pluginGroups = groups.toString();
+                } catch (Throwable t) {
+                    pluginGroups = "error: " + t.getMessage();
+                }
+
+                LOGGER.atInfo().log("[Seed] NPC: roleName=%s npcTypeId=%s roleIndex=%d hasStatMap=%s health=%s assetOwner=[%s] loadedPlugins=[%s]",
+                        roleName, npcTypeId, roleIndex, hasStatMap, hasHealth, assetOwner, pluginGroups);
             }
 
             if (statMap != null) {

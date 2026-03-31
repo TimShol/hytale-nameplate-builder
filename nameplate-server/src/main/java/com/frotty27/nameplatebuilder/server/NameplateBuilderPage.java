@@ -22,7 +22,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
-    private static final int CHAIN_PAGE_SIZE = 4;
+    private static final int MAX_CHAIN_BLOCKS = 50;
+    private static final int MAX_PREVIEW_TARGETS = 8;
     private static final int AVAIL_PAGE_SIZE = 8;
     private static final int ADMIN_PAGE_SIZE = 7;
     private static final int MOD_NAME_MAX_LENGTH = 24;
@@ -63,7 +64,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     private String filter = "";
     private String adminFilter = "";
     private int availPage = 0;
-    private int chainPage = 0;
     private int adminLeftPage = 0;
     private int adminRightPage = 0;
     private AdminSubTab adminSubTab = AdminSubTab.REQUIRED;
@@ -158,7 +158,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             }
             this.filter = state.filter();
             this.availPage = state.availPage();
-            this.chainPage = state.chainPage();
             this.adminLeftPage = state.adminLeftPage();
             this.adminRightPage = state.adminRightPage();
             this.adminSubTab = state.adminSubTab() != null ? state.adminSubTab() : AdminSubTab.REQUIRED;
@@ -234,14 +233,14 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         bindAction(events, "#NextAdminRight", "NextAdminRight");
 
 
-        for (int i = 0; i < CHAIN_PAGE_SIZE; i++) {
+        for (int i = 0; i < MAX_CHAIN_BLOCKS; i++) {
             bindAction(events, "#ChainBlock" + i + "Left", "Left_" + i);
             bindAction(events, "#ChainBlock" + i + "Right", "Right_" + i);
             bindAction(events, "#ChainBlock" + i + "Remove", "Remove_" + i);
         }
 
 
-        for (int i = 0; i < CHAIN_PAGE_SIZE; i++) {
+        for (int i = 0; i < MAX_CHAIN_BLOCKS; i++) {
             bindAction(events, "#ChainSep" + i, "EditSep_" + i);
         }
 
@@ -387,7 +386,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         bindAction(events, "#SepCancel", "SepCancel");
 
 
-        for (int i = 0; i < CHAIN_PAGE_SIZE; i++) {
+        for (int i = 0; i < MAX_CHAIN_BLOCKS; i++) {
             bindAction(events, "#ChainBlock" + i + "Format", "Format_" + i);
         }
 
@@ -426,7 +425,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         bindAction(events, "#InstLast", "InstLast");
         bindAction(events, "#SaveButtonSettings", "SaveSettings");
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < MAX_PREVIEW_TARGETS; i++) {
             bindAction(events, "#PreviewTargetBtn" + i, "PreviewTarget_" + i);
             bindAction(events, "#PreviewTargetBtn" + i + "Active", "PreviewTarget_" + i);
         }
@@ -592,7 +591,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     adminSubTab = AdminSubTab.ORDER;
                     adminOrderIsNpc = true;
                     chainSubTab = ChainSubTab.CHAIN;
-                    chainPage = 0;
                     availPage = 0;
                 }
                 sendUpdate(buildUpdate());
@@ -604,7 +602,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     adminSubTab = AdminSubTab.ORDER;
                     adminOrderIsNpc = false;
                     chainSubTab = ChainSubTab.CHAIN;
-                    chainPage = 0;
                     availPage = 0;
                 }
                 sendUpdate(buildUpdate());
@@ -922,16 +919,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 sendUpdate(buildUpdate());
                 return;
             }
-            case "PrevChain" -> {
-                chainPage = Math.max(0, chainPage - 1);
-                sendUpdate(buildUpdate());
-                return;
-            }
-            case "NextChain" -> {
-                chainPage = chainPage + 1;
-                sendUpdate(buildUpdate());
-                return;
-            }
             case "PrevAdminLeft" -> {
                 adminLeftPage = Math.max(0, adminLeftPage - 1);
                 sendUpdate(buildUpdate());
@@ -966,7 +953,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             }
             case "ClearChain" -> {
                 clearChain();
-                chainPage = 0;
                 sendUpdate(buildUpdate());
                 return;
             }
@@ -1165,7 +1151,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         if (data.action.startsWith("EditSep_")) {
             int sepIndex = parseRowIndex(data.action, "EditSep_");
             List<SegmentView> chain = getChainViews();
-            int absoluteIndex = chainPage * CHAIN_PAGE_SIZE + sepIndex;
+            int absoluteIndex = sepIndex;
             if (absoluteIndex >= 0 && absoluteIndex < chain.size()) {
                 editingSepIndex = sepIndex;
                 SegmentKey blockKey = chain.get(absoluteIndex).key();
@@ -1181,7 +1167,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         if ("SepConfirm".equals(data.action)) {
             if (editingSepIndex >= 0) {
                 List<SegmentView> chain = getChainViews();
-                int absoluteIndex = chainPage * CHAIN_PAGE_SIZE + editingSepIndex;
+                int absoluteIndex = editingSepIndex;
                 if (absoluteIndex >= 0 && absoluteIndex < chain.size()) {
                     SegmentKey blockKey = chain.get(absoluteIndex).key();
                     String entityType = tabEntityType();
@@ -1409,7 +1395,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         filter = "";
         adminFilter = "";
         availPage = 0;
-        chainPage = 0;
         adminLeftPage = 0;
         adminRightPage = 0;
         adminSubTab = AdminSubTab.REQUIRED;
@@ -1687,9 +1672,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         List<SegmentView> available = getAvailableViews();
 
         int totalAvailPages = Math.max(1, (int) Math.ceil(available.size() / (double) AVAIL_PAGE_SIZE));
-        int totalChainPages = Math.max(1, (int) Math.ceil(chain.size() / (double) CHAIN_PAGE_SIZE));
         if (availPage >= totalAvailPages) availPage = totalAvailPages - 1;
-        if (chainPage >= totalChainPages) chainPage = totalChainPages - 1;
 
         boolean isNpcContext = isAdminOrder ? adminOrderIsNpc : (activeTab == ActiveTab.NPCS);
         boolean chainLocked = isNpcContext ? adminConfig.isNpcChainLocked() : adminConfig.isPlayerChainLocked();
@@ -1704,7 +1687,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
         commands.set("#ChainLockedNotice.Visible", !isAdmin && chainLocked);
 
-        fillChain(commands, chain, totalChainPages, chainLocked);
+        fillChain(commands, chain, chainLocked);
         fillAvailable(commands, available, totalAvailPages, chainLocked);
 
         fillPreviewTargets(commands);
@@ -1982,7 +1965,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
     private void persistUiState() {
-        UI_STATE.put(viewerUuid, new UiState(activeTab, filter, availPage, chainPage,
+        UI_STATE.put(viewerUuid, new UiState(activeTab, filter, availPage, 0,
                 adminLeftPage, adminRightPage, adminSubTab, adminDisLeftPage, adminDisRightPage, disabledPage,
                 "", chainSubTab));
     }
@@ -2005,18 +1988,17 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         commands.set(base + "Active.Visible", active);
     }
 
-    private void fillChain(UICommandBuilder commands, List<SegmentView> chain, int totalPages, boolean chainLocked) {
+    private void fillChain(UICommandBuilder commands, List<SegmentView> chain, boolean chainLocked) {
         boolean hasChain = !chain.isEmpty();
         boolean singleBlock = chain.size() <= 1;
         boolean editable = !chainLocked;
         commands.set("#ChainEmpty.Visible", !hasChain);
         commands.set("#ChainStrip.Visible", hasChain);
 
-        int start = chainPage * CHAIN_PAGE_SIZE;
-        int end = Math.min(chain.size(), start + CHAIN_PAGE_SIZE);
+        int end = Math.min(chain.size(), MAX_CHAIN_BLOCKS);
 
-        for (int i = 0; i < CHAIN_PAGE_SIZE; i++) {
-            int index = start + i;
+        for (int i = 0; i < MAX_CHAIN_BLOCKS; i++) {
+            int index = i;
             boolean visible = index < end;
             String prefix = "#ChainBlock" + i;
             commands.set(prefix + ".Visible", visible);
@@ -2103,8 +2085,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             }
 
 
-            if (i < CHAIN_PAGE_SIZE - 1) {
-                boolean sepVisible = visible && (start + i + 1) < end;
+            if (i < MAX_CHAIN_BLOCKS - 1) {
+                boolean sepVisible = visible && (i + 1) < end;
                 String sepId = "#ChainSep" + i;
                 commands.set(sepId + ".Visible", sepVisible);
                 if (sepVisible) {
@@ -2117,26 +2099,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
 
 
-        {
-            int lastOnPage = start + CHAIN_PAGE_SIZE - 1;
-            boolean trailingSepVisible = lastOnPage < chain.size() && (lastOnPage + 1) < chain.size();
-            commands.set("#ChainSep3.Visible", trailingSepVisible);
-            if (trailingSepVisible) {
-                SegmentKey blockKey = chain.get(lastOnPage).key();
-                String sep = preferences.getSeparatorAfter(chainViewerUuid(), tabEntityType(), blockKey);
-                String displaySep = sep.isEmpty() ? "." : sep;
-                commands.set("#ChainSep3.Text", displaySep);
-            }
-        }
-
-
-        boolean showPagination = totalPages > 1;
-        commands.set("#PrevChain.Visible", showPagination);
-        commands.set("#ChainPageLabel.Visible", showPagination);
-        commands.set("#NextChain.Visible", showPagination);
-        if (showPagination) {
-            commands.set("#ChainPageLabel.Text", "Page " + (chainPage + 1) + "/" + totalPages);
-        }
     }
 
 
@@ -2651,7 +2613,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     private SegmentView getAvailableRow(int row) {
         List<SegmentView> list = getAvailableViews();
         int start = availPage * AVAIL_PAGE_SIZE;
-        int index = start + row;
+        int index = row;
         if (index < 0 || index >= list.size()) {
             return null;
         }
@@ -2660,8 +2622,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
     private SegmentView getChainRow(int row) {
         List<SegmentView> list = getChainViews();
-        int start = chainPage * CHAIN_PAGE_SIZE;
-        int index = start + row;
+        int index = row;
         if (index < 0 || index >= list.size()) {
             return null;
         }
@@ -2990,7 +2951,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return;
         }
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < MAX_PREVIEW_TARGETS; i++) {
             if (i < profileNames.size()) {
                 commands.set("#PreviewTarget" + i + ".Visible", true);
                 String name = profileNames.get(i);

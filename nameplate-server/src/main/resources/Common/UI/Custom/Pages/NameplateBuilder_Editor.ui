@@ -431,13 +431,11 @@ $C.@PageOverlay {
                 TextButton #ChainBlock0Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
               }
             }
-
             $C.@SmallSecondaryTextButton #ChainSep0 {
               @Text = "-";
               Anchor: (Width: 28, Height: 122);
               Visible: false;
             }
-
             Group #ChainBlock1 {
               Anchor: (Width: 176, Height: 122);
               Background: (Color: #1a2840);
@@ -463,13 +461,11 @@ $C.@PageOverlay {
                 TextButton #ChainBlock1Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
               }
             }
-
             $C.@SmallSecondaryTextButton #ChainSep1 {
               @Text = "-";
               Anchor: (Width: 28, Height: 122);
               Visible: false;
             }
-
             Group #ChainBlock2 {
               Anchor: (Width: 176, Height: 122);
               Background: (Color: #1a2840);
@@ -495,13 +491,11 @@ $C.@PageOverlay {
                 TextButton #ChainBlock2Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
               }
             }
-
             $C.@SmallSecondaryTextButton #ChainSep2 {
               @Text = "-";
               Anchor: (Width: 28, Height: 122);
               Visible: false;
             }
-
             Group #ChainBlock3 {
               Anchor: (Width: 176, Height: 122);
               Background: (Color: #1a2840);
@@ -527,105 +521,1465 @@ $C.@PageOverlay {
                 TextButton #ChainBlock3Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
               }
             }
-
             $C.@SmallSecondaryTextButton #ChainSep3 {
               @Text = "-";
               Anchor: (Width: 28, Height: 122);
               Visible: false;
             }
-          }
-
-          Group #ChainPagination {
-            LayoutMode: Left;
-            Anchor: (Height: 24, Top: 8, Bottom: 15);
-            Padding: (Left: 331, Right: 331);
-
-            TextButton #PrevChain {
-              Text: "<";
-              Anchor: (Width: 24, Height: 24, Right: 6);
-              Style: @PaginationButtonStyle;
+            Group #ChainBlock4 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock4Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock4Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock4Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock4TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock4Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock4BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock4Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock4Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock4Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock4BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock4BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock4ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock4Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock4Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep4 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock5 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock5Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock5Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock5Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock5TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock5Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock5BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock5Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock5Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock5Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock5BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock5BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock5ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock5Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock5Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep5 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock6 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock6Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock6Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock6Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock6TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock6Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock6BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock6Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock6Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock6Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock6BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock6BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock6ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock6Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock6Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep6 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock7 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock7Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock7Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock7Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock7TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock7Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock7BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock7Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock7Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock7Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock7BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock7BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock7ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock7Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock7Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep7 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock8 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock8Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock8Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock8Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock8TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock8Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock8BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock8Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock8Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock8Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock8BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock8BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock8ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock8Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock8Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep8 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock9 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock9Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock9Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock9Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock9TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock9Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock9BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock9Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock9Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock9Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock9BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock9BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock9ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock9Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock9Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep9 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock10 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock10Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock10Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock10Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock10TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock10Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock10BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock10Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock10Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock10Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock10BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock10BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock10ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock10Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock10Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep10 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock11 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock11Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock11Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock11Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock11TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock11Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock11BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock11Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock11Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock11Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock11BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock11BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock11ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock11Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock11Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep11 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock12 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock12Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock12Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock12Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock12TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock12Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock12BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock12Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock12Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock12Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock12BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock12BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock12ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock12Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock12Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep12 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock13 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock13Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock13Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock13Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock13TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock13Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock13BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock13Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock13Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock13Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock13BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock13BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock13ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock13Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock13Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep13 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock14 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock14Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock14Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock14Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock14TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock14Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock14BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock14Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock14Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock14Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock14BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock14BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock14ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock14Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock14Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep14 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock15 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock15Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock15Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock15Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock15TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock15Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock15BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock15Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock15Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock15Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock15BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock15BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock15ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock15Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock15Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep15 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock16 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock16Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock16Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock16Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock16TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock16Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock16BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock16Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock16Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock16Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock16BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock16BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock16ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock16Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock16Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep16 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock17 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock17Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock17Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock17Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock17TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock17Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock17BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock17Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock17Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock17Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock17BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock17BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock17ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock17Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock17Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep17 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock18 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock18Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock18Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock18Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock18TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock18Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock18BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock18Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock18Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock18Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock18BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock18BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock18ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock18Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock18Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep18 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock19 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock19Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock19Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock19Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock19TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock19Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock19BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock19Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock19Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock19Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock19BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock19BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock19ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock19Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock19Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep19 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock20 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock20Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock20Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock20Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock20TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock20Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock20BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock20Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock20Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock20Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock20BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock20BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock20ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock20Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock20Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep20 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock21 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock21Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock21Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock21Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock21TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock21Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock21BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock21Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock21Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock21Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock21BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock21BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock21ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock21Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock21Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep21 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock22 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock22Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock22Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock22Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock22TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock22Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock22BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock22Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock22Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock22Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock22BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock22BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock22ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock22Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock22Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep22 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock23 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock23Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock23Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock23Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock23TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock23Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock23BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock23Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock23Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock23Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock23BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock23BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock23ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock23Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock23Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep23 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock24 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock24Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock24Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock24Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock24TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock24Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock24BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock24Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock24Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock24Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock24BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock24BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock24ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock24Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock24Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep24 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock25 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock25Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock25Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock25Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock25TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock25Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock25BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock25Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock25Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock25Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock25BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock25BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock25ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock25Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock25Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep25 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock26 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock26Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock26Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock26Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock26TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock26Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock26BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock26Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock26Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock26Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock26BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock26BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock26ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock26Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock26Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep26 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock27 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock27Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock27Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock27Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock27TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock27Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock27BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock27Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock27Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock27Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock27BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock27BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock27ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock27Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock27Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep27 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock28 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock28Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock28Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock28Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock28TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock28Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock28BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock28Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock28Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock28Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock28BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock28BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock28ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock28Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock28Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep28 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock29 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock29Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock29Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock29Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock29TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock29Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock29BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock29Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock29Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock29Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock29BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock29BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock29ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock29Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock29Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep29 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock30 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock30Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock30Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock30Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock30TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock30Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock30BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock30Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock30Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock30Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock30BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock30BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock30ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock30Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock30Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep30 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock31 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock31Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock31Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock31Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock31TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock31Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock31BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock31Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock31Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock31Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock31BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock31BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock31ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock31Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock31Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep31 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock32 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock32Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock32Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock32Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock32TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock32Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock32BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock32Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock32Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock32Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock32BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock32BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock32ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock32Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock32Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep32 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock33 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock33Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock33Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock33Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock33TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock33Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock33BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock33Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock33Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock33Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock33BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock33BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock33ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock33Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock33Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep33 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock34 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock34Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock34Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock34Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock34TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock34Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock34BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock34Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock34Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock34Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock34BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock34BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock34ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock34Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock34Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep34 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock35 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock35Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock35Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock35Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock35TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock35Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock35BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock35Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock35Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock35Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock35BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock35BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock35ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock35Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock35Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep35 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock36 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock36Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock36Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock36Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock36TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock36Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock36BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock36Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock36Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock36Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock36BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock36BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock36ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock36Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock36Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep36 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock37 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock37Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock37Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock37Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock37TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock37Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock37BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock37Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock37Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock37Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock37BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock37BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock37ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock37Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock37Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep37 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock38 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock38Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock38Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock38Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock38TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock38Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock38BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock38Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock38Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock38Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock38BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock38BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock38ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock38Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock38Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep38 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock39 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock39Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock39Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock39Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock39TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock39Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock39BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock39Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock39Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock39Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock39BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock39BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock39ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock39Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock39Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep39 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock40 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock40Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock40Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock40Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock40TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock40Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock40BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock40Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock40Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock40Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock40BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock40BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock40ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock40Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock40Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep40 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock41 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock41Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock41Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock41Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock41TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock41Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock41BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock41Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock41Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock41Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock41BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock41BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock41ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock41Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock41Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep41 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock42 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock42Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock42Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock42Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock42TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock42Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock42BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock42Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock42Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock42Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock42BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock42BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock42ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock42Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock42Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep42 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock43 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock43Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock43Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock43Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock43TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock43Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock43BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock43Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock43Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock43Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock43BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock43BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock43ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock43Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock43Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep43 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock44 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock44Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock44Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock44Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock44TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock44Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock44BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock44Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock44Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock44Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock44BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock44BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock44ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock44Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock44Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep44 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock45 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock45Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock45Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock45Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock45TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock45Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock45BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock45Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock45Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock45Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock45BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock45BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock45ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock45Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock45Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep45 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock46 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock46Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock46Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock46Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock46TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock46Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock46BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock46Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock46Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock46Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock46BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock46BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock46ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock46Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock46Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep46 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock47 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock47Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock47Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock47Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock47TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock47Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock47BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock47Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock47Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock47Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock47BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock47BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock47ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock47Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock47Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep47 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock48 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock48Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock48Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock48Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock48TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock48Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock48BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock48Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock48Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock48Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock48BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock48BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock48ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock48Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock48Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep48 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
+            }
+            Group #ChainBlock49 {
+              Anchor: (Width: 176, Height: 122);
+              Background: (Color: #1a2840);
+              Padding: (Left: 10, Right: 10, Top: 8, Bottom: 6);
+              LayoutMode: Top;
+              Visible: false;
+              Label #ChainBlock49Label { Style: (FontSize: 14, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 20); }
+              Label #ChainBlock49Sub { Style: (FontSize: 11, TextColor: #96a9be); Anchor: (Height: 16); }
+              Label #ChainBlock49Author { Style: (FontSize: 11, TextColor: #5a6d82); Anchor: (Height: 14); }
+              Group #ChainBlock49TopSpacer { FlexWeight: 1; Visible: false; }
+              Group #ChainBlock49Buttons { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Padding: (Left: 16, Right: 16);
+                Group #ChainBlock49BtnLeftSpacer { FlexWeight: 1; Visible: false; }
+                $C.@SmallSecondaryTextButton #ChainBlock49Left { @Text = "<"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                $C.@SmallSecondaryTextButton #ChainBlock49Right { @Text = ">"; Anchor: (Width: 30, Height: 22, Right: 4); }
+                TextButton #ChainBlock49Remove { Text: "X"; Anchor: (Width: 30, Height: 22); Style: @RemoveButtonStyle; }
+                Group #ChainBlock49BtnRightSpacer { FlexWeight: 1; Visible: false; }
+              }
+              Group { FlexWeight: 1; }
+              Group #ChainBlock49BottomRow { LayoutMode: Left; Anchor: (Height: 18);
+                Group #ChainBlock49ExampleBar { FlexWeight: 1; Anchor: (Height: 18); Background: (Color: #111a28); Padding: (Left: 6, Right: 6);
+                  Label #ChainBlock49Example { Style: (FontSize: 11, TextColor: #6b7d93, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Height: 18); }
+                }
+                TextButton #ChainBlock49Format { Text: "Format"; FlexWeight: 1; Anchor: (Height: 18); Style: @FormatButtonStyle; Visible: false; }
+              }
+            }
+            $C.@SmallSecondaryTextButton #ChainSep49 {
+              @Text = "-";
+              Anchor: (Width: 28, Height: 122);
+              Visible: false;
             }
 
-            Label #ChainPageLabel {
-              Style: (TextColor: #96a9be, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center);
-              Anchor: (Width: 70, Height: 24);
-            }
-
-            TextButton #NextChain {
-              Text: ">";
-              Anchor: (Width: 24, Height: 24, Left: 6);
-              Style: @PaginationButtonStyle;
-            }
-          }
-
-          Group #PreviewTargetBar {
-            LayoutMode: Left;
-            Anchor: (Height: 28, Bottom: 4);
-            Visible: false;
-
-            Label { Text: "Preview:"; Style: (TextColor: #5a6d82, FontSize: 13, VerticalAlignment: Center, RenderBold: true); Anchor: (Width: 60, Height: 28); }
-
-            Group #PreviewTarget0 { Anchor: (Height: 26, Bottom: 2); Visible: false;
-              TextButton #PreviewTargetBtn0 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
-              TextButton #PreviewTargetBtn0Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
-            }
-            Group { Anchor: (Width: 4); }
-            Group #PreviewTarget1 { Anchor: (Height: 26, Bottom: 2); Visible: false;
-              TextButton #PreviewTargetBtn1 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
-              TextButton #PreviewTargetBtn1Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
-            }
-            Group { Anchor: (Width: 4); }
-            Group #PreviewTarget2 { Anchor: (Height: 26, Bottom: 2); Visible: false;
-              TextButton #PreviewTargetBtn2 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
-              TextButton #PreviewTargetBtn2Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
-            }
-            Group { Anchor: (Width: 4); }
-            Group #PreviewTarget3 { Anchor: (Height: 26, Bottom: 2); Visible: false;
-              TextButton #PreviewTargetBtn3 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
-              TextButton #PreviewTargetBtn3Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
-            }
-          }
 
           Group {
             LayoutMode: Left;
-            Anchor: (Height: 36, Bottom: 5);
-
-            Group #PreviewContainer {
-              FlexWeight: 1;
-              Anchor: (Height: 36);
-              Background: (Color: #0a0f17);
-              Padding: (Left: 14, Right: 14, Top: 0, Bottom: 0);
-              LayoutMode: Left;
-
-              Label {
-                Text: "Preview:";
-                Style: (FontSize: 13, TextColor: #5a6d82, RenderBold: true, VerticalAlignment: Center);
-                Anchor: (Width: 70, Height: 30, Top: 0);
-              }
-
-              Group {
-                FlexWeight: 1;
-                Anchor: (Height: 36);
-                LayoutMode: LeftScrolling;
-                MouseWheelScrollBehaviour: HorizontalOnly;
-                ScrollbarStyle: (Spacing: 2, Size: 4, Background: #1a2840, Handle: #2a3d5a, HoveredHandle: #3a5070, DraggedHandle: #4a6080);
-
-                Label #PreviewText {
-                  Style: (FontSize: 13, TextColor: #ffffff, VerticalAlignment: Center);
-                  Anchor: (Height: 30);
-                }
-              }
-            }
-
+            Anchor: (Height: 28, Bottom: 6);
             $C.@SmallSecondaryTextButton #ClearChainButton {
               @Text = "Clear All";
-              Anchor: (Width: 140, Height: 36, Left: 8);
+              Anchor: (Width: 120, Height: 28);
             }
+            Group { FlexWeight: 1; }
           }
 
-          Group {
-            Anchor: (Height: 1, Top: 10, Bottom: 15);
-            Background: (Color: #1a2840);
+          Group #PreviewSection {
+            Anchor: (Height: 68, Bottom: 8);
+
+            Group #PreviewTargetBar {
+              LayoutMode: Left;
+              Anchor: (Height: 28, Bottom: 4);
+              Visible: false;
+
+              Label { Text: "Preview:"; Style: (TextColor: #5a6d82, FontSize: 13, VerticalAlignment: Center, RenderBold: true); Anchor: (Width: 70, Height: 28); }
+
+              Group #PreviewTarget0 { Anchor: (Height: 26); Visible: false;
+                TextButton #PreviewTargetBtn0 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
+                TextButton #PreviewTargetBtn0Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
+              }
+              Group { Anchor: (Width: 4); }
+              Group #PreviewTarget1 { Anchor: (Height: 26); Visible: false;
+                TextButton #PreviewTargetBtn1 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
+                TextButton #PreviewTargetBtn1Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
+              }
+              Group { Anchor: (Width: 4); }
+              Group #PreviewTarget2 { Anchor: (Height: 26); Visible: false;
+                TextButton #PreviewTargetBtn2 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
+                TextButton #PreviewTargetBtn2Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
+              }
+              Group { Anchor: (Width: 4); }
+              Group #PreviewTarget3 { Anchor: (Height: 26); Visible: false;
+                TextButton #PreviewTargetBtn3 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
+                TextButton #PreviewTargetBtn3Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
+              }
+              Group { Anchor: (Width: 4); }
+              Group #PreviewTarget4 { Anchor: (Height: 26); Visible: false;
+                TextButton #PreviewTargetBtn4 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
+                TextButton #PreviewTargetBtn4Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
+              }
+              Group { Anchor: (Width: 4); }
+              Group #PreviewTarget5 { Anchor: (Height: 26); Visible: false;
+                TextButton #PreviewTargetBtn5 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
+                TextButton #PreviewTargetBtn5Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
+              }
+              Group { Anchor: (Width: 4); }
+              Group #PreviewTarget6 { Anchor: (Height: 26); Visible: false;
+                TextButton #PreviewTargetBtn6 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
+                TextButton #PreviewTargetBtn6Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
+              }
+              Group { Anchor: (Width: 4); }
+              Group #PreviewTarget7 { Anchor: (Height: 26); Visible: false;
+                TextButton #PreviewTargetBtn7 { Text: ""; Anchor: (Height: 26); Style: @SubTabStyle; }
+                TextButton #PreviewTargetBtn7Active { Text: ""; Anchor: (Height: 26); Style: @SubTabActiveStyle; Visible: false; }
+              }
+            }
+
+            Group #PreviewContainer {
+              Anchor: (Height: 32);
+              Background: (Color: #0a0f17);
+              Padding: (Left: 14, Right: 14);
+              LayoutMode: LeftScrolling;
+              MouseWheelScrollBehaviour: HorizontalOnly;
+              ScrollbarStyle: (Spacing: 2, Size: 3, Background: #1a2840, Handle: #2a3d5a, HoveredHandle: #3a5070, DraggedHandle: #4a6080);
+
+              Label { Text: "Preview:"; Style: (FontSize: 13, TextColor: #5a6d82, RenderBold: true, VerticalAlignment: Center); Anchor: (Width: 70, Height: 30); }
+              Label #PreviewText { Style: (FontSize: 13, TextColor: #ffffff, VerticalAlignment: Center); Anchor: (Height: 30); }
+            }
           }
 
           $C.@TextField #FilterField {

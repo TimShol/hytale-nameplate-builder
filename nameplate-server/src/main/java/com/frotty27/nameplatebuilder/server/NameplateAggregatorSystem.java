@@ -346,7 +346,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 text = ALL_HIDDEN_HINT;
             } else {
                 List<SegmentKey> chain = preferences.getChain(chainUuid, preferenceEntityType, available, defaultComparator);
-                text = buildText(chain, entityData, chainUuid, preferenceEntityType, store, entityRef);
+                text = buildText(chain, entityData, chainUuid, preferenceEntityType, store, entityRef, segments);
                 if (text.isEmpty()) {
                     text = NO_DATA_HINT;
                 }
@@ -415,28 +415,18 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                                                    Store<EntityStore> store,
                                                    Ref<EntityStore> entityRef,
                                                    ArchetypeChunk<EntityStore> chunk) {
-        List<SegmentKey> keys = new ArrayList<>();
+        java.util.Set<SegmentKey> keySet = new java.util.LinkedHashSet<>();
 
         for (String entryKey : entityData.getEntries().keySet()) {
-            if (entryKey.startsWith("_")) {
-                continue;
-            }
-            if (entryKey.contains(".")) {
-                continue;
-            }
+            if (entryKey.startsWith("_")) continue;
+            if (entryKey.contains(".")) continue;
             SegmentKey matched = findSegmentKey(entryKey, segments);
             if (matched != null) {
-                if (adminConfig.isDisabled(matched)) {
-                    continue;
-                }
-                if (!keys.contains(matched)) {
-                    keys.add(matched);
+                if (!adminConfig.isDisabled(matched)) {
+                    keySet.add(matched);
                 }
             } else {
-                SegmentKey synthetic = new SegmentKey("_unknown", entryKey);
-                if (!keys.contains(synthetic)) {
-                    keys.add(synthetic);
-                }
+                keySet.add(new SegmentKey("_unknown", entryKey));
             }
         }
 
@@ -445,7 +435,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             NameplateRegistry.Segment segment = entry.getValue();
             if (segment.resolver() == null) continue;
             if (adminConfig.isDisabled(entry.getKey())) continue;
-            if (keys.contains(entry.getKey())) continue;
+            if (keySet.contains(entry.getKey())) continue;
 
             if (segment.requiredComponent() != null) {
                 boolean hasComponent = false;
@@ -458,10 +448,10 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 if (!hasComponent) continue;
             }
 
-            keys.add(entry.getKey());
+            keySet.add(entry.getKey());
         }
 
-        return keys;
+        return new ArrayList<>(keySet);
     }
 
 
@@ -498,7 +488,8 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                              UUID viewerUuid,
                              String entityTypeId,
                              Store<EntityStore> store,
-                             Ref<EntityStore> entityRef) {
+                             Ref<EntityStore> entityRef,
+                             Map<SegmentKey, NameplateRegistry.Segment> segments) {
         StringBuilder builder = new StringBuilder();
         SegmentKey prevKey = null;
         for (SegmentKey key : ordered) {
@@ -521,7 +512,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             }
 
             if (text == null || text.isBlank()) {
-                NameplateRegistry.Segment segment = registry.getSegments().get(key);
+                NameplateRegistry.Segment segment = segments.get(key);
                 if (segment != null && segment.resolver() != null) {
                     try {
                         text = segment.resolver().resolve(store, entityRef, variantIndex);
@@ -536,7 +527,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             }
 
 
-            NameplateRegistry.Segment segmentDefinition = registry.getSegments().get(key);
+            NameplateRegistry.Segment segmentDefinition = segments.get(key);
             if (segmentDefinition != null && segmentDefinition.supportsPrefixSuffix() && variantIndex > 0) {
                 String barEmpty = preferences.getBarEmptyChar(viewerUuid, entityTypeId, key);
                 if (barEmpty.length() == 1) {
