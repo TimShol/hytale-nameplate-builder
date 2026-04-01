@@ -38,10 +38,9 @@
         "icon": "code",
         "pages": [
           "modding/quick-start",
-          "modding/describe-segments",
+          "modding/resolvers",
+          "modding/manual-text",
           "modding/format-variants",
-          "modding/register-text",
-          "modding/tick-systems",
           "modding/advanced"
         ]
       },
@@ -50,6 +49,7 @@
         "icon": "book",
         "pages": [
           "reference/api",
+          "reference/placeholder-api",
           "reference/persistence",
           "reference/architecture",
           "reference/faq"

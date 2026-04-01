@@ -22,7 +22,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
-    private static final int MAX_CHAIN_BLOCKS = 50;
+    private static final int MAX_CHAIN_BLOCKS = 10;
     private static final int MAX_PREVIEW_TARGETS = 8;
     private static final int AVAIL_PAGE_SIZE = 8;
     private static final int ADMIN_PAGE_SIZE = 7;
@@ -225,8 +225,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         bindAction(events, "#CloseButton", "Close");
         bindAction(events, "#PrevAvail", "PrevAvail");
         bindAction(events, "#NextAvail", "NextAvail");
-        bindAction(events, "#PrevChain", "PrevChain");
-        bindAction(events, "#NextChain", "NextChain");
         bindAction(events, "#PrevAdminLeft", "PrevAdminLeft");
         bindAction(events, "#NextAdminLeft", "NextAdminLeft");
         bindAction(events, "#PrevAdminRight", "PrevAdminRight");
@@ -1151,10 +1149,9 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         if (data.action.startsWith("EditSep_")) {
             int sepIndex = parseRowIndex(data.action, "EditSep_");
             List<SegmentView> chain = getChainViews();
-            int absoluteIndex = sepIndex;
-            if (absoluteIndex >= 0 && absoluteIndex < chain.size()) {
+            if (sepIndex >= 0 && sepIndex < chain.size()) {
                 editingSepIndex = sepIndex;
-                SegmentKey blockKey = chain.get(absoluteIndex).key();
+                SegmentKey blockKey = chain.get(sepIndex).key();
                 sepText = preferences.getSeparatorAfter(chainViewerUuid(), tabEntityType(), blockKey);
 
                 pendingSepInput = null;
@@ -2940,6 +2937,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
     private void fillPreviewTargets(UICommandBuilder commands) {
+        // Player tab only shows the default chain preview - no target selection needed
+        if (activeTab == ActiveTab.PLAYERS) {
+            commands.set("#PreviewTargetBar.Visible", false);
+            selectedPreviewTarget = 0;
+            return;
+        }
+
         Map<String, Set<String>> profiles = adminConfig.getSegmentProfiles();
         List<String> profileNames = new ArrayList<>(profiles.keySet());
 
@@ -2968,6 +2972,11 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     private String buildPreview(List<SegmentView> views) {
         if (views.isEmpty()) {
             return "(no blocks enabled)";
+        }
+
+        // Player tab shows all segments unfiltered - no target selection
+        if (activeTab == ActiveTab.PLAYERS) {
+            return buildSinglePreviewLine(views);
         }
 
         Map<String, Set<String>> profiles = adminConfig.getSegmentProfiles();

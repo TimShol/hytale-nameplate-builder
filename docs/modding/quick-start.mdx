@@ -4,7 +4,7 @@ icon: rocket
 description: Add your own nameplate segment in under 5 minutes.
 ---
 
-This page walks you through adding a custom segment to NameplateBuilder from scratch. By the end, your segment will appear in the player UI and show text above entities.
+This page walks you through adding a custom segment to NameplateBuilder. By the end, your segment will appear in the player UI and show text above entities.
 
 ## How It Works (30-Second Version)
 
@@ -12,8 +12,8 @@ NameplateBuilder is a **central nameplate aggregator**. Instead of each mod figh
 
 **Your job as a modder:**
 
-1. Tell NameplateBuilder about your segments (names, targets, examples, variants)
-2. Push text values onto entities at runtime
+1. **Define** your segment (give it a name, target, and example text for the UI)
+2. **Provide text** - either with a resolver function (computed per entity) or by pushing text manually
 
 That's it. NameplateBuilder handles compositing, per-player preferences, the UI, persistence, death cleanup, and everything else.
 
@@ -37,7 +37,7 @@ In your `build.gradle`:
 
 ```groovy
 dependencies {
-    compileOnly files('libs/NameplateBuilder-API-1.0.0.jar')
+    compileOnly files('libs/NameplateBuilder-API-2.0.0.jar')
 }
 ```
 
@@ -48,13 +48,14 @@ You only need the lightweight API jar, not the full server plugin. It contains:
 | Class | Purpose |
 | :--- | :--- |
 | `NameplateAPI` | Main entry point - all calls go through here |
+| `SegmentBuilder` | Fluent builder returned by `define()` for configuring resolvers and caching |
+| `SegmentResolver` | Functional interface for computing segment text per entity |
 | `NameplateData` | ECS component that holds segment text on entities |
 | `SegmentTarget` | Enum: `ALL`, `PLAYERS`, or `NPCS` |
-| `NameplateException` | Base exception class |
-| `NameplateNotInitializedException` | Thrown if NameplateBuilder hasn't loaded yet |
-| `NameplateArgumentException` | Thrown for null/blank arguments |
 
-## Step 3 - Describe and Register
+## Step 3 - Define Your Segment
+
+In your plugin's `setup()` method, call `NameplateAPI.define()` to tell NameplateBuilder about your segment:
 
 ```java
 import com.frotty27.nameplatebuilder.api.NameplateAPI;
@@ -68,59 +69,71 @@ public final class MyModPlugin extends JavaPlugin {
 
     @Override
     protected void setup() {
-        // Tell the UI about your segment
-        NameplateAPI.describe(this, "bounty", "Bounty",
+        NameplateAPI.define(this, "bounty", "Bounty",
                 SegmentTarget.NPCS, "$500");
-
-        // Register a tick system that pushes text to entities
-        getEntityStoreRegistry().registerSystem(
-            new MyNpcNameplateSystem(NameplateAPI.getComponentType()));
     }
 }
 ```
 
-## Step 4 - Push Text to Entities
+**What `define()` does:** It registers UI metadata so the segment shows up in the `/npb` player UI with a display name, target tag, and example preview. It also returns a `SegmentBuilder` you can chain onto (we'll cover that next).
+
+**What it does NOT do:** It does not create ECS components or affect entities. It only tells the UI about your segment.
+
+Your segment is now visible in the UI. But it won't show any text yet - you need to provide values. There are two ways to do this:
+
+## Step 4 - Provide Text (Choose Your Pattern)
+
+### Which one do I use?
+
+| | Resolver | Manual Text |
+| :--- | :--- | :--- |
+| **How it works** | You give NameplateBuilder a function. It calls it every tick for each visible entity. | You push text to specific entities yourself from your own code. |
+| **Setup** | Everything in `setup()` - no tick systems needed | Requires your own tick system, event handler, or command |
+| **Best for** | Values derived from ECS components (health, stats, level, faction, tier) | Values from events, commands, external state, or manual NPC initialization |
+| **Examples** | Health bar from `EntityStatMap`, faction from `FactionComponent` | Buff applied by chat command, custom tag set by admin, bounty from a database |
+| **Variant support** | `variantIndex` parameter passed to your function | Suffixed keys (`"health.1"`, `"health.2"`) |
+| **Filtering** | Return `null` to skip entities that don't apply | Only call `setText()` on entities that should have the segment |
+
+Most segments should use **resolvers**. Use manual text only when the value can't be computed from the entity's existing components.
+
+### Option A: Resolver (Recommended)
+
+A **resolver** is a function that NameplateBuilder calls every tick for each visible entity. It computes the segment's text from the entity's existing components. No tick systems needed.
 
 ```java
-import com.frotty27.nameplatebuilder.api.NameplateData;
-
-final class MyNpcNameplateSystem extends EntityTickingSystem<EntityStore> {
-
-    private final ComponentType<EntityStore, NameplateData> nameplateDataType;
-
-    MyNpcNameplateSystem(ComponentType<EntityStore, NameplateData> type) {
-        this.nameplateDataType = type;
-    }
-
-    @Override
-    public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk,
-                     Store<EntityStore> store, CommandBuffer<EntityStore> cb) {
-
-        Ref<EntityStore> ref = chunk.getReferenceTo(index);
-
-        // First time? Seed the component via CommandBuffer
-        if (store.getComponent(ref, nameplateDataType) == null) {
-            NameplateData data = new NameplateData();
-            data.setText("bounty", "$500");
-            cb.putComponent(ref, nameplateDataType, data);
-            return;
-        }
-
-        // Already initialized? Update in place (safe during tick)
-        NameplateData data = chunk.getComponent(index, nameplateDataType);
-        if (data != null) {
-            data.setText("bounty", "$" + computeBounty());
-        }
-    }
+@Override
+protected void setup() {
+    NameplateAPI.define(this, "bounty", "Bounty",
+            SegmentTarget.NPCS, "$500")
+        .resolver((store, entityRef, variantIndex) -> {
+            BountyComponent bounty = store.getComponent(entityRef, bountyType);
+            if (bounty == null) return null; // no bounty on this entity
+            return "$" + bounty.getAmount();
+        });
 }
 ```
 
-Your segment now appears in the `/npb` UI. Players can add it to their chain, reorder it, and see the bounty value above NPCs.
+**When the resolver returns `null`**, the segment is skipped for that entity. This means your segment automatically only appears on entities that have the relevant data.
+
+### Option B: Manual Text
+
+For segments driven by events or external state (not ECS components), push text directly:
+
+```java
+// In an event handler, command, or any code with store access:
+NameplateAPI.setText(store, entityRef, "bounty", "$500");
+
+// Clear when no longer applicable:
+NameplateAPI.clearText(store, entityRef, "bounty");
+```
+
+---
+
+Your segment now appears in the `/npb` UI. Players can add it to their chain, reorder it, pick display formats, and see values above entities.
 
 ## Next Steps
 
-* **[Describe Segments](/modding/describe-segments)** - All three `describe()` overloads explained
-* **[Format Variants](/modding/format-variants)** - Let players pick between display formats
-* **[Register Text](/modding/register-text)** - `register()`, `remove()`, and `NameplateData` methods
-* **[Tick Systems](/modding/tick-systems)** - NPC spawn initialization and live tick updates
+* **[Resolvers](/modding/resolvers)** - Archetype filtering with `requires()`, caching with `cacheTicks()`, and variant support
+* **[Manual Text](/modding/manual-text)** - `setText()`, `clearText()`, tick system patterns, and `NameplateData` direct access
+* **[Format Variants](/modding/format-variants)** - Let players pick between display formats (e.g. "42/67" vs "63%")
 * **[Advanced](/modding/advanced)** - Hidden metadata keys, cleanup, and edge cases

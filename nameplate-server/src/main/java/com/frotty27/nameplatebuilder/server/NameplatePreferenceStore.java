@@ -1,5 +1,7 @@
 package com.frotty27.nameplatebuilder.server;
 
+import com.hypixel.hytale.logger.HytaleLogger;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -9,8 +11,8 @@ import java.util.*;
 
 final class NameplatePreferenceStore {
 
+    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     private static final UUID ADMIN_CHAIN_UUID = new UUID(0L, 0L);
-    private static final Set<String> DEFAULT_ENABLED_BUILTINS = Set.of("entity-name", "health", "player-name");
 
     private final Path filePath;
     private final Map<UUID, Map<String, PreferenceSet>> data = new HashMap<>();
@@ -116,8 +118,8 @@ final class NameplatePreferenceStore {
                     }
                 }
             }
-        } catch (IOException | RuntimeException _) {
-
+        } catch (IOException | RuntimeException exception) {
+            LOGGER.atWarning().withCause(exception).log("Failed to load preferences from %s", filePath);
         }
         migratePerNamespaceKeys();
     }
@@ -148,8 +150,8 @@ final class NameplatePreferenceStore {
     void save() {
         try {
             Files.createDirectories(filePath.getParent());
-        } catch (IOException _) {
-
+        } catch (IOException exception) {
+            LOGGER.atWarning().withCause(exception).log("Failed to create preferences directory");
         }
 
         try (BufferedWriter writer = Files.newBufferedWriter(filePath)) {
@@ -201,9 +203,9 @@ final class NameplatePreferenceStore {
                     }
                     for (Map.Entry<SegmentKey, Integer> variantEntry : set.selectedVariant.entrySet()) {
                         SegmentKey key = variantEntry.getKey();
-                        int vi = variantEntry.getValue();
-                        if (vi != 0) {
-                            writer.write("V|" + viewer + "|" + entityType + "|" + key.pluginId() + "|" + key.segmentId() + "|" + vi);
+                        int variantIndex = variantEntry.getValue();
+                        if (variantIndex != 0) {
+                            writer.write("V|" + viewer + "|" + entityType + "|" + key.pluginId() + "|" + key.segmentId() + "|" + variantIndex);
                             writer.newLine();
                         }
                     }
@@ -243,7 +245,8 @@ final class NameplatePreferenceStore {
                     }
                 }
             }
-        } catch (IOException _) {
+        } catch (IOException exception) {
+            LOGGER.atWarning().withCause(exception).log("Failed to save preferences to %s", filePath);
 
         }
     }
@@ -581,22 +584,18 @@ final class NameplatePreferenceStore {
 
     private void seedDefaultChain(UUID viewer, String entityType, List<SegmentKey> available) {
         PreferenceSet set = getSet(viewer, entityType, true);
+        boolean isPlayerChain = "_players".equals(entityType);
+        String nameSegment = isPlayerChain ? "player-name" : "entity-name";
+
         int order = 0;
         for (SegmentKey key : available) {
-            if ("entity-name".equals(key.segmentId())) {
+            if (nameSegment.equals(key.segmentId())) {
                 set.enabled.put(key, true);
                 set.order.put(key, order++);
             }
         }
         for (SegmentKey key : available) {
-            if ("entity-name".equals(key.segmentId())) continue;
-            if (DEFAULT_ENABLED_BUILTINS.contains(key.segmentId())) continue;
-            if ("stamina".equals(key.segmentId()) || "mana".equals(key.segmentId())) continue;
-            set.enabled.put(key, true);
-            set.order.put(key, order++);
-        }
-        for (SegmentKey key : available) {
-            if (DEFAULT_ENABLED_BUILTINS.contains(key.segmentId()) && !"entity-name".equals(key.segmentId())) {
+            if ("health".equals(key.segmentId())) {
                 set.enabled.put(key, true);
                 set.order.put(key, order++);
             }

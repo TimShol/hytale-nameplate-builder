@@ -1,25 +1,37 @@
 ---
 title: API Reference
 icon: terminal
-description: Complete method tables for NameplateAPI, NameplateData, and related types.
+description: Complete method tables for NameplateAPI, SegmentBuilder, SegmentResolver, NameplateData, and related types.
 ---
 
 ## NameplateAPI - Static Methods
 
-| Method | Description |
-| :--- | :--- |
-| `describe(plugin, segmentId, displayName)` | Register UI metadata. Defaults to `SegmentTarget.ALL`, no example. |
-| `describe(plugin, segmentId, displayName, target)` | Register UI metadata with an entity target hint. |
-| `describe(plugin, segmentId, displayName, target, example)` | Register UI metadata with target hint and example preview text. |
-| `describeVariants(plugin, segmentId, variantNames)` | Register format variant names for a segment. Index 0 is the default. |
-| `undescribe(plugin, segmentId)` | Remove a segment description from the UI at runtime. |
-| `register(store, entityRef, segmentId, text)` | Set or update nameplate text for a segment on an entity. |
-| `remove(store, entityRef, segmentId)` | Remove a segment's text from an entity. Auto-removes the component if empty. |
-| `getComponentType()` | Get the `ComponentType<EntityStore, NameplateData>` for direct ECS access. |
+### Segment Definition
+
+| Method | Returns | Description |
+| :--- | :--- | :--- |
+| `define(plugin, segmentId, displayName)` | `SegmentBuilder` | Define a segment. Defaults to `SegmentTarget.ALL`, no example. |
+| `define(plugin, segmentId, displayName, target)` | `SegmentBuilder` | Define a segment with an entity target hint. |
+| `define(plugin, segmentId, displayName, target, example)` | `SegmentBuilder` | Define a segment with target hint and example preview text. |
+| `defineVariants(plugin, segmentId, variantNames)` | `void` | Register format variant names for a segment. Index 0 is the default. |
+| `undefine(plugin, segmentId)` | `void` | Remove a segment definition from the UI at runtime. |
+
+### Per-Entity Text
+
+| Method | Returns | Description |
+| :--- | :--- | :--- |
+| `setText(store, entityRef, segmentId, text)` | `void` | Set or update nameplate text for a segment on an entity. Creates `NameplateData` if needed. |
+| `clearText(store, entityRef, segmentId)` | `void` | Clear a segment's text from an entity. Auto-removes `NameplateData` if empty. |
+
+### Component Access
+
+| Method | Returns | Description |
+| :--- | :--- | :--- |
+| `getComponentType()` | `ComponentType<EntityStore, NameplateData>` | Get the component type for direct ECS access. |
 
 ### Parameter Details
 
-**`describe()` parameters:**
+**`define()` parameters:**
 
 | Parameter | Type | Description |
 | :--- | :--- | :--- |
@@ -27,16 +39,42 @@ description: Complete method tables for NameplateAPI, NameplateData, and related
 | `segmentId` | `String` | Unique key for this segment within your plugin (e.g. `"health"`, `"guild"`) |
 | `displayName` | `String` | Human-readable name shown in the UI (e.g. `"Health Bar"`) |
 | `target` | `SegmentTarget` | UI hint for which entity types this applies to |
-| `example` | `String` | Preview text shown in the UI (e.g. `"67/67"`) |
+| `example` | `String` | Preview text shown in the UI (e.g. `"67/67"`). Nullable. |
 
-**`register()` parameters:**
+**`setText()` parameters:**
 
 | Parameter | Type | Description |
 | :--- | :--- | :--- |
 | `store` | `Store<EntityStore>` | The entity store |
 | `entityRef` | `Ref<EntityStore>` | Reference to the target entity |
-| `segmentId` | `String` | The segment key (must match what you passed to `describe()`) |
-| `text` | `String` | The text value to display |
+| `segmentId` | `String` | The segment key (must match what you passed to `define()`) |
+| `text` | `String` | The text value to display. Must not be blank - use `clearText()` to clear. |
+
+## SegmentBuilder - Instance Methods
+
+Returned by `define()`. Methods chain fluently and write through to the registry immediately - no `build()` call needed.
+
+| Method | Returns | Description |
+| :--- | :--- | :--- |
+| `resolver(resolver)` | `SegmentBuilder` | Register a function that computes text per entity every tick. |
+| `requires(componentType)` | `SegmentBuilder` | Optimization hint: only call the resolver for entities whose archetype contains this component. |
+| `cacheTicks(ticks)` | `SegmentBuilder` | How many ticks to cache the resolver result per entity. Default: 1 (every tick). |
+
+## SegmentResolver - Functional Interface
+
+```java
+@FunctionalInterface
+public interface SegmentResolver {
+    String resolve(Store<EntityStore> store, Ref<EntityStore> entityRef, int variantIndex);
+}
+```
+
+| Parameter | Type | Description |
+| :--- | :--- | :--- |
+| `store` | `Store<EntityStore>` | The entity store for reading components |
+| `entityRef` | `Ref<EntityStore>` | Reference to the entity being processed |
+| `variantIndex` | `int` | The viewer's selected variant (0 = default) |
+| **Returns** | `String` | The segment text to display, or `null` if this segment does not apply to this entity |
 
 ## NameplateData - Instance Methods
 
@@ -56,7 +94,7 @@ description: Complete method tables for NameplateAPI, NameplateData, and related
 | `PLAYERS` | `[Players]` | Intended for player entities |
 | `NPCS` | `[NPCs]` | Intended for NPC entities |
 
-The target is a **UI hint only**. It does not restrict which entity types you can register the segment on.
+The target is a **UI hint only**. It does not restrict which entity types you can set text on or which entities a resolver runs for (use `requires()` for that).
 
 ## Exceptions
 
@@ -74,12 +112,13 @@ The target is a **UI hint only**. It does not restrict which entity types you ca
 * Scoped to your plugin - two mods can both use `"health"` without conflict
 * Used as the key in `NameplateData.setText()` and `NameplateData.getText()`
 
-### Variant Key Suffixes
+### Variant Key Suffixes (Manual Text Only)
 
 * Variant 0 (default) uses the base key: `"health"`
 * Variant 1 uses `.1` suffix: `"health.1"`
 * Variant 2 uses `.2` suffix: `"health.2"`
 * The aggregator falls back to the base key if a suffixed key is missing
+* Not needed when using resolvers - the `variantIndex` parameter handles this
 
 ### Hidden Keys
 

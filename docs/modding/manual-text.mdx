@@ -1,0 +1,181 @@
+---
+title: Manual Text
+icon: file-lines
+description: Push, update, and clear segment text on entities for event-driven segments.
+---
+
+For segments whose values come from events, commands, or external state rather than ECS components, use `setText()` and `clearText()` to push text directly to entities.
+
+**When to use manual text instead of resolvers:**
+- The value comes from a player command or chat event
+- The value is driven by external state (database, API, config)
+- You need per-entity initialization inside a tick system (e.g. seeding NPC data on spawn)
+
+## Basic Usage
+
+### Set Text
+
+```java
+// Set or update a segment's text on an entity.
+// If the entity doesn't have a NameplateData component yet,
+// one is created and attached automatically.
+NameplateAPI.setText(store, entityRef, "bounty", "$500");
+```
+
+Calling `setText()` again overwrites the previous value. No need to clear first.
+
+### Clear Text
+
+```java
+// Remove a single segment's text from an entity.
+// If this was the last segment, the NameplateData component
+// is automatically removed.
+NameplateAPI.clearText(store, entityRef, "bounty");
+```
+
+### Remove All Nameplate Data
+
+```java
+// Wipe every segment at once. Use when an entity should have
+// no nameplate at all (e.g. going invisible, despawning).
+store.tryRemoveComponent(entityRef, NameplateAPI.getComponentType());
+```
+
+## Where You Can Call These Methods
+
+`setText()` and `clearText()` work **anywhere you have access to the `Store` and a `Ref`**: event handlers, command handlers, custom systems, etc.
+
+### The Tick System Exception
+
+Inside an `EntityTickingSystem`, the store is **locked for structural changes**. If the entity does **not** already have a `NameplateData` component, `setText()` tries to call `store.addComponent()`, which throws:
+
+```
+IllegalStateException: Store is currently processing
+```
+
+For tick-system initialization, build a `NameplateData` manually and use the `CommandBuffer` pattern instead (see below).
+
+If the entity **already has** the component, mutating it via `NameplateData.setText()` is safe from within tick systems.
+
+## Tick System Patterns
+
+### NPC Spawn Initialization
+
+The most common manual text pattern: detect newly spawned NPCs and seed their nameplate data.
+
+```java
+final class MyNpcNameplateSystem extends EntityTickingSystem<EntityStore> {
+
+    private final ComponentType<EntityStore, NPCEntity> npcType;
+    private final ComponentType<EntityStore, NameplateData> nameplateDataType;
+
+    MyNpcNameplateSystem(ComponentType<EntityStore, NameplateData> type) {
+        this.npcType = NPCEntity.getComponentType();
+        this.nameplateDataType = type;
+    }
+
+    @Override
+    public Archetype<EntityStore> getQuery() {
+        return Archetype.of(npcType);
+    }
+
+    @Override
+    public SystemGroup<EntityStore> getGroup() {
+        return EntityTrackerSystems.QUEUE_UPDATE_GROUP;
+    }
+
+    @Override
+    public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk,
+                     Store<EntityStore> store, CommandBuffer<EntityStore> cb) {
+
+        NPCEntity npc = chunk.getComponent(index, npcType);
+        if (npc == null || !"Kweebec".equals(npc.getRoleName())) {
+            return;
+        }
+
+        Ref<EntityStore> ref = chunk.getReferenceTo(index);
+
+        // Skip if already initialized
+        if (store.getComponent(ref, nameplateDataType) != null) {
+            return;
+        }
+
+        // Build NameplateData manually and use CommandBuffer
+        NameplateData data = new NameplateData();
+        data.setText("faction", "<Forest>");
+        data.setText("level", "Lv. 10");
+        cb.putComponent(ref, nameplateDataType, data);
+    }
+}
+```
+
+**Why `CommandBuffer`?** Inside a tick system, the store is locked for structural changes. `CommandBuffer` queues the change and executes it after the tick finishes.
+
+**Why `putComponent()` instead of `addComponent()`?** `addComponent()` throws if the component already exists. `putComponent()` is an upsert - safe when multiple systems might initialize the same entity.
+
+### Live Tick Updates
+
+Once an entity has a `NameplateData` component, update it every tick to keep dynamic values current:
+
+```java
+@Override
+public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk,
+                 Store<EntityStore> store, CommandBuffer<EntityStore> cb) {
+
+    NameplateData data = chunk.getComponent(index, nameplateDataType);
+    if (data == null) return;
+
+    // setText() every tick is safe - it's just a HashMap.put()
+    data.setText("health", computeHealthText(store, chunk, index));
+}
+```
+
+Calling `data.setText()` every tick is cheap - it's just a `HashMap.put()`. The aggregator reads the latest value on the next compositing tick.
+
+### Registering Systems
+
+```java
+@Override
+protected void setup() {
+    NameplateAPI.define(this, "faction", "Faction",
+            SegmentTarget.NPCS, "<Forest>");
+    NameplateAPI.define(this, "level", "Level",
+            SegmentTarget.ALL, "Lv. 10");
+
+    ComponentType<EntityStore, NameplateData> type =
+        NameplateAPI.getComponentType();
+
+    getEntityStoreRegistry().registerSystem(new MyNpcNameplateSystem(type));
+}
+```
+
+## NameplateData Direct Access
+
+For advanced use cases, you can work with the `NameplateData` component directly:
+
+```java
+ComponentType<EntityStore, NameplateData> type = NameplateAPI.getComponentType();
+NameplateData data = store.getComponent(entityRef, type);
+
+if (data != null) {
+    data.setText("health", "42/67");     // set or update
+    String val = data.getText("health"); // read current value
+    data.removeText("health");           // remove a key
+    boolean empty = data.isEmpty();      // check if any entries exist
+
+    for (var entry : data.getEntries()) {
+        // iterate all key-value pairs
+    }
+}
+```
+
+## Manual Text vs Resolvers
+
+If an entity has both manual text (via `setText()`) and a resolver for the same segment, **manual text takes precedence**. This lets you override computed values for specific entities.
+
+For most segments, **prefer resolvers** - they're simpler (no tick systems needed) and let NameplateBuilder handle scheduling and caching. Use manual text when you genuinely need event-driven updates or per-entity initialization that can't be derived from ECS components.
+
+## Next Steps
+
+* **[Format Variants](/modding/format-variants)** - Let players pick between display formats
+* **[Advanced](/modding/advanced)** - Hidden metadata keys, cleanup, and edge cases

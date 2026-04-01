@@ -1,7 +1,7 @@
 ---
 title: Advanced
 icon: flask
-description: Hidden keys, cleanup behaviour, undescribe, and common mistakes.
+description: Hidden keys, cleanup behaviour, undefine, and common mistakes.
 ---
 
 ## Hidden Metadata Keys
@@ -30,39 +30,40 @@ NameplateBuilder **automatically clears nameplates when an entity dies**. When a
 
 ### Plugin Unload - Automatic
 
-When your plugin unloads, NameplateBuilder **automatically removes all segment descriptions** registered by your plugin. No shutdown hook needed.
+When your plugin unloads, NameplateBuilder **automatically removes all segment definitions** registered by your plugin. No shutdown hook needed.
 
-### Runtime Removal - `undescribe()`
+### Runtime Removal - `undefine()`
 
-The `undescribe()` method exists for edge cases where you want to dynamically remove a segment from the UI **while the server is running** (e.g. a minigame mod that adds/removes segments based on game phase):
+The `undefine()` method exists for edge cases where you want to dynamically remove a segment from the UI **while the server is running** (e.g. a minigame mod that adds/removes segments based on game phase):
 
 ```java
 // Remove the "bounty" segment from the UI mid-game
-NameplateAPI.undescribe(this, "bounty");
+NameplateAPI.undefine(this, "bounty");
 ```
 
-After calling `undescribe()`:
+After calling `undefine()`:
 
 * The segment disappears from the NameplateBuilder UI
 * Existing `NameplateData` on entities is **not** affected - the text stays until you explicitly remove it or the entity dies
 * Players who had it in their chain will no longer see it rendered
 
-For the vast majority of mods, you will **never need to call `undescribe()`**.
+For the vast majority of mods, you will **never need to call `undefine()`**.
 
 ## Common Mistakes
 
 | Mistake | Fix |
 | :--- | :--- |
 | Calling `store.addComponent()` inside a tick system | Use `commandBuffer.putComponent()` instead |
-| Calling `NameplateAPI.register()` inside a tick system on an entity without data | Build a `NameplateData` manually and use `commandBuffer.putComponent()` |
+| Calling `NameplateAPI.setText()` inside a tick system on an entity without data | Build a `NameplateData` manually and use `commandBuffer.putComponent()` |
 | Forgetting the manifest dependency | Add `"Frotty27:NameplateBuilder": "*"` to your `manifest.json` |
-| Calling `undescribe()` in a shutdown hook | Not needed - auto-cleaned on plugin unload |
+| Calling `undefine()` in a shutdown hook | Not needed - auto-cleaned on plugin unload |
 | Removing nameplate data on entity death | Not needed - auto-cleaned on death |
-| Pushing variant text without the base key | Always set the base key (`"health"`) - suffixed keys (`.1`, `.2`) are optional fallbacks |
+| With manual text: pushing variant text without the base key | Always set the base key (`"health"`) - suffixed keys (`.1`, `.2`) are optional fallbacks |
+| With resolvers: not handling unknown variant indices | Always include a `default` case in your variant switch |
 
 ## Complete Plugin Example
 
-Here's a full plugin that registers 3 segments with different targets, one with format variants, and a tick system for NPC initialization:
+A full plugin using both resolvers and manual text:
 
 ```java
 package com.example.mymod;
@@ -70,10 +71,8 @@ package com.example.mymod;
 import com.frotty27.nameplatebuilder.api.NameplateAPI;
 import com.frotty27.nameplatebuilder.api.NameplateData;
 import com.frotty27.nameplatebuilder.api.SegmentTarget;
-import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
-import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.util.List;
 
@@ -85,28 +84,38 @@ public final class MyModPlugin extends JavaPlugin {
 
     @Override
     protected void setup() {
-        // Health - for all entities, with 3 format variants
-        NameplateAPI.describe(this, "health", "Health Bar",
-                SegmentTarget.ALL, "100/100");
-        NameplateAPI.describeVariants(this, "health", List.of(
-            "Current/Max",
-            "Percentage",
-            "Bar"
+        // Health - resolver with variants (no tick system needed)
+        NameplateAPI.define(this, "health", "Health",
+                SegmentTarget.ALL, "100/100")
+            .requires(EntityStatMap.getComponentType())
+            .resolver((store, ref, variant) -> {
+                EntityStatMap stats = store.getComponent(ref, statMapType);
+                if (stats == null) return null;
+                int cur = Math.round(stats.get(health).get());
+                int max = Math.round(stats.get(health).getMax());
+                return switch (variant) {
+                    case 1 -> Math.round(100f * cur / max) + "%";
+                    default -> cur + "/" + max;
+                };
+            });
+
+        NameplateAPI.defineVariants(this, "health", List.of(
+            "Current/Max", "Percentage"
         ));
 
-        // Guild - for players only
-        NameplateAPI.describe(this, "guild", "Guild Tag",
+        // Guild - manual text, set from event handlers
+        NameplateAPI.define(this, "guild", "Guild Tag",
                 SegmentTarget.PLAYERS, "[Warriors]");
 
-        // Faction - for NPCs only
-        NameplateAPI.describe(this, "faction", "Faction",
-                SegmentTarget.NPCS, "<Undead>");
-
-        // Register tick systems
-        ComponentType<EntityStore, NameplateData> type =
-            NameplateAPI.getComponentType();
-        getEntityStoreRegistry().registerSystem(
-            new MyNpcNameplateSystem(type));
+        // Faction - resolver with caching
+        NameplateAPI.define(this, "faction", "Faction",
+                SegmentTarget.NPCS, "<Undead>")
+            .requires(FactionComponent.getComponentType())
+            .cacheTicks(100)
+            .resolver((store, ref, variant) -> {
+                FactionComponent f = store.getComponent(ref, factionType);
+                return f != null ? "<" + f.getName() + ">" : null;
+            });
     }
 }
 ```

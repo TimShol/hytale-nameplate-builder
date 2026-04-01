@@ -11,11 +11,10 @@ Hytale gives each entity a single `Nameplate` component. When multiple mods try 
 ## Core Features
 
 * **Multi-mod aggregation** - Any number of mods contribute segments. NameplateBuilder handles compositing, ordering, and per-viewer preferences
-* **Opt-in NPC model** - Only Hytale-namespace NPCs are auto-seeded with nameplates. Other mods call `NameplateAPI.register()` to opt in, preventing conflicts
+* **Opt-in NPC model** - Only Hytale-namespace NPCs are auto-seeded with nameplates. Other mods use resolvers or `NameplateAPI.setText()` to opt in, preventing conflicts
 * **Built-in segments** - Player Name (with anonymize variant), Health, Stamina, and Mana (each with Current/Max, Percentage, and Bar variants). Built-in segments are shown with a distinct warm-purple tint in the UI
 * **Death cleanup** - Nameplates are automatically cleared when an entity dies, instead of lingering through the death animation
 * **Persistent preferences** - All player settings and admin config are saved to disk and survive server restarts
-* **PlaceholderAPI support** - Optional integration with PlaceholderAPI. Segment text containing `%placeholder%` tokens is parsed per-viewer with a 500ms TTL cache
 
 ## Welcome Message
 

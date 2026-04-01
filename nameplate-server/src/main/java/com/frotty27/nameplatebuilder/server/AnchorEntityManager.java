@@ -15,7 +15,6 @@ import java.util.*;
 final class AnchorEntityManager {
 
     private final Map<Ref<EntityStore>, AnchorState> anchors = new HashMap<>();
-    private final List<AnchorState> pendingRemovals = new ArrayList<>();
 
 
     private static final class AnchorState {
@@ -149,7 +148,6 @@ final class AnchorEntityManager {
 
     void clear() {
         anchors.clear();
-        pendingRemovals.clear();
     }
 
 
@@ -212,25 +210,22 @@ final class AnchorEntityManager {
 
         if (state.lastPosition != null) {
 
-            double dx = realPosition.getX() - state.lastPosition.getX();
-            double dy = realPosition.getY() - state.lastPosition.getY();
-            double dz = realPosition.getZ() - state.lastPosition.getZ();
-
+            double deltaX = realPosition.getX() - state.lastPosition.getX();
+            double deltaY = realPosition.getY() - state.lastPosition.getY();
+            double deltaZ = realPosition.getZ() - state.lastPosition.getZ();
 
             if (state.velocity != null) {
-
-                dx = state.velocity.getX() * 0.7 + dx * 0.3;
-                dy = state.velocity.getY() * 0.7 + dy * 0.3;
-                dz = state.velocity.getZ() * 0.7 + dz * 0.3;
+                deltaX = state.velocity.getX() * 0.7 + deltaX * 0.3;
+                deltaY = state.velocity.getY() * 0.7 + deltaY * 0.3;
+                deltaZ = state.velocity.getZ() * 0.7 + deltaZ * 0.3;
             }
 
-            state.velocity = new Vector3d(dx, dy, dz);
-
+            state.velocity = new Vector3d(deltaX, deltaY, deltaZ);
 
             targetPosition = new Vector3d(
-                    realPosition.getX() + dx,
-                    realPosition.getY() + dy + offset,
-                    realPosition.getZ() + dz
+                    realPosition.getX() + deltaX,
+                    realPosition.getY() + deltaY + offset,
+                    realPosition.getZ() + deltaZ
             );
         } else {
 

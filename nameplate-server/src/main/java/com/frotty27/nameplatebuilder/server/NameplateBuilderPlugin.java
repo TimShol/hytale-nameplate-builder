@@ -5,18 +5,16 @@ import com.frotty27.nameplatebuilder.api.NameplateData;
 import com.frotty27.nameplatebuilder.api.SegmentTarget;
 import com.hypixel.hytale.builtin.instances.InstancesPlugin;
 import com.hypixel.hytale.component.ComponentType;
-import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.Message;
-import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
-import com.hypixel.hytale.server.core.plugin.JavaPlugin;
-import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
-import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
+import com.hypixel.hytale.server.core.plugin.JavaPlugin;
+import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 
@@ -66,7 +64,7 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
         registry.defineBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_ENTITY_NAME,
                 "Entity Name", SegmentTarget.NPCS, "Archaeopteryx")
                 .requires(npcEntityType)
-                .resolver((store, entityRef, variant) -> {
+                .resolver((store, entityRef, variantIndex) -> {
                     NPCEntity npcEntity = store.getComponent(entityRef, npcEntityType);
                     if (npcEntity == null) return null;
                     String roleName = npcEntity.getRoleName();
@@ -77,10 +75,10 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
         registry.defineBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_PLAYER_NAME,
                 "Player Name", SegmentTarget.PLAYERS, "Frotty27")
                 .requires(playerType)
-                .resolver((store, entityRef, variant) -> {
+                .resolver((store, entityRef, variantIndex) -> {
                     Player player = store.getComponent(entityRef, playerType);
                     if (player == null) return null;
-                    return variant == 1 ? "Player" : player.getDisplayName();
+                    return variantIndex == 1 ? "Player" : player.getDisplayName();
                 });
         registry.defineVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_PLAYER_NAME,
                 List.of("Real Name", "Anonymized (Player)"));
@@ -88,9 +86,9 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
         registry.defineBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_HEALTH,
                 "Health", SegmentTarget.ALL, "67/69")
                 .requires(statMapType)
-                .resolver((store, entityRef, variant) -> {
+                .resolver((store, entityRef, variantIndex) -> {
                     EntityStatMap statMap = store.getComponent(entityRef, statMapType);
-                    return statMap != null ? formatStat(statMap.get(DefaultEntityStatTypes.getHealth()), variant) : null;
+                    return statMap != null ? formatStat(statMap.get(DefaultEntityStatTypes.getHealth()), variantIndex) : null;
                 });
         registry.defineVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_HEALTH,
                 List.of("Current/Max (67/69)", "Percentage (69%)", "Bar (||||||-----)"));
@@ -99,9 +97,9 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
         registry.defineBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_STAMINA,
                 "Stamina", SegmentTarget.ALL, "42/100")
                 .requires(statMapType)
-                .resolver((store, entityRef, variant) -> {
+                .resolver((store, entityRef, variantIndex) -> {
                     EntityStatMap statMap = store.getComponent(entityRef, statMapType);
-                    return statMap != null ? formatStat(statMap.get(DefaultEntityStatTypes.getStamina()), variant) : null;
+                    return statMap != null ? formatStat(statMap.get(DefaultEntityStatTypes.getStamina()), variantIndex) : null;
                 });
         registry.defineVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_STAMINA,
                 List.of("Current/Max (42/100)", "Percentage (42%)", "Bar (||||||||-----)"));
@@ -110,9 +108,9 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
         registry.defineBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_MANA,
                 "Mana", SegmentTarget.ALL, "30/50")
                 .requires(statMapType)
-                .resolver((store, entityRef, variant) -> {
+                .resolver((store, entityRef, variantIndex) -> {
                     EntityStatMap statMap = store.getComponent(entityRef, statMapType);
-                    return statMap != null ? formatStat(statMap.get(DefaultEntityStatTypes.getMana()), variant) : null;
+                    return statMap != null ? formatStat(statMap.get(DefaultEntityStatTypes.getMana()), variantIndex) : null;
                 });
         registry.defineVariantsInternal(pluginId, DefaultSegmentSystem.SEGMENT_MANA,
                 List.of("Current/Max (30/50)", "Percentage (60%)", "Bar (||||||||||||-----)"));
@@ -130,6 +128,7 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
         getEventRegistry().registerGlobal(PlayerReadyEvent.class, event -> {
             try {
                 var player = event.getPlayer();
+                @SuppressWarnings("removal")
                 UUID playerUuid = player.getPlayerRef().getUuid();
                 if (playerUuid == null) return;
 
@@ -147,13 +146,9 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
                     player.sendMessage(Message.raw("[" + serverName + "] - Use /npb to customize your nameplates.")
                             .color("#55FF55"));
                 }
-            } catch (RuntimeException _) {
-
+            } catch (RuntimeException ignored) {
             }
         });
-
-        PlaceholderAPIHook.init();
-        PlaceholderAPIHook.registerExpansion();
 
         discoverWorlds();
 
@@ -207,11 +202,11 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
 
     private static final int BAR_LENGTH = 20;
 
-    private static String formatStat(EntityStatValue stat, int variant) {
+    private static String formatStat(EntityStatValue stat, int variantIndex) {
         if (stat == null) return null;
         int current = Math.round(stat.get());
         int max = Math.round(stat.getMax());
-        return switch (variant) {
+        return switch (variantIndex) {
             case 1 -> (max > 0 ? Math.round(100f * current / max) : 0) + "%";
             case 2 -> {
                 int filled = max > 0 ? Math.round((float) current / max * BAR_LENGTH) : 0;

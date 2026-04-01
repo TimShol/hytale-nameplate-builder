@@ -60,13 +60,13 @@ NameplateBuilder/
 
 ### Registration Flow
 
-1. Mods call `NameplateAPI.describe()` during `setup()` to register UI metadata
-2. `NameplateRegistry` stores display names, targets, examples, and variant lists
+1. Mods call `NameplateAPI.define()` during `setup()` to register UI metadata and optional resolvers
+2. `NameplateRegistry` stores display names, targets, examples, variant lists, and resolver functions
 3. The UI reads from `NameplateRegistry` to populate Available Blocks
 
 ### Runtime Flow
 
-1. Mods call `NameplateAPI.register()` or write to `NameplateData` directly
+1. Resolvers compute text per entity automatically, or mods call `NameplateAPI.setText()` / write to `NameplateData` directly
 2. `NameplateData` stores segment text as `Map<String, String>` on the entity
 3. `NameplateAggregatorSystem` ticks every frame
 

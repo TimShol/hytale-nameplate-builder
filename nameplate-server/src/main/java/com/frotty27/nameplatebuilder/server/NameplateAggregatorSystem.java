@@ -81,7 +81,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     }
 
     @Override
-    public void tick(float dt, int index, ArchetypeChunk<EntityStore> chunk, @NonNull Store<EntityStore> store, @NonNull CommandBuffer<EntityStore> commandBuffer) {
+    public void tick(float deltaTime, int index, ArchetypeChunk<EntityStore> chunk, @NonNull Store<EntityStore> store, @NonNull CommandBuffer<EntityStore> commandBuffer) {
 
 
         World cleanupWorld = resolveWorld(store, chunk.getReferenceTo(index));
@@ -111,9 +111,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             sendEmptyToAll(visible, entityRef);
             return;
         }
-
-        PlaceholderAPIHook.cleanupCache();
-
 
         DeathComponent deathComponent = store.getComponent(entityRef, deathComponentType);
         if (deathComponent != null) {
@@ -214,7 +211,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 adminConfig.trackNamespaceSegment(modNamespace, key.segmentId(), false);
                 if (segment != null && segment.pluginName() != null) {
                     adminConfig.trackNamespaceDisplayName(modNamespace, segment.pluginName());
-                    adminConfig.trackModEntityType(modNamespace, entityTypeId);
                 }
             }
         }
@@ -352,26 +348,11 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 }
             }
 
-            if (PlaceholderAPIHook.isAvailable() && text.contains("%")) {
-                Player viewerPlayer = store.getComponent(viewerRef, playerType);
-                if (viewerPlayer != null) {
-                    text = PlaceholderAPIHook.parse(text, viewerPlayer.getPlayerRef());
-                }
-            }
-
             if (wantsAnchor && anchorRef != null) {
-
-
                 viewer.queueUpdate(entityRef, nameplateUpdate(""));
                 safeAnchorUpdate(viewer, anchorRef, nameplateUpdate(text));
-            } else if (wantsAnchor) {
-
-
-                viewer.queueUpdate(entityRef, nameplateUpdate(text));
             } else {
-
                 viewer.queueUpdate(entityRef, nameplateUpdate(text));
-
                 if (anchorRef != null) {
                     safeAnchorUpdate(viewer, anchorRef, nameplateUpdate(""));
                 }
@@ -395,16 +376,13 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
     private double resolveEntityHeight(Store<EntityStore> store, Ref<EntityStore> entityRef) {
         try {
-            BoundingBox bb = store.getComponent(entityRef, boundingBoxType);
-            if (bb == null) return 0.0;
-            Box box = bb.getBoundingBox();
+            BoundingBox boundingBox = store.getComponent(entityRef, boundingBoxType);
+            if (boundingBox == null) return 0.0;
+            Box box = boundingBox.getBoundingBox();
             if (box == null) return 0.0;
-
-
-            double h = box.max.getY();
-            return Math.max(0.0, h);
-        } catch (Throwable _) {
-
+            double height = box.max.getY();
+            return Math.max(0.0, height);
+        } catch (Throwable ignored) {
             return 0.0;
         }
     }
@@ -516,7 +494,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 if (segment != null && segment.resolver() != null) {
                     try {
                         text = segment.resolver().resolve(store, entityRef, variantIndex);
-                    } catch (Throwable _) {
+                    } catch (Throwable ignored) {
                         text = null;
                     }
                 }
@@ -630,13 +608,12 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 return;
             }
             viewer.queueUpdate(anchorRef, update);
-        } catch (IllegalArgumentException | IllegalStateException _) {
-
+        } catch (IllegalArgumentException | IllegalStateException ignored) {
         }
     }
 
-    private UUID getUuid(Store<EntityStore> store, Ref<EntityStore> ref) {
-        UUIDComponent uuidComponent = store.getComponent(ref, uuidComponentType);
+    private UUID getUuid(Store<EntityStore> store, Ref<EntityStore> entityRef) {
+        UUIDComponent uuidComponent = store.getComponent(entityRef, uuidComponentType);
         if (uuidComponent != null) {
             return uuidComponent.getUuid();
         }

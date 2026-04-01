@@ -69,7 +69,7 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
     }
 
     @Override
-    public void tick(float dt, int index, @NonNull ArchetypeChunk<EntityStore> chunk,
+    public void tick(float deltaTime, int index, @NonNull ArchetypeChunk<EntityStore> chunk,
                      @NonNull Store<EntityStore> store, @NonNull CommandBuffer<EntityStore> commandBuffer) {
 
         if (!adminConfig.isMasterEnabled()) {
@@ -128,7 +128,7 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
                     assetOwner = "error: " + t.getMessage();
                 }
 
-                String pluginGroups = "n/a";
+                String pluginGroups;
                 try {
                     var plugins = com.hypixel.hytale.server.core.plugin.PluginManager.get().getPlugins();
                     StringBuilder groups = new StringBuilder();
@@ -249,77 +249,38 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
     }
 
     private void setHealthText(NameplateData data, Store<EntityStore> store, Ref<EntityStore> entityRef) {
-        EntityStatMap statMap = store.getComponent(entityRef, statMapType);
-        if (statMap == null) {
-            return;
-        }
-        EntityStatValue health = statMap.get(DefaultEntityStatTypes.getHealth());
-        if (health == null) {
-            return;
-        }
-
-        int current = Math.round(health.get());
-        int max = Math.round(health.getMax());
-
-
-        data.setText(SEGMENT_HEALTH, current + "/" + max);
-
-
-        int pct = max > 0 ? Math.round(100f * current / max) : 0;
-        data.setText(SEGMENT_HEALTH_PCT, pct + "%");
-
-
-        int filled = max > 0 ? Math.round((float) BAR_LENGTH * current / max) : 0;
-        filled = Math.max(0, Math.min(BAR_LENGTH, filled));
-        String bar = "|".repeat(filled) + ".".repeat(BAR_LENGTH - filled);
-        data.setText(SEGMENT_HEALTH_BAR, bar);
+        setStatText(data, store, entityRef, DefaultEntityStatTypes.getHealth(),
+                SEGMENT_HEALTH, SEGMENT_HEALTH_PCT, SEGMENT_HEALTH_BAR);
     }
 
     private void setStaminaText(NameplateData data, Store<EntityStore> store, Ref<EntityStore> entityRef) {
-        EntityStatMap statMap = store.getComponent(entityRef, statMapType);
-        if (statMap == null) {
-            return;
-        }
-        EntityStatValue stamina = statMap.get(DefaultEntityStatTypes.getStamina());
-        if (stamina == null) {
-            return;
-        }
-
-        int current = Math.round(stamina.get());
-        int max = Math.round(stamina.getMax());
-
-        data.setText(SEGMENT_STAMINA, current + "/" + max);
-
-        int pct = max > 0 ? Math.round(100f * current / max) : 0;
-        data.setText(SEGMENT_STAMINA_PCT, pct + "%");
-
-        int filled = max > 0 ? Math.round((float) BAR_LENGTH * current / max) : 0;
-        filled = Math.max(0, Math.min(BAR_LENGTH, filled));
-        String bar = "|".repeat(filled) + ".".repeat(BAR_LENGTH - filled);
-        data.setText(SEGMENT_STAMINA_BAR, bar);
+        setStatText(data, store, entityRef, DefaultEntityStatTypes.getStamina(),
+                SEGMENT_STAMINA, SEGMENT_STAMINA_PCT, SEGMENT_STAMINA_BAR);
     }
 
     private void setManaText(NameplateData data, Store<EntityStore> store, Ref<EntityStore> entityRef) {
+        setStatText(data, store, entityRef, DefaultEntityStatTypes.getMana(),
+                SEGMENT_MANA, SEGMENT_MANA_PCT, SEGMENT_MANA_BAR);
+    }
+
+    private void setStatText(NameplateData data, Store<EntityStore> store, Ref<EntityStore> entityRef,
+                             int statId,
+                             String baseKey, String percentKey, String barKey) {
         EntityStatMap statMap = store.getComponent(entityRef, statMapType);
-        if (statMap == null) {
-            return;
-        }
-        EntityStatValue mana = statMap.get(DefaultEntityStatTypes.getMana());
-        if (mana == null) {
-            return;
-        }
+        if (statMap == null) return;
+        EntityStatValue stat = statMap.get(statId);
+        if (stat == null) return;
 
-        int current = Math.round(mana.get());
-        int max = Math.round(mana.getMax());
+        int current = Math.round(stat.get());
+        int max = Math.round(stat.getMax());
 
-        data.setText(SEGMENT_MANA, current + "/" + max);
+        data.setText(baseKey, current + "/" + max);
 
-        int pct = max > 0 ? Math.round(100f * current / max) : 0;
-        data.setText(SEGMENT_MANA_PCT, pct + "%");
+        int percent = max > 0 ? Math.round(100f * current / max) : 0;
+        data.setText(percentKey, percent + "%");
 
         int filled = max > 0 ? Math.round((float) BAR_LENGTH * current / max) : 0;
         filled = Math.max(0, Math.min(BAR_LENGTH, filled));
-        String bar = "|".repeat(filled) + ".".repeat(BAR_LENGTH - filled);
-        data.setText(SEGMENT_MANA_BAR, bar);
+        data.setText(barKey, "|".repeat(filled) + ".".repeat(BAR_LENGTH - filled));
     }
 }

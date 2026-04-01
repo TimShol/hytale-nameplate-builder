@@ -1,0 +1,49 @@
+---
+title: PlaceholderAPI
+icon: plug
+description: Why NameplateBuilder does not integrate with PlaceholderAPI.
+---
+
+## Why NameplateBuilder does not support PlaceholderAPI
+
+PlaceholderAPI and NameplateBuilder solve different problems with incompatible models. This page explains the mismatch and why integration was considered but not pursued.
+
+## The Core Mismatch
+
+PlaceholderAPI resolves `%placeholder%` tokens relative to a **single player**. A mod registers an expansion (e.g. `%player_rank%`), and PlaceholderAPI replaces the token with that player's value.
+
+Nameplates display information about an **entity** - the NPC or player being looked at. The text describes the entity's health, faction, level, etc. PlaceholderAPI has no concept of "the entity being viewed" - it only knows about the player requesting the parse.
+
+If a modder set `%player_health%` as segment text on an NPC, PlaceholderAPI would resolve it to the **viewer's** health, not the NPC's. Every player looking at that NPC would see their own health displayed above it.
+
+## Per-Viewer Text
+
+The only scenario where PlaceholderAPI's per-viewer model could be useful is relationship-based text - showing "Ally" to one player and "Enemy" to another looking at the same entity.
+
+This would require a PlaceholderAPI expansion that:
+1. Knows which entity the viewer is currently looking at
+2. Computes a relationship between the viewer and that entity
+3. Returns different text per viewer-entity pair
+
+Standard PlaceholderAPI expansions don't work this way. A mod would need to build a custom expansion specifically for this use case, at which point it already has the entity context needed to use NPB's resolver pattern directly - without the PlaceholderAPI dependency.
+
+## What Resolvers Cover
+
+NPB's resolver pattern handles the primary use case for dynamic nameplate text: computing values from an entity's ECS components.
+
+```java
+NameplateAPI.define(this, "health", "Health", SegmentTarget.ALL, "67/69")
+    .requires(EntityStatMap.getComponentType())
+    .resolver((store, entityRef, variantIndex) -> {
+        EntityStatMap stats = store.getComponent(entityRef, statMapType);
+        if (stats == null) return null;
+        return Math.round(stats.get(health).get()) + "/"
+             + Math.round(stats.get(health).getMax());
+    });
+```
+
+Resolvers are called per entity, have direct store access, support archetype filtering via `requires()`, and offer result caching via `cacheTicks()`. This covers health, stats, faction, level, tier, and any other value that lives on the entity.
+
+## If Per-Viewer Text Is Needed in the Future
+
+Should a genuine use case for per-viewer nameplate text emerge, the resolver API could be extended with viewer context (e.g. a `viewerRef` parameter) rather than depending on PlaceholderAPI's player-only model. This would keep the integration native to NPB's architecture without introducing external dependencies or per-tick string scanning overhead.

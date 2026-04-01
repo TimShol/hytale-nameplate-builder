@@ -72,13 +72,13 @@ Your mod is calling the API before NameplateBuilder has loaded. Add the manifest
 
 ### Why does `store.addComponent()` throw inside my tick system?
 
-The store is locked for structural changes during tick processing. Use `commandBuffer.putComponent()` instead. See [Tick Systems](/modding/tick-systems) for the correct pattern.
+The store is locked for structural changes during tick processing. Use `commandBuffer.putComponent()` instead. See [Manual Text](/modding/manual-text#tick-system-patterns) for the correct pattern.
 
 ### Do I need to clean up nameplates when entities die?
 
 No. NameplateBuilder automatically clears nameplates on death. See [Advanced](/modding/advanced#cleanup-and-unregistering).
 
-### Do I need to call `undescribe()` when my plugin shuts down?
+### Do I need to call `undefine()` when my plugin shuts down?
 
 No. NameplateBuilder automatically removes all segment descriptions when your plugin unloads.
 

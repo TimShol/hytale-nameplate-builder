@@ -1,5 +1,7 @@
 package com.frotty27.nameplatebuilder.server;
 
+import com.hypixel.hytale.logger.HytaleLogger;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -9,6 +11,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 final class AdminConfigStore {
+
+    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
     private static final Set<String> BUILT_IN_SEGMENT_IDS = Set.of(
             "entity-name", "player-name", "player-name.1",
@@ -32,7 +36,6 @@ final class AdminConfigStore {
     private final Map<String, Set<String>> segmentsByNamespace = new ConcurrentHashMap<>();
     private final Set<String> integratedNamespaces = ConcurrentHashMap.newKeySet();
     private final Map<String, String> namespaceDisplayNames = new ConcurrentHashMap<>();
-    private final Map<String, Set<String>> modEntityTypes = new ConcurrentHashMap<>();
     private final Set<String> blacklistedNpcs = ConcurrentHashMap.newKeySet();
 
 
@@ -72,9 +75,9 @@ final class AdminConfigStore {
                     case "S" -> serverName = parts[1];
                     case "G" -> welcomeMessagesEnabled = Boolean.parseBoolean(parts[1]);
                     case "L" -> {
-                        boolean val = Boolean.parseBoolean(parts[1]);
-                        npcChainLocked = val;
-                        playerChainLocked = val;
+                        boolean locked = Boolean.parseBoolean(parts[1]);
+                        npcChainLocked = locked;
+                        playerChainLocked = locked;
                     }
                     case "LN" -> npcChainLocked = Boolean.parseBoolean(parts[1]);
                     case "LP" -> playerChainLocked = Boolean.parseBoolean(parts[1]);
@@ -83,30 +86,30 @@ final class AdminConfigStore {
                     case "NC" -> npcChainEnabled = Boolean.parseBoolean(parts[1]);
                     case "NS" -> {
                         if (parts.length >= 3) {
-                            String ns = parts[1].trim();
-                            if (!ns.isEmpty()) {
-                                namespaceEnabled.put(ns, Boolean.parseBoolean(parts[2]));
+                            String namespace = parts[1].trim();
+                            if (!namespace.isEmpty()) {
+                                namespaceEnabled.put(namespace, Boolean.parseBoolean(parts[2]));
                             }
                         }
                     }
                     case "WE" -> {
                         if (parts.length >= 3) {
-                            String wn = parts[1].trim();
-                            if (!wn.isEmpty()) {
-                                worldEnabled.put(wn, Boolean.parseBoolean(parts[2]));
+                            String worldName = parts[1].trim();
+                            if (!worldName.isEmpty()) {
+                                worldEnabled.put(worldName, Boolean.parseBoolean(parts[2]));
                             }
                         }
                     }
                     case "A" -> {
-                        String ns = parts[1].trim();
-                        if (!ns.isEmpty()) {
-                            namespaceEnabled.put(ns, true);
+                        String namespace = parts[1].trim();
+                        if (!namespace.isEmpty()) {
+                            namespaceEnabled.put(namespace, true);
                         }
                     }
                     case "X" -> {
-                        String ns = parts[1].trim();
-                        if (!ns.isEmpty()) {
-                            namespaceEnabled.put(ns, false);
+                        String namespace = parts[1].trim();
+                        if (!namespace.isEmpty()) {
+                            namespaceEnabled.put(namespace, false);
                         }
                     }
                     case "R" -> {
@@ -126,8 +129,8 @@ final class AdminConfigStore {
                     }
                 }
             }
-        } catch (IOException | RuntimeException _) {
-
+        } catch (IOException | RuntimeException exception) {
+            LOGGER.atWarning().withCause(exception).log("Failed to load admin config from %s", filePath);
         }
     }
 
@@ -135,8 +138,8 @@ final class AdminConfigStore {
     void save() {
         try {
             Files.createDirectories(filePath.getParent());
-        } catch (IOException _) {
-
+        } catch (IOException exception) {
+            LOGGER.atWarning().withCause(exception).log("Failed to create admin config directory");
         }
 
         try (BufferedWriter writer = Files.newBufferedWriter(filePath)) {
@@ -216,8 +219,8 @@ final class AdminConfigStore {
                 writer.write("BL|" + npc);
                 writer.newLine();
             }
-        } catch (IOException _) {
-
+        } catch (IOException exception) {
+            LOGGER.atWarning().withCause(exception).log("Failed to save admin config to %s", filePath);
         }
     }
 
@@ -363,13 +366,6 @@ final class AdminConfigStore {
         return segmentsByNamespace;
     }
 
-    void trackModEntityType(String modNamespace, String entityTypeId) {
-        if (modNamespace == null || entityTypeId == null || modNamespace.isEmpty()) {
-            return;
-        }
-        modEntityTypes.computeIfAbsent(modNamespace, _ -> ConcurrentHashMap.newKeySet()).add(entityTypeId);
-    }
-
     void trackNamespaceDisplayName(String namespace, String displayName) {
         if (namespace != null && displayName != null && !displayName.isBlank()) {
             namespaceDisplayNames.putIfAbsent(namespace, displayName);
@@ -384,24 +380,24 @@ final class AdminConfigStore {
 
     private static String formatNamespaceFallback(String namespace) {
         if (namespace == null || namespace.isEmpty()) return namespace;
-        StringBuilder sb = new StringBuilder();
+        StringBuilder result = new StringBuilder();
         boolean capitalizeNext = true;
         for (int i = 0; i < namespace.length(); i++) {
-            char ch = namespace.charAt(i);
-            if (ch == '_' || ch == '-') {
-                sb.append(' ');
+            char character = namespace.charAt(i);
+            if (character == '_' || character == '-') {
+                result.append(' ');
                 capitalizeNext = true;
             } else if (capitalizeNext) {
-                sb.append(Character.toUpperCase(ch));
+                result.append(Character.toUpperCase(character));
                 capitalizeNext = false;
             } else {
-                if (Character.isUpperCase(ch) && Character.isLowerCase(namespace.charAt(i - 1))) {
-                    sb.append(' ');
+                if (Character.isUpperCase(character) && Character.isLowerCase(namespace.charAt(i - 1))) {
+                    result.append(' ');
                 }
-                sb.append(ch);
+                result.append(character);
             }
         }
-        return sb.toString();
+        return result.toString();
     }
 
 

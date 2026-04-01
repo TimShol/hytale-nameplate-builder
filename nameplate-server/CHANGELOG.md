@@ -2,15 +2,36 @@
 
 All notable changes to NameplateBuilder Server will be documented in this file.
 
-## [4.260326.2] - 2026-03-31
+## [4.260326.2] - 2026-04-01
 
 ### Added
 - **Resolver pattern** - Mods can now register resolver functions that compute segment values per entity, replacing the need for manual tick systems
 - Built-in segments (health, stamina, mana, entity name, player name) now use resolvers with archetype-based optimization
+- **Horizontal scroll chain** - Chain blocks now scroll horizontally instead of using pagination, supporting up to 10 visible blocks
+- **Preview bar rework** - Up to 8 preview targets in a scrollable container with Clear All button inline
+- **Chain/Settings sub-tabs** - 2-state nav button pattern for switching between Chain and Settings views
+- **UI separators** - Visual separators between chain/preview and preview/search sections
 
 ### Changed
 - API methods renamed for clarity: `define()`, `defineVariants()`, `undefine()`, `setText()`, `clearText()`
 - Requires NameplateBuilder API v2.0.0
+- Default chain simplified to only name segment + health
+- Player tab hides preview target buttons since players only see their own nameplate
+- Player tab preview shows all segments unfiltered
+- Save button spacing equalized (right and bottom margin) across all pages
+
+### Fixed
+- NPC picker typing no longer loses focus after one character
+- Built-in segments now respect namespace killswitch
+- Vanilla NPCs get nameplates correctly regardless of entity type ID
+
+### Removed
+- **PlaceholderAPI support** - Resolves per-viewer, not per-entity, making it unsuitable for nameplates. See Placeholder-API page on the docs for more info.
+
+### Performance
+- Segments map passed as parameter to buildText, eliminating redundant registry lookups
+- LinkedHashSet for O(1) contains checks in the aggregator
+- Removed per-tick PlaceholderAPI string scanning and cache eviction
 
 ## [4.260326.1] - 2026-03-30
 

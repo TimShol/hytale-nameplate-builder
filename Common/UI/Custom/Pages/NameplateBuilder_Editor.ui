@@ -202,13 +202,13 @@ $C.@PageOverlay {
         FlexWeight: 1;
         Background: (Color: #141c26);
         LayoutMode: Top;
-        Padding: (Left: 24, Right: 8, Top: 8, Bottom: 8);
+        Padding: (Left: 24, Right: 24, Top: 8, Bottom: 8);
 
         Group #TabGeneral {
           LayoutMode: Top;
           FlexWeight: 1;
           Visible: false;
-          Padding: (Top: 12, Right: 12, Bottom: 12);
+          Padding: (Top: 12);
 
           Label {
             Text: "GENERAL";
@@ -302,7 +302,7 @@ $C.@PageOverlay {
 
           Group {
             LayoutMode: Left;
-            Anchor: (Height: 42, Bottom: 8);
+            Anchor: (Height: 42, Bottom: 4);
 
             Group { FlexWeight: 1; }
 
@@ -403,7 +403,7 @@ $C.@PageOverlay {
             LayoutMode: LeftScrolling;
             MouseWheelScrollBehaviour: HorizontalOnly;
             ScrollbarStyle: (Spacing: 2, Size: 4, Background: #1a2840, Handle: #2a3d5a, HoveredHandle: #3a5070, DraggedHandle: #4a6080);
-            Anchor: (Height: 126);
+            Anchor: (Height: 126, Bottom: 4);
             Padding: (Top: 2, Bottom: 2);
 
             Group #ChainBlock0 {
@@ -706,14 +706,18 @@ $C.@PageOverlay {
               Anchor: (Width: 28, Height: 122);
               Visible: false;
             }
-          }
 
-          Group { Anchor: (Height: 1, Top: 10, Bottom: 10); Background: (Color: #1a2840); }
+
+
+
+          }
 
           Group #PreviewTargetBar {
             LayoutMode: Left;
-            Anchor: (Height: 26);
+            Anchor: (Height: 28, Bottom: 4);
             Visible: false;
+
+            Label { Text: "Preview:"; Style: (TextColor: #5a6d82, FontSize: 13, VerticalAlignment: Center, RenderBold: true); Anchor: (Width: 70, Height: 28); }
 
             Group {
               FlexWeight: 1;
@@ -766,19 +770,19 @@ $C.@PageOverlay {
 
           Group {
             LayoutMode: Left;
-            Anchor: (Height: 36);
+            Anchor: (Height: 36, Bottom: 5);
 
             Group #PreviewContainer {
               FlexWeight: 1;
               Anchor: (Height: 36);
               Background: (Color: #0a0f17);
-              Padding: (Left: 14, Right: 14, Top: 2);
+              Padding: (Left: 14, Right: 14);
               LayoutMode: LeftScrolling;
               MouseWheelScrollBehaviour: HorizontalOnly;
               ScrollbarStyle: (Spacing: 2, Size: 3, Background: #1a2840, Handle: #2a3d5a, HoveredHandle: #3a5070, DraggedHandle: #4a6080);
 
-              Label { Text: "Preview:"; Style: (FontSize: 13, TextColor: #5a6d82, RenderBold: true, VerticalAlignment: Center); Anchor: (Width: 70, Height: 28); }
-              Label #PreviewText { Style: (FontSize: 13, TextColor: #ffffff, VerticalAlignment: Center); Anchor: (Height: 28); }
+              Label { Text: "Preview:"; Style: (FontSize: 13, TextColor: #5a6d82, RenderBold: true, VerticalAlignment: Center); Anchor: (Width: 70, Height: 30); }
+              Label #PreviewText { Style: (FontSize: 13, TextColor: #ffffff, VerticalAlignment: Center); Anchor: (Height: 30); }
             }
 
             $C.@SmallSecondaryTextButton #ClearChainButton {
@@ -790,7 +794,7 @@ $C.@PageOverlay {
           Group { Anchor: (Height: 1, Top: 10, Bottom: 10); Background: (Color: #1a2840); }
 
           $C.@TextField #FilterField {
-            Anchor: (Width: 460, Height: 34, Bottom: 6);
+            Anchor: (Width: 460, Height: 34, Bottom: 10);
             PlaceholderText: "Search for available blocks...";
           }
 
@@ -1007,7 +1011,7 @@ $C.@PageOverlay {
             ScrollbarStyle: (Spacing: 8, Size: 4, Background: #1a2840, Handle: #2a3d5a, HoveredHandle: #3a5070, DraggedHandle: #4a6080);
             FlexWeight: 1;
             Visible: false;
-            Padding: (Left: 24, Right: 12, Top: 12, Bottom: 12);
+            Padding: (Left: 24, Right: 16, Top: 12);
 
             Label {
               Text: "CHAIN SETTINGS";
@@ -1220,7 +1224,7 @@ $C.@PageOverlay {
           Group #ChainFooter {
             LayoutMode: Left;
             Anchor: (Height: 50);
-            Padding: (Left: 24, Right: 12, Top: 8, Bottom: 12);
+            Padding: (Left: 24, Right: 24, Top: 8, Bottom: 8);
 
             Group { FlexWeight: 1; }
 
@@ -1287,7 +1291,7 @@ $C.@PageOverlay {
           Group #AdminRequiredContent {
             LayoutMode: Top;
             FlexWeight: 1;
-            Padding: (Left: 8, Right: 12, Top: 12, Bottom: 12);
+            Padding: (Left: 8, Right: 8, Top: 12);
 
             Label {
               Text: "REQUIRED SEGMENTS";
@@ -1639,7 +1643,7 @@ $C.@PageOverlay {
 
             Group {
               LayoutMode: Left;
-              Anchor: (Height: 42, Bottom: 8);
+              Anchor: (Height: 42, Bottom: 4);
 
               TextButton #ResetButtonAdmin {
                 Text: "Reset";
@@ -1668,7 +1672,7 @@ $C.@PageOverlay {
             LayoutMode: Top;
             FlexWeight: 1;
             Visible: false;
-            Padding: (Left: 8, Right: 12, Top: 12, Bottom: 12);
+            Padding: (Left: 8, Right: 8, Top: 12);
 
             Label {
               Text: "DISABLED SEGMENTS";
@@ -2020,7 +2024,7 @@ $C.@PageOverlay {
 
             Group {
               LayoutMode: Left;
-              Anchor: (Height: 42, Bottom: 8);
+              Anchor: (Height: 42, Bottom: 4);
 
               TextButton #ResetButtonAdminDis {
                 Text: "Reset";
@@ -2050,7 +2054,7 @@ $C.@PageOverlay {
             ScrollbarStyle: (Spacing: 8, Size: 4, Background: #1a2840, Handle: #2a3d5a, HoveredHandle: #3a5070, DraggedHandle: #4a6080);
             FlexWeight: 1;
             Visible: false;
-            Padding: (Left: 24, Right: 12, Top: 12, Bottom: 12);
+            Padding: (Left: 24, Right: 16, Top: 12);
 
             Label {
               Text: "ADMIN SETTINGS";
@@ -2306,7 +2310,7 @@ $C.@PageOverlay {
 
             Group {
               LayoutMode: Left;
-              Anchor: (Height: 42, Bottom: 8);
+              Anchor: (Height: 42, Bottom: 4);
 
               TextButton #ResetButtonAdminSettings {
                 Text: "Reset";
@@ -2335,7 +2339,7 @@ $C.@PageOverlay {
             LayoutMode: Top;
             FlexWeight: 1;
             Visible: false;
-            Padding: (Left: 8, Right: 12, Top: 12, Bottom: 12);
+            Padding: (Left: 8, Right: 8, Top: 12);
 
             Label {
               Text: "NPC BLACKLIST";
@@ -2462,7 +2466,7 @@ $C.@PageOverlay {
 
             Group {
               LayoutMode: Left;
-              Anchor: (Height: 42, Bottom: 8);
+              Anchor: (Height: 42, Bottom: 4);
 
               TextButton #BlacklistClearAll { Text: "Clear Blacklist"; Anchor: (Width: 150, Height: 36); Style: @ResetButtonStyle; }
 

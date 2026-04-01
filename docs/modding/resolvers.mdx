@@ -1,0 +1,163 @@
+---
+title: Resolvers
+icon: bolt
+description: Compute segment values per entity using resolver functions.
+---
+
+Resolvers are the **recommended way** to provide segment text. Instead of manually pushing text to entities, you give NameplateBuilder a function that computes the value from the entity's existing components. NameplateBuilder calls it automatically for each visible entity.
+
+## Basic Resolver
+
+Chain `.resolver()` onto `define()` in your plugin's `setup()`:
+
+```java
+@Override
+protected void setup() {
+    NameplateAPI.define(this, "health", "Health",
+            SegmentTarget.ALL, "67/69")
+        .resolver((store, entityRef, variantIndex) -> {
+            EntityStatMap stats = store.getComponent(entityRef, statMapType);
+            if (stats == null) return null;
+            int current = Math.round(stats.get(health).get());
+            int max = Math.round(stats.get(health).getMax());
+            return current + "/" + max;
+        });
+}
+```
+
+The resolver receives three parameters:
+
+| Parameter | Type | Description |
+| :--- | :--- | :--- |
+| `store` | `Store<EntityStore>` | The entity store for reading components |
+| `entityRef` | `Ref<EntityStore>` | Reference to the entity being processed |
+| `variantIndex` | `int` | Which display format the viewer selected (0 = default) |
+
+**Return `null`** to skip this segment for the entity. Return a non-null string to include it.
+
+## Archetype Filtering with `requires()`
+
+If your resolver only applies to entities with a specific component, use `requires()` as an optimization hint:
+
+```java
+NameplateAPI.define(this, "health", "Health",
+        SegmentTarget.ALL, "67/69")
+    .requires(EntityStatMap.getComponentType())
+    .resolver((store, entityRef, variantIndex) -> {
+        EntityStatMap stats = store.getComponent(entityRef, statMapType);
+        if (stats == null) return null;
+        return Math.round(stats.get(health).get()) + "/"
+             + Math.round(stats.get(health).getMax());
+    });
+```
+
+With `requires()`, NameplateBuilder skips entities whose archetype doesn't include that component type. The resolver is never called for those entities, saving component lookups.
+
+Without `requires()`, the resolver is called for every visible entity and must do its own null checks (which still works, but is less efficient).
+
+## Caching with `cacheTicks()`
+
+For data that changes infrequently, cache the resolver result to avoid recomputing every tick:
+
+```java
+NameplateAPI.define(this, "faction", "Faction",
+        SegmentTarget.NPCS, "<Undead>")
+    .requires(FactionComponent.getComponentType())
+    .cacheTicks(100) // re-evaluate every 100 ticks (~5 seconds)
+    .resolver((store, entityRef, variantIndex) -> {
+        FactionComponent faction = store.getComponent(entityRef, factionType);
+        return faction != null ? "<" + faction.getName() + ">" : null;
+    });
+```
+
+The default is 1 (re-evaluate every tick). The cache is per-entity and is cleared when the entity dies.
+
+**Use caching for:** level, faction, tier, rank - anything that rarely changes.
+**Avoid caching for:** health, mana, timers - anything that changes frequently.
+
+## Variant Support
+
+When your segment has multiple display formats (registered via `defineVariants()`), use the `variantIndex` parameter to return the right format:
+
+```java
+NameplateAPI.define(this, "health", "Health",
+        SegmentTarget.ALL, "67/69")
+    .requires(EntityStatMap.getComponentType())
+    .resolver((store, entityRef, variantIndex) -> {
+        EntityStatMap stats = store.getComponent(entityRef, statMapType);
+        if (stats == null) return null;
+        int current = Math.round(stats.get(health).get());
+        int max = Math.round(stats.get(health).getMax());
+        return switch (variantIndex) {
+            case 1 -> Math.round(100f * current / max) + "%";
+            case 2 -> buildBarString(current, max);
+            default -> current + "/" + max;
+        };
+    });
+
+NameplateAPI.defineVariants(this, "health", List.of(
+    "Current/Max",    // variant 0 (default)
+    "Percentage",     // variant 1
+    "Bar"             // variant 2
+));
+```
+
+The `variantIndex` corresponds to the index in the variant names list. Always handle the `default` case - return the base format for any unknown index.
+
+See **[Format Variants](/modding/format-variants)** for more on variant registration and naming.
+
+## Resolver vs Manual Text
+
+If an entity has both a resolver and manual text (via `setText()`) for the same segment, **manual text takes precedence**. This lets you override computed values for specific entities when needed.
+
+## Complete Example
+
+```java
+@Override
+protected void setup() {
+    // Health - resolver with variants, updates every tick
+    NameplateAPI.define(this, "health", "Health",
+            SegmentTarget.ALL, "67/69")
+        .requires(EntityStatMap.getComponentType())
+        .resolver((store, ref, variant) -> {
+            EntityStatMap stats = store.getComponent(ref, statMapType);
+            if (stats == null) return null;
+            int cur = Math.round(stats.get(health).get());
+            int max = Math.round(stats.get(health).getMax());
+            return switch (variant) {
+                case 1 -> Math.round(100f * cur / max) + "%";
+                default -> cur + "/" + max;
+            };
+        });
+
+    NameplateAPI.defineVariants(this, "health", List.of(
+        "Current/Max", "Percentage"
+    ));
+
+    // Faction - resolver with caching, rarely changes
+    NameplateAPI.define(this, "faction", "Faction",
+            SegmentTarget.NPCS, "<Undead>")
+        .requires(FactionComponent.getComponentType())
+        .cacheTicks(100)
+        .resolver((store, ref, variant) -> {
+            FactionComponent f = store.getComponent(ref, factionType);
+            return f != null ? "<" + f.getName() + ">" : null;
+        });
+
+    // Title - simple resolver, no caching needed
+    NameplateAPI.define(this, "title", "Title",
+            SegmentTarget.PLAYERS, "[Knight]")
+        .resolver((store, ref, variant) -> {
+            TitleData title = store.getComponent(ref, titleType);
+            return title != null ? "[" + title.getTitle() + "]" : null;
+        });
+}
+```
+
+No tick systems needed. NameplateBuilder handles the scheduling, per-viewer compositing, and caching internally.
+
+## Next Steps
+
+* **[Manual Text](/modding/manual-text)** - For event-driven or stateful segments that can't use resolvers
+* **[Format Variants](/modding/format-variants)** - Let players pick between display formats
+* **[Advanced](/modding/advanced)** - Hidden metadata keys, cleanup, and edge cases
