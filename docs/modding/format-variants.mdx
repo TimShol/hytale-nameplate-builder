@@ -4,76 +4,36 @@ icon: list
 description: Let players choose between multiple display formats for a segment.
 ---
 
-If your segment supports multiple display formats, register variant names so players can pick their preferred format via the UI.
+A segment can have multiple **display formats**. For example, a health segment could show `"42/67"`, `"63%"`, or `"||||||------"`. Players pick their preferred format in the `/npb` UI, and NameplateBuilder tells your code which one they chose.
 
-## Registering Variants
+## How It Works
 
-```java
-@Override
-protected void setup() {
-    // Define the segment first
-    NameplateAPI.define(this, "health", "Health",
-            SegmentTarget.ALL, "67/67");
+There are three parts:
 
-    // Register format variants. Index 0 is always the default.
-    NameplateAPI.defineVariants(this, "health", List.of(
-        "Current/Max",       // variant 0 (default): "42/67"
-        "Percentage",        // variant 1:           "63%"
-        "Bar"                // variant 2:           "||||||------"
-    ));
-}
-```
+1. **Register variant names** - Tell the UI what formats are available
+2. **Handle the variant index** - Return the right format in your resolver (or push the right text manually)
+3. **NameplateBuilder handles the rest** - The UI shows a format picker, saves the player's choice, and passes the selected index to your code
 
-## Providing Variant Text
+## Step 1: Register Variant Names
 
-### With Resolvers (Recommended)
-
-Use the `variantIndex` parameter to return the right format:
+Call `defineVariants()` after `define()` in your `setup()` method. Pass a list of human-readable names for each format:
 
 ```java
 NameplateAPI.define(this, "health", "Health",
-        SegmentTarget.ALL, "67/67")
-    .resolver((store, entityRef, variantIndex) -> {
-        EntityStatMap stats = store.getComponent(entityRef, statMapType);
-        if (stats == null) return null;
-        int current = Math.round(stats.get(health).get());
-        int max = Math.round(stats.get(health).getMax());
-        return switch (variantIndex) {
-            case 1 -> Math.round(100f * current / max) + "%";
-            case 2 -> buildBarString(current, max);
-            default -> current + "/" + max;
-        };
-    });
+        SegmentTarget.ALL, "67/67");
+
+NameplateAPI.defineVariants(this, "health", List.of(
+    "Current/Max",    // index 0 - the default format
+    "Percentage",     // index 1
+    "Bar"             // index 2
+));
 ```
 
-### With Manual Text
+The first name in the list (index 0) is the **default** format. Players see these names in the format picker popup when they click the "Format" button on a chain block.
 
-Push text for each variant using suffixed keys:
+### Variant names with examples
 
-```java
-// Variant 0 (default) - uses the base key
-data.setText("health", currentHp + "/" + maxHp);
-
-// Variant 1 - uses ".1" suffix
-data.setText("health.1", percent + "%");
-
-// Variant 2 - uses ".2" suffix
-data.setText("health.2", barString);
-```
-
-## How Variant Resolution Works
-
-When the aggregator composites the nameplate for a viewer:
-
-1. It checks which variant index the viewer selected for this segment
-2. For resolvers: it passes the `variantIndex` directly to your function
-3. For manual text: if the viewer selected variant 2, it looks for the key `"health.2"`. If that key is missing, it falls back to the base key `"health"`
-
-**With manual text, always set the base key** - suffixed keys are optional. If you don't set a suffixed key, the viewer sees the base format regardless of their selection.
-
-## Variant Name Tips
-
-Variant names can include parenthesized examples:
+You can include an example in parentheses. The UI extracts it and shows it as a preview:
 
 ```java
 NameplateAPI.defineVariants(this, "health", List.of(
@@ -83,23 +43,76 @@ NameplateAPI.defineVariants(this, "health", List.of(
 ));
 ```
 
-The UI extracts the value inside parentheses to show as a preview in the format popup.
+## Step 2: Handle the Variant Index
 
-## Prefix, Suffix, and Bar Customization
+### With Resolvers
 
-When a player selects a variant, the format popup also lets them configure:
+The `variantIndex` parameter tells you which format the player selected. Use a `switch` to return the right text:
 
-* **Prefix** - text prepended to the value (e.g. `HP: [`)
-* **Suffix** - text appended to the value (e.g. `]`)
-* **Bar empty fill** - the character used for unfilled bar positions (only shown for Bar variants)
+```java
+NameplateAPI.define(this, "health", "Health",
+        SegmentTarget.ALL, "67/67")
+    .requires(EntityStatMap.getComponentType())
+    .resolver((store, entityRef, variantIndex) -> {
+        EntityStatMap stats = store.getComponent(entityRef, statMapType);
+        if (stats == null) return null;
 
-These wrapping and fill options are handled entirely by NameplateBuilder - you don't need to do anything special in your mod. Just provide the raw variant text and NameplateBuilder wraps it.
+        int current = Math.round(stats.get(health).get());
+        int max = Math.round(stats.get(health).getMax());
+
+        return switch (variantIndex) {
+            case 1 -> {
+                int percent = max > 0 ? Math.round(100f * current / max) : 0;
+                yield percent + "%";
+            }
+            case 2 -> {
+                int filled = max > 0 ? Math.round(20f * current / max) : 0;
+                yield "|".repeat(filled) + "-".repeat(20 - filled);
+            }
+            default -> current + "/" + max;
+        };
+    });
+```
+
+The `default` case handles index 0 (the default format) and any unexpected index.
+
+### With Manual Text
+
+If you're using `setText()` instead of a resolver, push each variant using **suffixed keys**:
+
+```java
+int current = 42;
+int max = 67;
+
+// Variant 0 (default) - use the base key
+data.setText("health", current + "/" + max);
+
+// Variant 1 - append ".1" to the key
+data.setText("health.1", Math.round(100f * current / max) + "%");
+
+// Variant 2 - append ".2" to the key
+data.setText("health.2", "|".repeat(13) + "-".repeat(7));
+```
+
+When the player selects variant 2, NameplateBuilder looks for the key `"health.2"`. If it exists, that text is used. If it's missing, it falls back to the base key `"health"`.
+
+**Always set the base key.** The suffixed keys are optional - if you skip one, the player sees the default format instead. This means you can support some variants but not all, and it degrades gracefully.
 
 ## Segments Without Variants
 
-If your segment only has one display format, don't call `defineVariants()`. The format button won't appear on the chain block, and the segment will always display its base text.
+If your segment only has one display format, simply don't call `defineVariants()`. The format button won't appear on the chain block in the UI, and the segment always displays its base text. You can ignore the `variantIndex` parameter in your resolver.
+
+## Prefix, Suffix, and Bar Customization
+
+When a player selects a format variant, the UI also lets them configure:
+
+- **Prefix** - Text prepended before the value (e.g. `"HP: ["`)
+- **Suffix** - Text appended after the value (e.g. `"]"`)
+- **Bar empty fill** - The character used for unfilled positions in bar variants
+
+These are handled entirely by NameplateBuilder. You don't need to do anything in your mod - just return the raw value and NameplateBuilder wraps it with whatever prefix/suffix the player configured.
 
 ## Next Steps
 
 * **[Advanced](/modding/advanced)** - Hidden metadata keys, cleanup, and edge cases
-* **[API Reference](/reference/api)** - Full method tables and exception docs
+* **[API Reference](/reference/api)** - Full method tables

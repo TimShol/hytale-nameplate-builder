@@ -11,150 +11,155 @@ Select your current API version below to see what needs to change.
 <Tabs>
   <Tab title="From API 1.0.0 to 2.0.0">
 
-    ## API 1.0.0 to 2.0.0
+    ## What Changed
 
-    API 2.0.0 renames all public methods for clarity and adds the resolver pattern. Your existing code will not compile until you update the method names.
+    API 2.0.0 has two changes:
 
-    ### 1. Update your API jar
+    1. **All method names were renamed** for clarity (required - your code won't compile until you rename them)
+    2. **Resolvers were added** as a new way to provide segment text (optional but recommended - your existing tick systems still work)
 
-    Replace `NameplateBuilder-API-1.0.0.jar` with `NameplateBuilder-API-2.0.0.jar` in your `libs/` folder, and update `build.gradle`:
+    ## Step 1: Update Dependencies
 
+    Replace the API jar in your `libs/` folder and update both files:
+
+    **`build.gradle`:**
     ```groovy
     dependencies {
-        // Before:
-        // compileOnly files('libs/NameplateBuilder-API-1.0.0.jar')
-
-        // After:
         compileOnly files('libs/NameplateBuilder-API-2.0.0.jar')
     }
     ```
 
-    ### 2. Update your manifest dependency
-
+    **`manifest.json`:**
     ```json
     {
       "Dependencies": {
-        // Before:
-        // "Frotty27:NameplateBuilder": "*"
-
-        // After:
         "Frotty27:NameplateBuilder": ">=4.260326.2"
       }
     }
     ```
 
-    ### 3. Rename method calls
+    ## Step 2: Rename Methods
 
-    Every public method on `NameplateAPI` has been renamed. Find and replace these in your code:
+    Find and replace these five method names across your code. The behavior is identical - only the names changed.
 
-    | Old (1.0.0) | New (2.0.0) | Why it changed |
-    | :--- | :--- | :--- |
-    | `NameplateAPI.describe(...)` | `NameplateAPI.define(...)` | "Define" better describes what it does - it registers a segment definition |
-    | `NameplateAPI.describeVariants(...)` | `NameplateAPI.defineVariants(...)` | Consistent with `define()` |
-    | `NameplateAPI.undescribe(...)` | `NameplateAPI.undefine(...)` | Consistent with `define()` |
-    | `NameplateAPI.register(...)` | `NameplateAPI.setText(...)` | "Set text" is clearer - you're setting text on an entity |
-    | `NameplateAPI.remove(...)` | `NameplateAPI.clearText(...)` | "Clear text" is clearer - you're clearing text from an entity |
-
-    **Example - before:**
-
-    ```java
-    @Override
-    protected void setup() {
-        NameplateAPI.describe(this, "bounty", "Bounty",
-                SegmentTarget.NPCS, "$500");
-        NameplateAPI.describeVariants(this, "bounty", List.of(
-            "Amount", "Rank"
-        ));
-    }
-
-    // At runtime:
-    NameplateAPI.register(store, entityRef, "bounty", "$500");
-    NameplateAPI.remove(store, entityRef, "bounty");
-    ```
-
-    **Example - after:**
-
-    ```java
-    @Override
-    protected void setup() {
-        NameplateAPI.define(this, "bounty", "Bounty",
-                SegmentTarget.NPCS, "$500");
-        NameplateAPI.defineVariants(this, "bounty", List.of(
-            "Amount", "Rank"
-        ));
-    }
-
-    // At runtime:
-    NameplateAPI.setText(store, entityRef, "bounty", "$500");
-    NameplateAPI.clearText(store, entityRef, "bounty");
-    ```
-
-    ### 4. (Optional) Switch to resolvers
-
-    API 2.0.0 adds the resolver pattern. If your segment's value comes from an ECS component on the entity, you can replace your tick system with a resolver. This is optional - your existing `setText()` code still works.
-
-    **Before (1.0.0) - manual tick system:**
-
-    ```java
-    @Override
-    protected void setup() {
-        NameplateAPI.define(this, "bounty", "Bounty",
-                SegmentTarget.NPCS, "$500");
-
-        // Had to write a tick system to push text to entities
-        getEntityStoreRegistry().registerSystem(
-            new BountyNameplateSystem(NameplateAPI.getComponentType()));
-    }
-    ```
-
-    **After (2.0.0) - resolver, no tick system needed:**
-
-    ```java
-    @Override
-    protected void setup() {
-        NameplateAPI.define(this, "bounty", "Bounty",
-                SegmentTarget.NPCS, "$500")
-            .requires(BountyComponent.getComponentType())
-            .resolver((store, entityRef, variantIndex) -> {
-                BountyComponent bounty = store.getComponent(entityRef, bountyType);
-                if (bounty == null) return null;
-                return "$" + bounty.getAmount();
-            });
-
-        // No tick system needed - NameplateBuilder calls the resolver automatically
-    }
-    ```
-
-    **Why switch?** Resolvers are simpler (no tick system class to write), more efficient (NameplateBuilder handles scheduling and caching), and support archetype filtering via `requires()`. See **[Resolvers](/modding/resolvers)** for the full guide.
-
-    **When NOT to switch:** Keep using `setText()` if your value doesn't come from an ECS component (e.g. it comes from a database, config file, or chat command).
-
-    ### 5. `NameplateData` methods are unchanged
-
-    If you use `NameplateData` directly (e.g. `data.setText()`, `data.getText()`), nothing has changed. These instance methods on the component are the same in both versions.
-
-    ### Summary
-
-    | What | Action needed |
+    | Find | Replace with |
     | :--- | :--- |
-    | API jar | Replace with 2.0.0 |
-    | Manifest version | Change to `>=4.260326.2` |
-    | `describe()` | Rename to `define()` |
-    | `describeVariants()` | Rename to `defineVariants()` |
-    | `undescribe()` | Rename to `undefine()` |
-    | `register()` | Rename to `setText()` |
-    | `remove()` | Rename to `clearText()` |
-    | Tick systems | Optionally replace with resolvers |
-    | `NameplateData` methods | No changes needed |
+    | `NameplateAPI.describe(` | `NameplateAPI.define(` |
+    | `NameplateAPI.describeVariants(` | `NameplateAPI.defineVariants(` |
+    | `NameplateAPI.undescribe(` | `NameplateAPI.undefine(` |
+    | `NameplateAPI.register(` | `NameplateAPI.setText(` |
+    | `NameplateAPI.remove(` | `NameplateAPI.clearText(` |
+
+    After this step, your code compiles and works exactly as before. You're done with the required migration.
+
+    **`NameplateData` methods are unchanged.** If you use `data.setText()`, `data.getText()`, etc. directly on the component, nothing needs to change.
+
+    ## Step 3: Switch to Resolvers (Recommended)
+
+    This step is optional. Your renamed `setText()` / `clearText()` code works fine. But if your segment's value comes from an **ECS component on the entity** (health, stats, faction, etc.), resolvers are simpler and more efficient.
+
+    **The idea:** Instead of writing a tick system that reads a component and calls `setText()` every tick, you give NameplateBuilder a function that does the reading. NameplateBuilder calls it automatically - no tick system needed.
+
+    ### Before (1.0.0 pattern)
+
+    You had to write a tick system class, register it, handle spawn initialization with `CommandBuffer`, and update every tick:
+
+    ```java
+    // In setup():
+    NameplateAPI.define(this, "health", "Health",
+            SegmentTarget.ALL, "67/69");
+
+    getEntityStoreRegistry().registerSystem(
+        new HealthNameplateSystem(NameplateAPI.getComponentType()));
+    ```
+
+    ```java
+    // Separate tick system class:
+    final class HealthNameplateSystem extends EntityTickingSystem<EntityStore> {
+        // ... constructor, getQuery(), getGroup() ...
+
+        @Override
+        public void tick(float deltaTime, int index, ArchetypeChunk<EntityStore> chunk,
+                         Store<EntityStore> store, CommandBuffer<EntityStore> commandBuffer) {
+            // Check if entity has stats
+            EntityStatMap stats = chunk.getComponent(index, statMapType);
+            if (stats == null) return;
+
+            Ref<EntityStore> entityRef = chunk.getReferenceTo(index);
+
+            // Initialize if needed (can't use setText here - store is locked)
+            if (store.getComponent(entityRef, nameplateDataType) == null) {
+                NameplateData data = new NameplateData();
+                data.setText("health", computeHealth(stats));
+                commandBuffer.putComponent(entityRef, nameplateDataType, data);
+                return;
+            }
+
+            // Update every tick
+            NameplateData data = chunk.getComponent(index, nameplateDataType);
+            if (data != null) {
+                data.setText("health", computeHealth(stats));
+            }
+        }
+    }
+    ```
+
+    ### After (2.0.0 with resolver)
+
+    Everything is in `setup()`. No tick system class needed:
+
+    ```java
+    @Override
+    protected void setup() {
+        NameplateAPI.define(this, "health", "Health",
+                SegmentTarget.ALL, "67/69")
+            .requires(EntityStatMap.getComponentType())
+            .resolver((store, entityRef, variantIndex) -> {
+                EntityStatMap stats = store.getComponent(entityRef, statMapType);
+                if (stats == null) return null;
+                int current = Math.round(stats.get(health).get());
+                int max = Math.round(stats.get(health).getMax());
+                return current + "/" + max;
+            });
+    }
+    ```
+
+    **What you can delete:** The entire tick system class (`HealthNameplateSystem`), its registration in `setup()`, and the `CommandBuffer` initialization logic. The resolver replaces all of it.
+
+    You can also add `.cacheTicks(100)` for data that rarely changes (faction, level, tier) to avoid recomputing every tick. See [Resolvers](/modding/resolvers) for the full guide.
+
+    ### When to Keep Using `setText()`
+
+    Keep your existing `setText()` / `clearText()` code if your segment's value **doesn't come from an ECS component**. For example:
+
+    - A bounty stored in your mod's config file or database
+    - A title assigned by an admin via a chat command
+    - A buff applied through an event, not stored as a component
+
+    In these cases there's no component for a resolver to read, so `setText()` is the right approach.
+
+    **Rule of thumb:** If you're reading a component inside a tick system and calling `setText()` with the result, that's a resolver. If you're reacting to an event or command, keep `setText()`.
+
+    ## Summary
+
+    | What | Required? | Action |
+    | :--- | :--- | :--- |
+    | API jar | Yes | Replace with `NameplateBuilder-API-2.0.0.jar` |
+    | Manifest version | Yes | Change to `">=4.260326.2"` |
+    | Rename 5 methods | Yes | `describe` -> `define`, `register` -> `setText`, `remove` -> `clearText`, etc. |
+    | Switch tick systems to resolvers | Recommended | Replace component-reading tick systems with `.resolver()` |
+    | Keep `setText()` for external data | Keep as-is | No change needed for event/command/database-driven segments |
+    | `NameplateData` methods | No change | `data.setText()`, `data.getText()`, etc. are identical |
 
   </Tab>
   <Tab title="Already on 2.0.0">
 
     ## You're up to date
 
-    You're on the latest version. No migration needed.
+    You're on the latest API version. No migration needed.
 
-    Check the **[Quick Start](/modding/quick-start)** if you're setting up a new integration, or the **[API Reference](/reference/api)** for the full method tables.
+    * **[Quick Start](/modding/quick-start)** - Setting up a new integration
+    * **[API Reference](/reference/api)** - Full method tables
 
   </Tab>
 </Tabs>

@@ -1,78 +1,141 @@
 ---
 title: Advanced
 icon: flask
-description: Hidden keys, cleanup behaviour, undefine, and common mistakes.
+description: Hidden keys, cleanup, undefine, and common mistakes.
 ---
+
+This page covers features you'll rarely need, but are good to know about.
 
 ## Hidden Metadata Keys
 
-Keys that start with `_` (underscore) are **hidden metadata**. They are stored in the `NameplateData` component but are **never shown** in the nameplate output or the player UI.
+Sometimes you need to store per-entity data alongside your visible segments - things like spawn timestamps, internal state flags, or tracking counters. You don't want players to see this data in their nameplate.
+
+Any key that starts with `_` (underscore) is **hidden**. It's stored in the `NameplateData` component like any other key, but NameplateBuilder's aggregator skips it when building the nameplate text. It never appears in the player UI either.
 
 ```java
-// Store a spawn tick so you can compute per-entity lifetime
-data.setText("_spawn_tick", String.valueOf(globalTick));
+// Store a spawn tick so you can compute a lifetime later
+data.setText("_spawn_tick", String.valueOf(currentTick));
 
-// Read it back later - invisible to players
-String spawnTick = data.getText("_spawn_tick");
-
-// Store any internal state alongside visible segments
-data.setText("_last_hit_by", attackerName);
+// Store internal state - invisible to players
 data.setText("_phase", "enraged");
+data.setText("_last_hit_by", attackerName);
+
+// Read it back in a later tick
+String spawnTick = data.getText("_spawn_tick");
+long lifetime = currentTick - Long.parseLong(spawnTick);
 ```
 
-This is useful when you need per-entity state inside a tick system but don't want to register a separate ECS component for it. The `_` prefix convention is enforced by the aggregator - it skips any key starting with underscore.
+**Why use this instead of a separate ECS component?** Convenience. If you only need a couple of small values per entity and they're closely tied to your nameplate logic, hidden keys save you from registering and managing a separate component. For larger or more structured data, a dedicated component is still the better choice.
 
-## Cleanup and Unregistering
+## Automatic Cleanup
 
-### Death Cleanup - Automatic
+NameplateBuilder handles two cleanup scenarios automatically. You don't need to write any code for either.
 
-NameplateBuilder **automatically clears nameplates when an entity dies**. When an entity receives a `DeathComponent`, the aggregator sends an empty nameplate to all viewers and removes the `NameplateData` component. You don't need to handle this yourself.
+### Entity Death
 
-### Plugin Unload - Automatic
+When an entity receives a `DeathComponent`, NameplateBuilder immediately:
+1. Sends an empty nameplate to all viewers (clears the text above the entity)
+2. Removes the `NameplateData` component from the entity
 
-When your plugin unloads, NameplateBuilder **automatically removes all segment definitions** registered by your plugin. No shutdown hook needed.
+This prevents stale nameplate text from lingering during death animations.
 
-### Runtime Removal - `undefine()`
+### Plugin Unload
 
-The `undefine()` method exists for edge cases where you want to dynamically remove a segment from the UI **while the server is running** (e.g. a minigame mod that adds/removes segments based on game phase):
+When your mod is unloaded (server shutdown, hot reload, etc.), NameplateBuilder automatically removes all segment definitions that your plugin registered. You don't need a shutdown hook or cleanup code.
+
+## Removing a Segment at Runtime with `undefine()`
+
+In rare cases, you might want to remove a segment from the UI **while the server is running**. For example, a minigame mod that adds segments when a game starts and removes them when it ends:
 
 ```java
-// Remove the "bounty" segment from the UI mid-game
-NameplateAPI.undefine(this, "bounty");
+// Game starts - add the segment
+NameplateAPI.define(this, "score", "Score",
+        SegmentTarget.PLAYERS, "0 pts");
+
+// Game ends - remove it from the UI
+NameplateAPI.undefine(this, "score");
 ```
 
 After calling `undefine()`:
+- The segment disappears from the `/npb` UI
+- Players who had it in their chain no longer see it rendered
+- Any `NameplateData` text on entities is **not** removed - it stays until the entity dies or you explicitly clear it
 
-* The segment disappears from the NameplateBuilder UI
-* Existing `NameplateData` on entities is **not** affected - the text stays until you explicitly remove it or the entity dies
-* Players who had it in their chain will no longer see it rendered
-
-For the vast majority of mods, you will **never need to call `undefine()`**.
+**Most mods will never need this.** If your segment exists for the lifetime of your plugin, the automatic plugin-unload cleanup is sufficient.
 
 ## Common Mistakes
 
-| Mistake | Fix |
-| :--- | :--- |
-| Calling `store.addComponent()` inside a tick system | Use `commandBuffer.putComponent()` instead |
-| Calling `NameplateAPI.setText()` inside a tick system on an entity without data | Build a `NameplateData` manually and use `commandBuffer.putComponent()` |
-| Forgetting the manifest dependency | Add `"Frotty27:NameplateBuilder": ">=4.260326.2"` to your `manifest.json` |
-| Calling `undefine()` in a shutdown hook | Not needed - auto-cleaned on plugin unload |
-| Removing nameplate data on entity death | Not needed - auto-cleaned on death |
-| With manual text: pushing variant text without the base key | Always set the base key (`"health"`) - suffixed keys (`.1`, `.2`) are optional fallbacks |
-| With resolvers: not handling unknown variant indices | Always include a `default` case in your variant switch |
+### Using `store.addComponent()` inside a tick system
+
+**Problem:** The entity store is locked during tick processing. Adding a component directly throws `IllegalStateException: Store is currently processing`.
+
+**Fix:** Use `commandBuffer.putComponent()` instead. The `CommandBuffer` queues the change and applies it after the tick finishes. See [Manual Text - Tick System Pattern](/modding/manual-text#tick-system-pattern-npc-spawn-initialization).
+
+### Using `NameplateAPI.setText()` inside a tick system on a new entity
+
+**Problem:** `setText()` tries to add a `NameplateData` component if the entity doesn't have one, which hits the same store-lock issue.
+
+**Fix:** Build a `NameplateData` object manually and use `commandBuffer.putComponent()`:
+
+```java
+NameplateData data = new NameplateData();
+data.setText("bounty", "$500");
+commandBuffer.putComponent(entityRef, nameplateDataType, data);
+```
+
+### Forgetting the manifest dependency
+
+**Problem:** Calling any `NameplateAPI` method throws `NameplateNotInitializedException`.
+
+**Fix:** Add the dependency to your `manifest.json`:
+
+```json
+{
+  "Dependencies": {
+    "Frotty27:NameplateBuilder": ">=4.260326.2"
+  }
+}
+```
+
+### Calling `undefine()` in a shutdown hook
+
+**Problem:** Unnecessary - NameplateBuilder already cleans up all your segments when your plugin unloads.
+
+**Fix:** Remove the `undefine()` call from your shutdown code.
+
+### Removing nameplate data on entity death
+
+**Problem:** Unnecessary - NameplateBuilder already handles death cleanup automatically.
+
+**Fix:** Remove your death-cleanup code. Let NameplateBuilder handle it.
+
+### Not handling the `default` case in variant switches
+
+**Problem:** If a player selects a variant index your resolver doesn't handle, it returns `null` and the segment disappears.
+
+**Fix:** Always include a `default` case that returns the base format:
+
+```java
+return switch (variantIndex) {
+    case 1 -> percent + "%";
+    case 2 -> barString;
+    default -> current + "/" + max; // catches index 0 and any unexpected index
+};
+```
 
 ## Complete Plugin Example
 
-A full plugin using both resolvers and manual text:
+A full plugin using both resolvers and manual text, with format variants:
 
 ```java
 package com.example.mymod;
 
 import com.frotty27.nameplatebuilder.api.NameplateAPI;
-import com.frotty27.nameplatebuilder.api.NameplateData;
 import com.frotty27.nameplatebuilder.api.SegmentTarget;
+import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.util.List;
 
@@ -84,18 +147,23 @@ public final class MyModPlugin extends JavaPlugin {
 
     @Override
     protected void setup() {
-        // Health - resolver with variants (no tick system needed)
+        ComponentType<EntityStore, EntityStatMap> statMapType =
+            EntityStatMap.getComponentType();
+        ComponentType<EntityStore, FactionComponent> factionType =
+            FactionComponent.getComponentType();
+
+        // Health - resolver with format variants, recomputed every tick
         NameplateAPI.define(this, "health", "Health",
                 SegmentTarget.ALL, "100/100")
-            .requires(EntityStatMap.getComponentType())
-            .resolver((store, ref, variant) -> {
-                EntityStatMap stats = store.getComponent(ref, statMapType);
+            .requires(statMapType)
+            .resolver((store, entityRef, variantIndex) -> {
+                EntityStatMap stats = store.getComponent(entityRef, statMapType);
                 if (stats == null) return null;
-                int cur = Math.round(stats.get(health).get());
+                int current = Math.round(stats.get(health).get());
                 int max = Math.round(stats.get(health).getMax());
-                return switch (variant) {
-                    case 1 -> Math.round(100f * cur / max) + "%";
-                    default -> cur + "/" + max;
+                return switch (variantIndex) {
+                    case 1 -> Math.round(100f * current / max) + "%";
+                    default -> current + "/" + max;
                 };
             });
 
@@ -103,19 +171,20 @@ public final class MyModPlugin extends JavaPlugin {
             "Current/Max", "Percentage"
         ));
 
-        // Guild - manual text, set from event handlers
-        NameplateAPI.define(this, "guild", "Guild Tag",
-                SegmentTarget.PLAYERS, "[Warriors]");
-
-        // Faction - resolver with caching
+        // Faction - resolver with caching, rarely changes
         NameplateAPI.define(this, "faction", "Faction",
                 SegmentTarget.NPCS, "<Undead>")
-            .requires(FactionComponent.getComponentType())
+            .requires(factionType)
             .cacheTicks(100)
-            .resolver((store, ref, variant) -> {
-                FactionComponent f = store.getComponent(ref, factionType);
-                return f != null ? "<" + f.getName() + ">" : null;
+            .resolver((store, entityRef, variantIndex) -> {
+                FactionComponent faction = store.getComponent(entityRef, factionType);
+                return faction != null ? "<" + faction.getName() + ">" : null;
             });
+
+        // Guild - manual text, set from event handlers or commands
+        // No resolver needed - text is pushed via setText() at runtime
+        NameplateAPI.define(this, "guild", "Guild Tag",
+                SegmentTarget.PLAYERS, "[Warriors]");
     }
 }
 ```

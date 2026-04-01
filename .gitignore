@@ -24,5 +24,6 @@ desktop.ini
 # Runtime
 *.log
 HytaleServer.jar
+.claude/
 CLAUDE.md
 VISION.md
