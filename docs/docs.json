@@ -41,7 +41,8 @@
           "modding/resolvers",
           "modding/manual-text",
           "modding/format-variants",
-          "modding/advanced"
+          "modding/advanced",
+          "modding/migration"
         ]
       },
       {
