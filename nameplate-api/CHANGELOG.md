@@ -2,7 +2,7 @@
 
 All notable changes to NameplateBuilder API will be documented in this file.
 
-## [2.0.0] - 2026-03-31
+## [2.0.0] - 2026-04-01
 
 ### Breaking Changes
 - `describe()` renamed to `define()` and now returns `SegmentBuilder`
