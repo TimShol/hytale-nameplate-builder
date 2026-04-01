@@ -202,13 +202,13 @@ $C.@PageOverlay {
         FlexWeight: 1;
         Background: (Color: #141c26);
         LayoutMode: Top;
-        Padding: (Left: 24, Right: 8, Top: 8, Bottom: 8);
+        Padding: (Left: 24, Right: 16, Top: 8, Bottom: 16);
 
         Group #TabGeneral {
           LayoutMode: Top;
           FlexWeight: 1;
           Visible: false;
-          Padding: (Top: 12, Right: 12, Bottom: 12);
+          Padding: (Top: 12);
 
           Label {
             Text: "GENERAL";
@@ -302,7 +302,7 @@ $C.@PageOverlay {
 
           Group {
             LayoutMode: Left;
-            Anchor: (Height: 42, Bottom: 8);
+            Anchor: (Height: 36);
 
             Group { FlexWeight: 1; }
 
@@ -766,7 +766,7 @@ $C.@PageOverlay {
 
           Group {
             LayoutMode: Left;
-            Anchor: (Height: 36);
+            Anchor: (Height: 42);
 
             Group #PreviewContainer {
               FlexWeight: 1;
@@ -1007,7 +1007,7 @@ $C.@PageOverlay {
             ScrollbarStyle: (Spacing: 8, Size: 4, Background: #1a2840, Handle: #2a3d5a, HoveredHandle: #3a5070, DraggedHandle: #4a6080);
             FlexWeight: 1;
             Visible: false;
-            Padding: (Left: 24, Right: 12, Top: 12, Bottom: 12);
+            Padding: (Left: 24, Top: 12);
 
             Label {
               Text: "CHAIN SETTINGS";
@@ -1219,8 +1219,7 @@ $C.@PageOverlay {
 
           Group #ChainFooter {
             LayoutMode: Left;
-            Anchor: (Height: 50);
-            Padding: (Left: 24, Right: 12, Top: 8, Bottom: 12);
+            Anchor: (Height: 36);
 
             Group { FlexWeight: 1; }
 
@@ -1287,7 +1286,7 @@ $C.@PageOverlay {
           Group #AdminRequiredContent {
             LayoutMode: Top;
             FlexWeight: 1;
-            Padding: (Left: 8, Right: 12, Top: 12, Bottom: 12);
+            Padding: (Left: 8, Top: 12);
 
             Label {
               Text: "REQUIRED SEGMENTS";
@@ -1639,7 +1638,7 @@ $C.@PageOverlay {
 
             Group {
               LayoutMode: Left;
-              Anchor: (Height: 42, Bottom: 8);
+              Anchor: (Height: 36);
 
               TextButton #ResetButtonAdmin {
                 Text: "Reset";
@@ -1668,7 +1667,7 @@ $C.@PageOverlay {
             LayoutMode: Top;
             FlexWeight: 1;
             Visible: false;
-            Padding: (Left: 8, Right: 12, Top: 12, Bottom: 12);
+            Padding: (Left: 8, Top: 12);
 
             Label {
               Text: "DISABLED SEGMENTS";
@@ -2020,7 +2019,7 @@ $C.@PageOverlay {
 
             Group {
               LayoutMode: Left;
-              Anchor: (Height: 42, Bottom: 8);
+              Anchor: (Height: 36);
 
               TextButton #ResetButtonAdminDis {
                 Text: "Reset";
@@ -2050,7 +2049,7 @@ $C.@PageOverlay {
             ScrollbarStyle: (Spacing: 8, Size: 4, Background: #1a2840, Handle: #2a3d5a, HoveredHandle: #3a5070, DraggedHandle: #4a6080);
             FlexWeight: 1;
             Visible: false;
-            Padding: (Left: 24, Right: 12, Top: 12, Bottom: 12);
+            Padding: (Left: 24, Top: 12);
 
             Label {
               Text: "ADMIN SETTINGS";
@@ -2306,7 +2305,7 @@ $C.@PageOverlay {
 
             Group {
               LayoutMode: Left;
-              Anchor: (Height: 42, Bottom: 8);
+              Anchor: (Height: 36);
 
               TextButton #ResetButtonAdminSettings {
                 Text: "Reset";
@@ -2335,7 +2334,7 @@ $C.@PageOverlay {
             LayoutMode: Top;
             FlexWeight: 1;
             Visible: false;
-            Padding: (Left: 8, Right: 12, Top: 12, Bottom: 12);
+            Padding: (Left: 8, Top: 12);
 
             Label {
               Text: "NPC BLACKLIST";
@@ -2351,17 +2350,17 @@ $C.@PageOverlay {
 
             Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 10);
               TextButton #BlacklistAddBtn {
-                Text: "[+] Add NPC to Blacklist";
-                Anchor: (Width: 220, Height: 30);
+                Text: "[+] Add NPC(s) to Blacklist";
+                Anchor: (Width: 230, Height: 30);
                 Style: @SaveButtonStyle;
               }
               Group { FlexWeight: 1; }
               TextButton #BlacklistRemoveFiltered { Text: "Remove Filtered"; Anchor: (Width: 150, Height: 30); Style: @ResetButtonStyle; Visible: false; }
             }
 
-            Group { LayoutMode: Left; Anchor: (Height: 32, Bottom: 6);
-              Label { Text: "Filter:"; Style: (FontSize: 13, TextColor: #96a9be, VerticalAlignment: Center); Anchor: (Width: 50, Height: 28); }
-              $C.@TextField #BlacklistFilterField { Anchor: (Height: 28); Style: (FontSize: 13, TextColor: #c8d6e5); FlexWeight: 1; }
+            $C.@TextField #BlacklistFilterField {
+              Anchor: (Height: 32, Bottom: 6);
+              PlaceholderText: "Filter NPCs...";
             }
 
             Group #BlacklistList {
@@ -2462,7 +2461,7 @@ $C.@PageOverlay {
 
             Group {
               LayoutMode: Left;
-              Anchor: (Height: 42, Bottom: 8);
+              Anchor: (Height: 36);
 
               TextButton #BlacklistClearAll { Text: "Clear Blacklist"; Anchor: (Width: 150, Height: 36); Style: @ResetButtonStyle; }
 
@@ -3355,20 +3354,21 @@ $C.@PageOverlay {
     TextButton #NpcPickerBackdrop { Text: ""; Anchor: (Width: 1080, Height: 780); Style: @NpcPickerBackdropStyle; }
 
     Group {
-      Anchor: (Width: 420, Height: 620);
+      Anchor: (Width: 420, Height: 480);
       Background: (Color: #141c26);
       LayoutMode: Top;
       Padding: (Left: 18, Right: 18, Top: 14, Bottom: 14);
 
       Label { Text: "Select NPC"; Style: (FontSize: 16, TextColor: #c8d6e5, RenderBold: true); Anchor: (Height: 26, Bottom: 8); }
 
-      Group { LayoutMode: Left; Anchor: (Height: 32, Bottom: 6);
-        Label { Text: "Filter:"; Style: (FontSize: 13, TextColor: #96a9be, VerticalAlignment: Center); Anchor: (Width: 50, Height: 28); }
-        $C.@TextField #NpcPickerFilter { Anchor: (Height: 28); Style: (FontSize: 13, TextColor: #c8d6e5); FlexWeight: 1; }
+      $C.@TextField #NpcPickerFilter {
+        Anchor: (Height: 32, Bottom: 6);
+        PlaceholderText: "Filter NPCs...";
       }
 
       Group #NpcPickerRows {
         LayoutMode: Top;
+        Anchor: (Height: 280);
 
         Group #NpcPickerRow0 { Anchor: (Height: 26, Bottom: 2); Visible: false;
           TextButton #NpcPickerRowBtn0 { Text: ""; Anchor: (Height: 26); Style: @NpcPickerRowStyle; }
@@ -3405,26 +3405,24 @@ $C.@PageOverlay {
       Label #NpcPickerEmpty { Text: "No NPCs match filter."; Style: (FontSize: 13, TextColor: #5a6d82); Anchor: (Height: 18); Visible: false; }
 
       Group #NpcPickerPagination { LayoutMode: Left; Anchor: (Height: 22, Top: 4); Visible: false;
+        Group { FlexWeight: 1; }
         TextButton #NpcPickerFirstPage { Text: "<<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
         TextButton #NpcPickerPrevPage { Text: "<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
-        Label #NpcPickerPageInfo { Text: "1/1"; Style: (TextColor: #5a6d82, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center); FlexWeight: 1; }
+        Label #NpcPickerPageInfo { Text: "1-10 of 100"; Style: (TextColor: #5a6d82, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Width: 100, Height: 22); }
         TextButton #NpcPickerNextPage { Text: ">"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
         TextButton #NpcPickerLastPage { Text: ">>"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+        Group { FlexWeight: 1; }
       }
 
-      Group { FlexWeight: 1; }
-
-      Group { LayoutMode: Left; Anchor: (Height: 22, Bottom: 6);
+      Group { LayoutMode: Left; Anchor: (Height: 22, Top: 8, Bottom: 6);
         Label { Text: "Selected: "; Style: (FontSize: 13, TextColor: #96a9be, VerticalAlignment: Center); }
         Label #NpcPickerSelectedLabel { Text: "None"; Style: (FontSize: 13, TextColor: #4ade80, VerticalAlignment: Center); }
       }
 
       Group { LayoutMode: Left; Anchor: (Height: 34);
-        TextButton #NpcPickerCancel { Text: "Cancel"; Anchor: (Width: 140, Height: 30); Style: @ResetButtonStyle; }
-        Group { FlexWeight: 1; }
-        TextButton #NpcPickerAddAllFiltered { Text: "Add All Filtered"; Anchor: (Width: 160, Height: 30); Style: @SaveButtonStyle; Visible: false; }
-        Group { Anchor: (Width: 8); }
-        TextButton #NpcPickerAdd { Text: "Add to Blacklist"; Anchor: (Width: 170, Height: 30); Style: @SaveButtonStyle; Visible: false; }
+        TextButton #NpcPickerCancel { Text: "Cancel"; Anchor: (Height: 30); FlexWeight: 1; Style: @ResetButtonStyle; }
+        TextButton #NpcPickerAddAllFiltered { Text: "Add All Filtered"; Anchor: (Height: 30, Left: 6); FlexWeight: 1; Style: @SaveButtonStyle; Visible: false; }
+        TextButton #NpcPickerAdd { Text: "Add to Blacklist"; Anchor: (Height: 30, Left: 6); FlexWeight: 1; Style: @SaveButtonStyle; Visible: false; }
       }
     }
   }

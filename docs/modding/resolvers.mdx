@@ -51,7 +51,7 @@ NameplateAPI.define(this, "health", "Health",
 
 ## Caching with `cacheTicks()`
 
-By default, your resolver runs **every tick** (20 times per second). For health or mana that changes constantly, that's exactly what you want. But for data that rarely changes - like a faction name, level, or title - recomputing every tick is wasteful.
+By default, your resolver runs **every tick** (30 times per second). For health or mana that changes constantly, that's exactly what you want. But for data that rarely changes - like a faction name, level, or title - recomputing every tick is wasteful.
 
 `cacheTicks()` tells NameplateBuilder to remember the result and reuse it for a set number of ticks before calling your resolver again:
 
@@ -59,7 +59,7 @@ By default, your resolver runs **every tick** (20 times per second). For health 
 NameplateAPI.define(this, "faction", "Faction",
         SegmentTarget.NPCS, "<Undead>")
     .requires(FactionComponent.getComponentType())
-    .cacheTicks(100) // recompute every 100 ticks (~5 seconds at 20 tps)
+    .cacheTicks(100) // recompute every 100 ticks (~3 seconds at 30 tps)
     .resolver((store, entityRef, variantIndex) -> {
         FactionComponent faction = store.getComponent(entityRef, factionType);
         if (faction == null) return null;

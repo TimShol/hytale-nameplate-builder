@@ -996,11 +996,11 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
 
         if (data.action.startsWith("NpcPickerRow_")) {
-            int rowIdx = parseRowIndex(data.action, "NpcPickerRow_");
-            int actualIdx = npcPickerPage * NPC_PICKER_ROW_COUNT + rowIdx;
             rebuildNpcPickerFiltered();
-            if (actualIdx >= 0 && actualIdx < npcPickerFiltered.size()) {
-                npcPickerSelectedItem = npcPickerFiltered.get(actualIdx);
+            int rowIndex = parseRowIndex(data.action, "NpcPickerRow_");
+            int actualIndex = npcPickerPage * NPC_PICKER_ROW_COUNT + rowIndex;
+            if (actualIndex >= 0 && actualIndex < npcPickerFiltered.size()) {
+                npcPickerSelectedItem = npcPickerFiltered.get(actualIndex);
             }
             sendUpdate(buildUpdate());
             return;
@@ -1905,7 +1905,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         boolean showWorldPagination = totalWorldPages > 1;
         commands.set("#WorldPagination.Visible", showWorldPagination);
         if (showWorldPagination) {
-            commands.set("#WorldPageLabel.Text", (worldPage + 1) + "/" + totalWorldPages);
+            commands.set("#WorldPageLabel.Text", paginationLabel(worldStart, 5, worldNames.size()));
         }
 
         List<String> instNames = getInstanceNames();
@@ -1938,7 +1938,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         boolean showInstPagination = totalInstPages > 1;
         commands.set("#InstPagination.Visible", showInstPagination);
         if (showInstPagination) {
-            commands.set("#InstPageLabel.Text", (instPage + 1) + "/" + totalInstPages);
+            commands.set("#InstPageLabel.Text", paginationLabel(instStart, 5, instNames.size()));
         }
     }
 
@@ -2161,7 +2161,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         commands.set("#AvailPaginationLabel.Visible", showPagination);
         commands.set("#NextAvail.Visible", showPagination);
         if (showPagination) {
-            commands.set("#AvailPaginationLabel.Text", "Page " + (availPage + 1) + "/" + totalPages);
+            commands.set("#AvailPaginationLabel.Text", paginationLabel(start, AVAIL_PAGE_SIZE, available.size()));
         }
     }
 
@@ -2231,7 +2231,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         boolean showPagination = totalPages > 1;
         commands.set("#AdminLeftPagination.Visible", showPagination);
         if (showPagination) {
-            commands.set("#AdminLeftPageLabel.Text", "Page " + (adminLeftPage + 1) + "/" + totalPages);
+            commands.set("#AdminLeftPageLabel.Text", paginationLabel(start, ADMIN_PAGE_SIZE, leftList.size()));
         }
     }
 
@@ -2270,7 +2270,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         boolean showPagination = totalPages > 1;
         commands.set("#AdminRightPagination.Visible", showPagination);
         if (showPagination) {
-            commands.set("#AdminRightPageLabel.Text", "Page " + (adminRightPage + 1) + "/" + totalPages);
+            commands.set("#AdminRightPageLabel.Text", paginationLabel(start, ADMIN_PAGE_SIZE, rightList.size()));
         }
     }
 
@@ -2340,7 +2340,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         boolean showPagination = totalPages > 1;
         commands.set("#AdminDisLeftPagination.Visible", showPagination);
         if (showPagination) {
-            commands.set("#AdminDisLeftPageLabel.Text", "Page " + (adminDisLeftPage + 1) + "/" + totalPages);
+            commands.set("#AdminDisLeftPageLabel.Text", paginationLabel(start, ADMIN_PAGE_SIZE, leftList.size()));
         }
     }
 
@@ -2379,7 +2379,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         boolean showPagination = totalPages > 1;
         commands.set("#AdminDisRightPagination.Visible", showPagination);
         if (showPagination) {
-            commands.set("#AdminDisRightPageLabel.Text", "Page " + (adminDisRightPage + 1) + "/" + totalPages);
+            commands.set("#AdminDisRightPageLabel.Text", paginationLabel(start, ADMIN_PAGE_SIZE, rightList.size()));
         }
     }
 
@@ -2430,7 +2430,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         commands.set("#DisabledPageLabel.Visible", showPagination);
         commands.set("#NextDisabled.Visible", showPagination);
         if (showPagination) {
-            commands.set("#DisabledPageLabel.Text", "Page " + (disabledPage + 1) + "/" + totalPages);
+            commands.set("#DisabledPageLabel.Text", paginationLabel(start, DISABLED_PAGE_SIZE, disabledViews.size()));
         }
     }
 
@@ -2824,7 +2824,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         boolean showWorldPag = totalWorldPages > 1;
         commands.set("#AdminWorldPagination.Visible", showWorldPag);
         if (showWorldPag) {
-            commands.set("#AdminWorldPageLabel.Text", (adminWorldPage + 1) + "/" + totalWorldPages);
+            commands.set("#AdminWorldPageLabel.Text", paginationLabel(worldStart, 5, worldNames.size()));
         }
 
         List<String> instNames = getInstanceNames();
@@ -2848,7 +2848,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         boolean showInstPag = totalInstPages > 1;
         commands.set("#AdminInstPagination.Visible", showInstPag);
         if (showInstPag) {
-            commands.set("#AdminInstPageLabel.Text", (adminInstPage + 1) + "/" + totalInstPages);
+            commands.set("#AdminInstPageLabel.Text", paginationLabel(instStart, 5, instNames.size()));
         }
 
         commands.set("#AdminWorldEmpty.Visible", worldNames.isEmpty() && instNames.isEmpty());
@@ -2893,7 +2893,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         boolean showPagination = totalPages > 1;
         commands.set("#BlacklistPagination.Visible", showPagination);
         if (showPagination) {
-            commands.set("#BlacklistPageLabel.Text", (blacklistPage + 1) + "/" + totalPages);
+            commands.set("#BlacklistPageLabel.Text", paginationLabel(start, BLACKLIST_ROW_COUNT, filtered.size()));
         }
     }
 
@@ -2928,7 +2928,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         boolean showPagination = totalPages > 1;
         commands.set("#NpcPickerPagination.Visible", showPagination);
         if (showPagination) {
-            commands.set("#NpcPickerPageInfo.Text", (npcPickerPage + 1) + "/" + totalPages);
+            commands.set("#NpcPickerPageInfo.Text", paginationLabel(start, NPC_PICKER_ROW_COUNT, npcPickerFiltered.size()));
         }
 
         commands.set("#NpcPickerSelectedLabel.Text", npcPickerSelectedItem != null ? npcPickerSelectedItem : "None");
@@ -3003,6 +3003,11 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
 
         return buildSinglePreviewLine(filtered.isEmpty() ? views : filtered);
+    }
+
+    private static String paginationLabel(int start, int pageSize, int totalItems) {
+        int lastShown = Math.min(start + pageSize, totalItems);
+        return lastShown + "/" + totalItems;
     }
 
     private String buildSinglePreviewLine(List<SegmentView> views) {

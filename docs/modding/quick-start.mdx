@@ -144,7 +144,7 @@ protected void setup() {
 
 Notice the two extra methods:
 - **`.requires(componentType)`** - An optimization. Tells NameplateBuilder to only call your resolver for entities that have this component in their archetype. Entities without it are skipped entirely.
-- **`.cacheTicks(100)`** - Another optimization. Caches the result for 100 ticks (~5 seconds) instead of recomputing every tick. Use this for values that don't change often.
+- **`.cacheTicks(100)`** - Another optimization. Caches the result for 100 ticks (~3 seconds) instead of recomputing every tick. Use this for values that don't change often.
 
 ## What About Manual Text?
 
