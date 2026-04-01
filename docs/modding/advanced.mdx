@@ -55,7 +55,7 @@ For the vast majority of mods, you will **never need to call `undefine()`**.
 | :--- | :--- |
 | Calling `store.addComponent()` inside a tick system | Use `commandBuffer.putComponent()` instead |
 | Calling `NameplateAPI.setText()` inside a tick system on an entity without data | Build a `NameplateData` manually and use `commandBuffer.putComponent()` |
-| Forgetting the manifest dependency | Add `"Frotty27:NameplateBuilder": "*"` to your `manifest.json` |
+| Forgetting the manifest dependency | Add `"Frotty27:NameplateBuilder": ">=4.260326.2"` to your `manifest.json` |
 | Calling `undefine()` in a shutdown hook | Not needed - auto-cleaned on plugin unload |
 | Removing nameplate data on entity death | Not needed - auto-cleaned on death |
 | With manual text: pushing variant text without the base key | Always set the base key (`"health"`) - suffixed keys (`.1`, `.2`) are optional fallbacks |
