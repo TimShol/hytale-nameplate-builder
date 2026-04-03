@@ -16,7 +16,7 @@ import org.jspecify.annotations.NonNull;
 final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
-    private static boolean debugEnabled = false;
+    private static volatile boolean debugEnabled = false;
 
     static void setDebugEnabled(boolean enabled) {
         debugEnabled = enabled;

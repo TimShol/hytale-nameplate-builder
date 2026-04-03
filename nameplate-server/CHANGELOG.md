@@ -2,6 +2,16 @@
 
 All notable changes to NameplateBuilder Server will be documented in this file.
 
+## [4.260326.4] - 2026-04-03
+
+### Fixed
+- Crash caused by `segments.hashCode()` triggering NPE on Hytale's proxied `ComponentType` objects in the cached comparator optimization
+- Potential NPE in view-cone check when `HeadRotation.getDirection()` returns null
+- `NameplateData` serialization corrupting text containing backslash-e or backslash-c sequences due to incorrect unescape order
+- Resolver exceptions now catch `Exception` instead of `Throwable` to avoid silently swallowing fatal errors like `OutOfMemoryError`
+- Debug flag visibility across threads (`volatile`)
+- Formatting issues in admin world/instance toggle handlers
+
 ## [4.260326.3] - 2026-04-03
 
 ### Performance

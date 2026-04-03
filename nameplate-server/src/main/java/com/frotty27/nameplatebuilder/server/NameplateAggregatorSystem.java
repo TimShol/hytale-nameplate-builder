@@ -365,7 +365,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
     // OPT-13: Build comparator once, cache until segments change
     private Comparator<SegmentKey> getOrBuildComparator(Map<SegmentKey, NameplateRegistry.Segment> segments) {
-        int currentVersion = segments.hashCode();
+        int currentVersion = registry.getVersion();
         if (cachedComparator != null && cachedComparatorVersion == currentVersion) {
             return cachedComparator;
         }
@@ -402,7 +402,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             if (box == null) return 0.0;
             double height = box.max.getY();
             return Math.max(0.0, height);
-        } catch (Throwable ignored) {
+        } catch (Exception ignored) {
             return 0.0;
         }
     }
@@ -525,7 +525,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 if (segment != null && segment.resolver() != null) {
                     try {
                         text = segment.resolver().resolve(store, entityRef, variantIndex);
-                    } catch (Throwable ignored) {
+                    } catch (Exception ignored) {
                         text = null;
                     }
                 }
@@ -593,6 +593,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         HeadRotation viewerHead = store.getComponent(viewerRef, headRotationType);
         if (viewerHead != null) {
             lookDir = viewerHead.getDirection();
+            if (lookDir == null) return true;
         } else {
             Vector3f rotation = viewerTransform.getRotation();
             lookDir = directionFromPitchYaw(rotation.getPitch(), rotation.getYaw());

@@ -12,10 +12,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 final class NameplateRegistry implements INameplateRegistry {
 
     private final Map<SegmentKey, Segment> segments = new ConcurrentHashMap<>();
+    private final AtomicInteger version = new AtomicInteger();
 
     @Override
     public SegmentBuilder define(JavaPlugin plugin, String segmentId, String displayName, SegmentTarget target, String example) {
@@ -37,7 +39,8 @@ final class NameplateRegistry implements INameplateRegistry {
         SegmentKey key = new SegmentKey(pluginId, segmentId);
         segments.put(key, new Segment(pluginId, pluginName, pluginAuthor, displayName, target, example,
                 List.of(), false, false, null, null, 1));
-        return new SegmentBuilderImpl(key, segments);
+        version.incrementAndGet();
+        return new SegmentBuilderImpl(key, segments, version);
     }
 
     SegmentBuilder defineBuiltIn(String pluginId, String segmentId, String displayName,
@@ -47,7 +50,8 @@ final class NameplateRegistry implements INameplateRegistry {
         SegmentKey key = new SegmentKey(pluginId, segmentId);
         segments.put(key, new Segment(pluginId, pluginName, pluginAuthor, displayName, target, example,
                 List.of(), true, false, null, null, 1));
-        return new SegmentBuilderImpl(key, segments);
+        version.incrementAndGet();
+        return new SegmentBuilderImpl(key, segments, version);
     }
 
     @Override
@@ -63,6 +67,7 @@ final class NameplateRegistry implements INameplateRegistry {
                     existing.displayName(), existing.target(), existing.example(),
                     List.copyOf(variantNames), existing.builtIn(), existing.supportsPrefixSuffix(),
                     existing.resolver(), existing.requiredComponent(), existing.cacheTicks()));
+            version.incrementAndGet();
         }
     }
 
@@ -74,6 +79,7 @@ final class NameplateRegistry implements INameplateRegistry {
                     existing.displayName(), existing.target(), existing.example(),
                     List.copyOf(variantNames), existing.builtIn(), existing.supportsPrefixSuffix(),
                     existing.resolver(), existing.requiredComponent(), existing.cacheTicks()));
+            version.incrementAndGet();
         }
     }
 
@@ -85,6 +91,7 @@ final class NameplateRegistry implements INameplateRegistry {
                     existing.displayName(), existing.target(), existing.example(),
                     existing.variants(), existing.builtIn(), true,
                     existing.resolver(), existing.requiredComponent(), existing.cacheTicks()));
+            version.incrementAndGet();
         }
     }
 
@@ -92,22 +99,31 @@ final class NameplateRegistry implements INameplateRegistry {
     public void undefine(JavaPlugin plugin, String segmentId) {
         Objects.requireNonNull(plugin, "plugin");
         Objects.requireNonNull(segmentId, "segmentId");
-        segments.remove(new SegmentKey(toPluginId(plugin), segmentId));
+        if (segments.remove(new SegmentKey(toPluginId(plugin), segmentId)) != null) {
+            version.incrementAndGet();
+        }
     }
 
     @Override
     public void undefineAll(JavaPlugin plugin) {
         Objects.requireNonNull(plugin, "plugin");
         String pluginId = toPluginId(plugin);
-        segments.keySet().removeIf(key -> key.pluginId().equals(pluginId));
+        if (segments.keySet().removeIf(key -> key.pluginId().equals(pluginId))) {
+            version.incrementAndGet();
+        }
     }
 
     void clear() {
         segments.clear();
+        version.incrementAndGet();
     }
 
     Map<SegmentKey, Segment> getSegments() {
         return segments;
+    }
+
+    int getVersion() {
+        return version.get();
     }
 
     static String toPluginId(JavaPlugin plugin) {

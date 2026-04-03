@@ -1050,8 +1050,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             if (isAdmin) {
                 int row = parseRowIndex(data.action, "AdminToggleWorld_");
                 List<String> worldNames = getWorldNames();
-            int index = adminWorldPage * 5 + row;
-                if (index >= 0 && index <worldNames.size()) {
+                int index = adminWorldPage * 5 + row;
+                if (index >= 0 && index < worldNames.size()) {
                     String name = worldNames.get(index);
                     boolean current = adminConfig.isWorldEnabled(name);
                     adminConfig.setWorldEnabled(name, !current);
@@ -1066,8 +1066,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             if (isAdmin) {
                 int row = parseRowIndex(data.action, "AdminToggleInst_");
                 List<String> instNames = getInstanceNames();
-            int index = adminInstPage * 5 + row;
-                if (index >= 0 && index <instNames.size()) {
+                int index = adminInstPage * 5 + row;
+                if (index >= 0 && index < instNames.size()) {
                     String name = instNames.get(index);
                     boolean current = adminConfig.isWorldEnabled(name);
                     adminConfig.setWorldEnabled(name, !current);
@@ -1082,7 +1082,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             int row = parseRowIndex(data.action, "ToggleWorld_");
             List<String> worldNames = getWorldNames();
             int index = worldPage * 5 + row;
-            if (index >= 0 && index <worldNames.size()) {
+            if (index >= 0 && index < worldNames.size()) {
                 String worldName = worldNames.get(index);
                 if (!isAdmin && !adminConfig.isWorldEnabled(worldName)) {
                     sendUpdate(buildUpdate());
@@ -1105,7 +1105,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             int row = parseRowIndex(data.action, "ToggleInst_");
             List<String> instNames = getInstanceNames();
             int index = instPage * 5 + row;
-            if (index >= 0 && index <instNames.size()) {
+            if (index >= 0 && index < instNames.size()) {
                 String instName = instNames.get(index);
                 if (!isAdmin && !adminConfig.isWorldEnabled(instName)) {
                     sendUpdate(buildUpdate());
