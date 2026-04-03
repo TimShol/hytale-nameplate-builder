@@ -44,9 +44,13 @@ jobs:
 
           format_for_discord() {
             local download_url="$1"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
             sed -E 's/^### (.+)/**\1**/g'
             echo ""
             echo "**[Download the latest version here](${download_url})**"
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           }
 
           post_discord() {
@@ -102,7 +106,7 @@ jobs:
           SUBPROJECT="${{ inputs.subproject }}"
 
           if [ "$SUBPROJECT" = "nameplate-server" ] || [ "$SUBPROJECT" = "both" ]; then
-            backfill_changelog "nameplate-server/CHANGELOG.md" "$WEBHOOK_SERVER" "NameplateBuilder Server" 8076525 "https://www.curseforge.com/hytale/mods/nameplatebuilder"
+            backfill_changelog "nameplate-server/CHANGELOG.md" "$WEBHOOK_SERVER" "NameplateBuilder" 8076525 "https://www.curseforge.com/hytale/mods/nameplatebuilder"
           fi
 
           if [ "$SUBPROJECT" = "nameplate-api" ] || [ "$SUBPROJECT" = "both" ]; then

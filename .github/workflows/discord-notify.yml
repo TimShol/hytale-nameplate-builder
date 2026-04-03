@@ -39,9 +39,15 @@ jobs:
 
           format_for_discord() {
             local download_url="$1"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
             sed -E 's/^### (.+)/**\1**/g'
             echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
             echo "**[Download the latest version here](${download_url})**"
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           }
 
           extract_version() {
@@ -74,8 +80,8 @@ jobs:
               VERSION=$(extract_version "nameplate-server/CHANGELOG.md")
               BODY=$(extract_latest_entry "nameplate-server/CHANGELOG.md" | format_for_discord "https://www.curseforge.com/hytale/mods/nameplatebuilder")
               if [ -n "$BODY" ]; then
-                post_discord "$WEBHOOK_SERVER" "NameplateBuilder Server v${VERSION}" "$BODY" 8076525
-                echo "Posted NameplateBuilder Server v${VERSION} to Discord"
+                post_discord "$WEBHOOK_SERVER" "NameplateBuilder v${VERSION}" "$BODY" 8076525
+                echo "Posted NameplateBuilder v${VERSION} to Discord"
               fi
             fi
           fi
