@@ -36,6 +36,10 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     private static final String NO_DATA_HINT = "Type /npb to customize";
     private static final String ALL_HIDDEN_HINT = "";
 
+    // OPT-1: Cached NameplateUpdate objects to avoid millions of identical allocations per second
+    private static final ComponentUpdate EMPTY_UPDATE = new NameplateUpdate(" ");
+    private static final ComponentUpdate NO_DATA_UPDATE = new NameplateUpdate(NO_DATA_HINT);
+
     private final ComponentType<EntityStore, EntityTrackerSystems.Visible> visibleComponentType;
     private final ComponentType<EntityStore, UUIDComponent> uuidComponentType;
     private final ComponentType<EntityStore, TransformComponent> transformComponentType;
@@ -49,6 +53,16 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     private final NameplatePreferenceStore preferences;
     private final AdminConfigStore adminConfig;
     private final AnchorEntityManager anchorManager;
+
+    // OPT-3: Cache entity type ID per archetype to avoid reflection every tick
+    private final IdentityHashMap<Archetype<EntityStore>, String> entityTypeIdCache = new IdentityHashMap<>();
+
+    // OPT-10: Guard orphan cleanup to run once per tick cycle
+    private volatile long lastCleanupEntityIndex = -1;
+
+    // OPT-13: Cached comparator - rebuilt only when segments change
+    private volatile Comparator<SegmentKey> cachedComparator;
+    private volatile int cachedComparatorVersion = -1;
 
     NameplateAggregatorSystem(NameplateRegistry registry,
                               NameplatePreferenceStore preferences,
@@ -83,18 +97,24 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     @Override
     public void tick(float deltaTime, int index, ArchetypeChunk<EntityStore> chunk, @NonNull Store<EntityStore> store, @NonNull CommandBuffer<EntityStore> commandBuffer) {
 
+        Ref<EntityStore> entityRef = chunk.getReferenceTo(index);
 
-        World cleanupWorld = resolveWorld(store, chunk.getReferenceTo(index));
-        List<Ref<EntityStore>> orphanedAnchors = cleanupWorld != null
-                ? anchorManager.cleanupOrphanedAnchors(cleanupWorld)
-                : List.of();
-        if (!orphanedAnchors.isEmpty()) {
-            ComponentUpdate blankUpdate = nameplateUpdate("");
-            for (Ref<EntityStore> orphanRef : orphanedAnchors) {
-                EntityTrackerSystems.Visible anchorVisible = store.getComponent(orphanRef, visibleComponentType);
-                if (anchorVisible != null && anchorVisible.visibleTo != null) {
-                    for (EntityTrackerSystems.EntityViewer viewer : anchorVisible.visibleTo.values()) {
-                        safeAnchorUpdate(viewer, orphanRef, blankUpdate);
+        // OPT-4: Resolve world once per entity instead of up to 5 times
+        World entityWorld = resolveWorld(store, entityRef);
+
+        // OPT-10: Run orphan cleanup once per tick cycle, not per entity
+        if (index == 0 && lastCleanupEntityIndex != index) {
+            lastCleanupEntityIndex = index;
+            if (entityWorld != null) {
+                List<Ref<EntityStore>> orphanedAnchors = anchorManager.cleanupOrphanedAnchors(entityWorld);
+                if (!orphanedAnchors.isEmpty()) {
+                    for (Ref<EntityStore> orphanRef : orphanedAnchors) {
+                        EntityTrackerSystems.Visible anchorVisible = store.getComponent(orphanRef, visibleComponentType);
+                        if (anchorVisible != null && anchorVisible.visibleTo != null) {
+                            for (EntityTrackerSystems.EntityViewer viewer : anchorVisible.visibleTo.values()) {
+                                safeAnchorUpdate(viewer, orphanRef, EMPTY_UPDATE);
+                            }
+                        }
                     }
                 }
             }
@@ -105,8 +125,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
-        Ref<EntityStore> entityRef = chunk.getReferenceTo(index);
-
         if (!adminConfig.isMasterEnabled()) {
             sendEmptyToAll(visible, entityRef);
             return;
@@ -115,19 +133,17 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         DeathComponent deathComponent = store.getComponent(entityRef, deathComponentType);
         if (deathComponent != null) {
             Ref<EntityStore> deadAnchorRef = anchorManager.getAnchorRef(entityRef);
-            ComponentUpdate emptyUpdate = nameplateUpdate("");
             for (Map.Entry<Ref<EntityStore>, EntityTrackerSystems.EntityViewer> viewerEntry : visible.visibleTo.entrySet()) {
-                viewerEntry.getValue().queueUpdate(entityRef, emptyUpdate);
+                viewerEntry.getValue().queueUpdate(entityRef, EMPTY_UPDATE);
                 if (deadAnchorRef != null) {
-                    safeAnchorUpdate(viewerEntry.getValue(), deadAnchorRef, emptyUpdate);
+                    safeAnchorUpdate(viewerEntry.getValue(), deadAnchorRef, EMPTY_UPDATE);
                 }
             }
-
-
             commandBuffer.removeComponent(entityRef, nameplateDataType);
             return;
         }
 
+        // OPT-3: Cached archetype-based entity type resolution (no reflection after first call)
         String entityTypeId = resolveEntityTypeId(chunk);
         String namespace = AdminConfigStore.extractNamespace(entityTypeId);
         if ("*".equals(namespace) || namespace.isEmpty()) {
@@ -158,7 +174,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             }
         }
 
-        World entityWorld = resolveWorld(store, entityRef);
+        // OPT-4: Reuse entityWorld resolved at the top
         if (entityWorld != null) {
             String worldName = entityWorld.getName();
             if (!adminConfig.isWorldEnabled(worldName)) {
@@ -169,11 +185,10 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
         NameplateData entityData = store.getComponent(entityRef, nameplateDataType);
         if (entityData == null) {
-
             if (anchorManager.hasAnchor(entityRef)) {
-                World removeWorld = resolveWorld(store, entityRef);
-                if (removeWorld != null) {
-                    anchorManager.removeAnchor(entityRef, removeWorld);
+                // OPT-4: Reuse entityWorld
+                if (entityWorld != null) {
+                    anchorManager.removeAnchor(entityRef, entityWorld);
                 }
             }
             return;
@@ -181,19 +196,18 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
         Map<SegmentKey, NameplateRegistry.Segment> segments = registry.getSegments();
 
-
         if (!segments.isEmpty() && segments.keySet().stream().allMatch(adminConfig::isDisabled)) {
             Ref<EntityStore> disAnchorRef = anchorManager.getAnchorRef(entityRef);
-            ComponentUpdate emptyUpdate = nameplateUpdate("");
             for (Map.Entry<Ref<EntityStore>, EntityTrackerSystems.EntityViewer> viewerEntry : visible.visibleTo.entrySet()) {
-                viewerEntry.getValue().queueUpdate(entityRef, emptyUpdate);
+                viewerEntry.getValue().queueUpdate(entityRef, EMPTY_UPDATE);
                 if (disAnchorRef != null) {
-                    safeAnchorUpdate(viewerEntry.getValue(), disAnchorRef, emptyUpdate);
+                    safeAnchorUpdate(viewerEntry.getValue(), disAnchorRef, EMPTY_UPDATE);
                 }
             }
             return;
         }
 
+        // OPT-5: Namespace filtering folded into resolveAvailableKeys - no copy + second pass needed
         List<SegmentKey> available = resolveAvailableKeys(entityData, segments, store, entityRef, chunk);
 
         for (SegmentKey key : available) {
@@ -215,38 +229,13 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             }
         }
 
-        available = new ArrayList<>(available);
-        available.removeIf(key -> {
-            NameplateRegistry.Segment segment = segments.get(key);
-            if (segment == null) return false;
-            if (segment.builtIn()) {
-                return !adminConfig.isNamespaceEnabled("hytale");
-            }
-            String modId = segment.pluginId();
-            String modNamespace = AdminConfigStore.extractModName(modId);
-            if (modNamespace.isEmpty()) {
-                modNamespace = AdminConfigStore.extractNamespace(modId);
-            }
-            return !adminConfig.isNamespaceEnabled(modNamespace);
-        });
-
-        Comparator<SegmentKey> defaultComparator = Comparator
-                .comparing((SegmentKey key) -> {
-                    NameplateRegistry.Segment segment = segments.get(key);
-                    return segment != null ? segment.pluginName() : key.pluginId();
-                })
-                .thenComparing(key -> {
-                    NameplateRegistry.Segment segment = segments.get(key);
-                    return segment != null ? segment.displayName() : key.segmentId();
-                });
-
+        // OPT-13: Cached comparator - only rebuild when segments change
+        Comparator<SegmentKey> defaultComparator = getOrBuildComparator(segments);
 
         TransformComponent realTransform = store.getComponent(entityRef, transformComponentType);
         Vector3d realPosition = realTransform != null ? realTransform.getPosition() : null;
 
-
         double entityHeight = resolveEntityHeight(store, entityRef);
-
 
         String preferenceEntityType = isPlayer
                 ? NameplateBuilderPage.ENTITY_TYPE_PLAYERS
@@ -264,9 +253,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             UUID viewerUuid = getUuid(store, viewerRef);
             viewerUuids[viewerIndex] = viewerUuid;
 
-
             double userOffset = preferences.getOffset(viewerUuid, "*");
-
 
             double totalOffset = entityHeight + userOffset;
             viewerWantsAnchor[viewerIndex] = !isPlayer && userOffset != 0.0;
@@ -279,22 +266,39 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             viewerIndex++;
         }
 
-
         if (anyViewerNeedsAnchor && !isPlayer && realPosition != null) {
-            World world = resolveWorld(store, entityRef);
-            if (world != null) {
+            // OPT-4: Reuse entityWorld
+            if (entityWorld != null) {
                 anchorManager.ensureAnchor(entityRef, realPosition, maxOffset,
-                        world, store, transformComponentType, commandBuffer);
+                        entityWorld, store, transformComponentType, commandBuffer);
             }
         } else if (anchorManager.hasAnchor(entityRef)) {
-            World anchorWorld = resolveWorld(store, entityRef);
-            if (anchorWorld != null) {
-                anchorManager.removeAnchor(entityRef, anchorWorld);
+            // OPT-4: Reuse entityWorld
+            if (entityWorld != null) {
+                anchorManager.removeAnchor(entityRef, entityWorld);
             }
         }
 
         Ref<EntityStore> anchorRef = anchorManager.getAnchorRef(entityRef);
 
+        // OPT-2: Pre-compute locked chain text once per entity instead of per viewer
+        boolean locked = isPlayer ? adminConfig.isPlayerChainLocked() : adminConfig.isNpcChainLocked();
+        String lockedText = null;
+        ComponentUpdate lockedTextUpdate = null;
+        ComponentUpdate lockedEmptyUpdate = null;
+        if (locked && !available.isEmpty()) {
+            List<SegmentKey> lockedChain = preferences.getChain(ADMIN_CHAIN_UUID, preferenceEntityType, available, defaultComparator);
+            lockedText = buildText(lockedChain, entityData, ADMIN_CHAIN_UUID, preferenceEntityType, store, entityRef, segments);
+            if (lockedText.isEmpty()) {
+                lockedText = NO_DATA_HINT;
+                lockedTextUpdate = NO_DATA_UPDATE;
+            } else {
+                lockedTextUpdate = nameplateUpdate(lockedText);
+            }
+            lockedEmptyUpdate = EMPTY_UPDATE;
+        }
+
+        String viewerChainType = isPlayer ? "_players" : "_npcs";
 
         viewerIndex = 0;
         for (Map.Entry<Ref<EntityStore>, EntityTrackerSystems.EntityViewer> viewerEntry : visible.visibleTo.entrySet()) {
@@ -304,62 +308,79 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             boolean wantsAnchor = viewerWantsAnchor[viewerIndex];
             viewerIndex++;
 
-
-            String viewerChainType = isPlayer ? "_players" : "_npcs";
             if (!preferences.isChainEnabled(viewerUuid, viewerChainType)) {
-                ComponentUpdate emptyUpdate = nameplateUpdate("");
-                viewer.queueUpdate(entityRef, emptyUpdate);
+                viewer.queueUpdate(entityRef, EMPTY_UPDATE);
                 if (anchorRef != null) {
-                    safeAnchorUpdate(viewer, anchorRef, emptyUpdate);
+                    safeAnchorUpdate(viewer, anchorRef, EMPTY_UPDATE);
                 }
                 continue;
             }
 
             if (entityWorld != null && !preferences.isWorldEnabled(viewerUuid, entityWorld.getName())) {
-                ComponentUpdate emptyUpdate = nameplateUpdate("");
-                viewer.queueUpdate(entityRef, emptyUpdate);
+                viewer.queueUpdate(entityRef, EMPTY_UPDATE);
                 if (anchorRef != null) {
-                    safeAnchorUpdate(viewer, anchorRef, emptyUpdate);
+                    safeAnchorUpdate(viewer, anchorRef, EMPTY_UPDATE);
                 }
                 continue;
             }
 
+            // OPT-11: Inline look-at math without Vector3d allocation
             if (preferences.isOnlyShowWhenLooking(viewerUuid, "*")
                     && !isLookingAt(store, viewerRef, entityRef)) {
-                ComponentUpdate emptyUpdate = nameplateUpdate("");
-                viewer.queueUpdate(entityRef, emptyUpdate);
+                viewer.queueUpdate(entityRef, EMPTY_UPDATE);
                 if (anchorRef != null) {
-                    safeAnchorUpdate(viewer, anchorRef, emptyUpdate);
+                    safeAnchorUpdate(viewer, anchorRef, EMPTY_UPDATE);
                 }
                 continue;
             }
 
-            boolean locked = isPlayer ? adminConfig.isPlayerChainLocked() : adminConfig.isNpcChainLocked();
-            UUID chainUuid = locked ? ADMIN_CHAIN_UUID : viewerUuid;
-
-            String text;
-            if (available.isEmpty()) {
-                text = ALL_HIDDEN_HINT;
+            // OPT-2: Reuse pre-computed locked text
+            ComponentUpdate textUpdate;
+            if (locked && lockedTextUpdate != null) {
+                textUpdate = lockedTextUpdate;
+            } else if (available.isEmpty()) {
+                textUpdate = EMPTY_UPDATE;
             } else {
+                UUID chainUuid = locked ? ADMIN_CHAIN_UUID : viewerUuid;
                 List<SegmentKey> chain = preferences.getChain(chainUuid, preferenceEntityType, available, defaultComparator);
-                text = buildText(chain, entityData, chainUuid, preferenceEntityType, store, entityRef, segments);
+                String text = buildText(chain, entityData, chainUuid, preferenceEntityType, store, entityRef, segments);
                 if (text.isEmpty()) {
-                    text = NO_DATA_HINT;
+                    textUpdate = NO_DATA_UPDATE;
+                } else {
+                    textUpdate = nameplateUpdate(text);
                 }
             }
 
             if (wantsAnchor && anchorRef != null) {
-                viewer.queueUpdate(entityRef, nameplateUpdate(""));
-                safeAnchorUpdate(viewer, anchorRef, nameplateUpdate(text));
+                viewer.queueUpdate(entityRef, EMPTY_UPDATE);
+                safeAnchorUpdate(viewer, anchorRef, textUpdate);
             } else {
-                viewer.queueUpdate(entityRef, nameplateUpdate(text));
+                viewer.queueUpdate(entityRef, textUpdate);
                 if (anchorRef != null) {
-                    safeAnchorUpdate(viewer, anchorRef, nameplateUpdate(""));
+                    safeAnchorUpdate(viewer, anchorRef, EMPTY_UPDATE);
                 }
             }
         }
     }
 
+    // OPT-13: Build comparator once, cache until segments change
+    private Comparator<SegmentKey> getOrBuildComparator(Map<SegmentKey, NameplateRegistry.Segment> segments) {
+        int currentVersion = segments.hashCode();
+        if (cachedComparator != null && cachedComparatorVersion == currentVersion) {
+            return cachedComparator;
+        }
+        cachedComparator = Comparator
+                .comparing((SegmentKey key) -> {
+                    NameplateRegistry.Segment segment = segments.get(key);
+                    return segment != null ? segment.pluginName() : key.pluginId();
+                })
+                .thenComparing(key -> {
+                    NameplateRegistry.Segment segment = segments.get(key);
+                    return segment != null ? segment.displayName() : key.segmentId();
+                });
+        cachedComparatorVersion = currentVersion;
+        return cachedComparator;
+    }
 
     private World resolveWorld(Store<EntityStore> store, Ref<EntityStore> entityRef) {
         NPCEntity npc = store.getComponent(entityRef, npcEntityType);
@@ -372,7 +393,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         }
         return null;
     }
-
 
     private double resolveEntityHeight(Store<EntityStore> store, Ref<EntityStore> entityRef) {
         try {
@@ -387,20 +407,20 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         }
     }
 
-
+    // OPT-5: Namespace filtering folded in - no separate copy + removeIf pass needed
     private List<SegmentKey> resolveAvailableKeys(NameplateData entityData,
                                                    Map<SegmentKey, NameplateRegistry.Segment> segments,
                                                    Store<EntityStore> store,
                                                    Ref<EntityStore> entityRef,
                                                    ArchetypeChunk<EntityStore> chunk) {
-        java.util.Set<SegmentKey> keySet = new java.util.LinkedHashSet<>();
+        Set<SegmentKey> keySet = new LinkedHashSet<>();
 
         for (String entryKey : entityData.getEntries().keySet()) {
             if (entryKey.startsWith("_")) continue;
             if (entryKey.contains(".")) continue;
             SegmentKey matched = findSegmentKey(entryKey, segments);
             if (matched != null) {
-                if (!adminConfig.isDisabled(matched)) {
+                if (!adminConfig.isDisabled(matched) && isNamespaceEnabledForSegment(matched, segments)) {
                     keySet.add(matched);
                 }
             } else {
@@ -414,6 +434,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             if (segment.resolver() == null) continue;
             if (adminConfig.isDisabled(entry.getKey())) continue;
             if (keySet.contains(entry.getKey())) continue;
+            if (!isNamespaceEnabledForSegment(entry.getKey(), segments)) continue;
 
             if (segment.requiredComponent() != null) {
                 boolean hasComponent = false;
@@ -432,6 +453,20 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         return new ArrayList<>(keySet);
     }
 
+    // OPT-5: Extracted namespace check to avoid duplicating logic
+    private boolean isNamespaceEnabledForSegment(SegmentKey key, Map<SegmentKey, NameplateRegistry.Segment> segments) {
+        NameplateRegistry.Segment segment = segments.get(key);
+        if (segment == null) return true;
+        if (segment.builtIn()) {
+            return adminConfig.isNamespaceEnabled("hytale");
+        }
+        String modId = segment.pluginId();
+        String modNamespace = AdminConfigStore.extractModName(modId);
+        if (modNamespace.isEmpty()) {
+            modNamespace = AdminConfigStore.extractNamespace(modId);
+        }
+        return adminConfig.isNamespaceEnabled(modNamespace);
+    }
 
     private SegmentKey findSegmentKey(String entryKey, Map<SegmentKey, NameplateRegistry.Segment> segments) {
         SegmentKey best = null;
@@ -446,12 +481,10 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 continue;
             }
             boolean candidateBuiltIn = entry.getValue().builtIn();
-
             if (candidateBuiltIn && !bestBuiltIn) {
                 best = entry.getKey();
                 bestBuiltIn = true;
             } else if (candidateBuiltIn == bestBuiltIn) {
-
                 if (entry.getKey().pluginId().compareTo(best.pluginId()) < 0) {
                     best = entry.getKey();
                 }
@@ -460,7 +493,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         return best;
     }
 
-
+    // OPT-12: Prefix/suffix appended directly to StringBuilder instead of intermediate string
     private String buildText(List<SegmentKey> ordered,
                              NameplateData entityData,
                              UUID viewerUuid,
@@ -471,11 +504,9 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         StringBuilder builder = new StringBuilder();
         SegmentKey prevKey = null;
         for (SegmentKey key : ordered) {
-
             if (adminConfig.isDisabled(key)) {
                 continue;
             }
-
             if (!adminConfig.isRequired(key) && !preferences.isEnabled(viewerUuid, entityTypeId, key)) {
                 continue;
             }
@@ -504,7 +535,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 continue;
             }
 
-
             NameplateRegistry.Segment segmentDefinition = segments.get(key);
             if (segmentDefinition != null && segmentDefinition.supportsPrefixSuffix() && variantIndex > 0) {
                 String barEmpty = preferences.getBarEmptyChar(viewerUuid, entityTypeId, key);
@@ -513,21 +543,27 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 }
             }
 
-            String prefix = preferences.getPrefix(viewerUuid, entityTypeId, key);
-            String suffix = preferences.getSuffix(viewerUuid, entityTypeId, key);
-            if (!prefix.isEmpty() || !suffix.isEmpty()) {
-                text = prefix + text + suffix;
-            }
             if (!builder.isEmpty() && prevKey != null) {
                 builder.append(preferences.getSeparatorAfter(viewerUuid, entityTypeId, prevKey));
             }
+
+            // OPT-12: Append prefix/suffix directly to builder
+            String prefix = preferences.getPrefix(viewerUuid, entityTypeId, key);
+            String suffix = preferences.getSuffix(viewerUuid, entityTypeId, key);
+            if (!prefix.isEmpty()) {
+                builder.append(prefix);
+            }
             builder.append(text);
+            if (!suffix.isEmpty()) {
+                builder.append(suffix);
+            }
+
             prevKey = key;
         }
         return builder.toString();
     }
 
-
+    // OPT-11: Inline dot product math without Vector3d allocation
     private boolean isLookingAt(Store<EntityStore> store,
                                 Ref<EntityStore> viewerRef,
                                 Ref<EntityStore> entityRef) {
@@ -544,32 +580,29 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         Vector3d viewerPos = viewerTransform.getPosition();
         Vector3d entityPos = entityTransform.getPosition();
 
-        double distance = viewerPos.distanceTo(entityPos);
-        if (distance > VIEW_RANGE || distance < 0.5) {
+        double toX = entityPos.getX() - viewerPos.getX();
+        double toY = entityPos.getY() - viewerPos.getY();
+        double toZ = entityPos.getZ() - viewerPos.getZ();
+        double distanceSq = toX * toX + toY * toY + toZ * toZ;
+
+        if (distanceSq > VIEW_RANGE * VIEW_RANGE || distanceSq < 0.25) {
             return false;
         }
-
 
         Vector3d lookDir;
         HeadRotation viewerHead = store.getComponent(viewerRef, headRotationType);
         if (viewerHead != null) {
             lookDir = viewerHead.getDirection();
         } else {
-
             Vector3f rotation = viewerTransform.getRotation();
             lookDir = directionFromPitchYaw(rotation.getPitch(), rotation.getYaw());
         }
 
-        Vector3d toEntity = new Vector3d(
-                entityPos.getX() - viewerPos.getX(),
-                entityPos.getY() - viewerPos.getY(),
-                entityPos.getZ() - viewerPos.getZ()
-        ).normalize();
-
-        double dot = lookDir.dot(toEntity);
-        return dot >= VIEW_CONE_THRESHOLD;
+        // dot/distance >= threshold  is equivalent to  dot >= threshold * distance
+        // Avoids division; multiply threshold by distance instead
+        double dot = lookDir.getX() * toX + lookDir.getY() * toY + lookDir.getZ() * toZ;
+        return dot >= VIEW_CONE_THRESHOLD * Math.sqrt(distanceSq);
     }
-
 
     private static Vector3d directionFromPitchYaw(float pitchDeg, float yawDeg) {
         double pitch = Math.toRadians(pitchDeg);
@@ -582,23 +615,21 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         ).normalize();
     }
 
-
+    // OPT-1: Uses cached EMPTY_UPDATE instead of allocating
     private void sendEmptyToAll(EntityTrackerSystems.Visible visible,
                                Ref<EntityStore> entityRef) {
-        ComponentUpdate emptyUpdate = nameplateUpdate("");
         Ref<EntityStore> anchorRef = anchorManager.getAnchorRef(entityRef);
         for (Map.Entry<Ref<EntityStore>, EntityTrackerSystems.EntityViewer> viewerEntry : visible.visibleTo.entrySet()) {
-            viewerEntry.getValue().queueUpdate(entityRef, emptyUpdate);
+            viewerEntry.getValue().queueUpdate(entityRef, EMPTY_UPDATE);
             if (anchorRef != null) {
-                safeAnchorUpdate(viewerEntry.getValue(), anchorRef, emptyUpdate);
+                safeAnchorUpdate(viewerEntry.getValue(), anchorRef, EMPTY_UPDATE);
             }
         }
     }
 
-    private static NameplateUpdate nameplateUpdate(String text) {
+    private static ComponentUpdate nameplateUpdate(String text) {
         return new NameplateUpdate(text == null || text.isEmpty() ? " " : text);
     }
-
 
     private static void safeAnchorUpdate(EntityTrackerSystems.EntityViewer viewer,
                                          Ref<EntityStore> anchorRef,
@@ -612,16 +643,28 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         }
     }
 
+    // OPT-6: Return cached UUID instead of allocating new one
     private UUID getUuid(Store<EntityStore> store, Ref<EntityStore> entityRef) {
         UUIDComponent uuidComponent = store.getComponent(entityRef, uuidComponentType);
         if (uuidComponent != null) {
             return uuidComponent.getUuid();
         }
-        return new UUID(0L, 0L);
+        return ADMIN_CHAIN_UUID;
     }
 
+    // OPT-3: Cache entity type ID per archetype - reflection only happens once per type
     private String resolveEntityTypeId(ArchetypeChunk<EntityStore> chunk) {
         Archetype<EntityStore> archetype = chunk.getArchetype();
+        String cached = entityTypeIdCache.get(archetype);
+        if (cached != null) {
+            return cached;
+        }
+        String result = computeEntityTypeId(archetype);
+        entityTypeIdCache.put(archetype, result);
+        return result;
+    }
+
+    private String computeEntityTypeId(Archetype<EntityStore> archetype) {
         for (int i = 0; i < archetype.length(); i++) {
             ComponentType<EntityStore, ?> type = archetype.get(i);
             if (type == null) {

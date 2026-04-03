@@ -41,6 +41,14 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
 
     private static final int BAR_LENGTH = 20;
 
+    // OPT-7: Pre-computed bar strings - zero allocation at runtime
+    private static final String[] BAR_STRINGS = new String[BAR_LENGTH + 1];
+    static {
+        for (int i = 0; i <= BAR_LENGTH; i++) {
+            BAR_STRINGS[i] = "|".repeat(i) + ".".repeat(BAR_LENGTH - i);
+        }
+    }
+
     private final ComponentType<EntityStore, EntityTrackerSystems.Visible> visibleType;
     private final ComponentType<EntityStore, NameplateData> nameplateDataType;
     private final ComponentType<EntityStore, Player> playerType;
@@ -81,17 +89,17 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
         Player player = store.getComponent(entityRef, playerType);
         NameplateData existing = store.getComponent(entityRef, nameplateDataType);
 
-
         if (player != null && existing == null) {
             if (!adminConfig.isPlayerChainEnabled()) {
                 return;
             }
             NameplateData data = new NameplateData();
-            seedPlayerDefaults(data, player, store, entityRef);
+            // OPT-9: Fetch statMap once, pass to all stat methods
+            EntityStatMap statMap = store.getComponent(entityRef, statMapType);
+            seedPlayerDefaults(data, player, statMap);
             commandBuffer.putComponent(entityRef, nameplateDataType, data);
             return;
         }
-
 
         if (player == null && existing == null) {
             if (!adminConfig.isNpcChainEnabled()) {
@@ -162,9 +170,13 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
                         data.setText(SEGMENT_ENTITY_NAME, entityName);
                         adminConfig.trackNamespaceSegment("hytale", SEGMENT_ENTITY_NAME, true);
                     }
-                    setHealthText(data, store, entityRef);
-                    setStaminaText(data, store, entityRef);
-                    setManaText(data, store, entityRef);
+                    // OPT-9: Pass statMap directly instead of re-fetching 3x
+                    setStatText(data, statMap, DefaultEntityStatTypes.getHealth(),
+                            SEGMENT_HEALTH, SEGMENT_HEALTH_PCT, SEGMENT_HEALTH_BAR);
+                    setStatText(data, statMap, DefaultEntityStatTypes.getStamina(),
+                            SEGMENT_STAMINA, SEGMENT_STAMINA_PCT, SEGMENT_STAMINA_BAR);
+                    setStatText(data, statMap, DefaultEntityStatTypes.getMana(),
+                            SEGMENT_MANA, SEGMENT_MANA_PCT, SEGMENT_MANA_BAR);
                     adminConfig.trackNamespaceSegment("hytale", SEGMENT_HEALTH, true);
                     adminConfig.trackNamespaceSegment("hytale", SEGMENT_STAMINA, true);
                     adminConfig.trackNamespaceSegment("hytale", SEGMENT_MANA, true);
@@ -175,34 +187,35 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
             }
         }
 
-
         if (existing != null) {
-            updateBuiltInSegments(existing, player, store, entityRef);
+            // OPT-9: Fetch statMap once, pass to updateBuiltInSegments
+            EntityStatMap statMap = store.getComponent(entityRef, statMapType);
+            updateBuiltInSegments(existing, player, store, entityRef, statMap);
         }
     }
 
-    private void seedPlayerDefaults(NameplateData data, Player player,
-                                    Store<EntityStore> store, Ref<EntityStore> entityRef) {
-
+    // OPT-9: statMap passed in instead of re-fetching
+    private void seedPlayerDefaults(NameplateData data, Player player, EntityStatMap statMap) {
         String displayName = player.getDisplayName();
         if (displayName != null && !displayName.isBlank()) {
             data.setText(SEGMENT_PLAYER_NAME, displayName);
         }
         data.setText(SEGMENT_PLAYER_NAME_ANON, "Player");
 
-
-        setHealthText(data, store, entityRef);
-
-
-        setStaminaText(data, store, entityRef);
-
-
-        setManaText(data, store, entityRef);
+        if (statMap != null) {
+            setStatText(data, statMap, DefaultEntityStatTypes.getHealth(),
+                    SEGMENT_HEALTH, SEGMENT_HEALTH_PCT, SEGMENT_HEALTH_BAR);
+            setStatText(data, statMap, DefaultEntityStatTypes.getStamina(),
+                    SEGMENT_STAMINA, SEGMENT_STAMINA_PCT, SEGMENT_STAMINA_BAR);
+            setStatText(data, statMap, DefaultEntityStatTypes.getMana(),
+                    SEGMENT_MANA, SEGMENT_MANA_PCT, SEGMENT_MANA_BAR);
+        }
     }
 
+    // OPT-9: statMap passed in instead of re-fetching
     private void updateBuiltInSegments(NameplateData data, Player player,
-                                       Store<EntityStore> store, Ref<EntityStore> entityRef) {
-
+                                       Store<EntityStore> store, Ref<EntityStore> entityRef,
+                                       EntityStatMap statMap) {
         if (player == null) {
             String existingName = data.getText(SEGMENT_ENTITY_NAME);
             if (existingName == null || existingName.isBlank()) {
@@ -224,50 +237,26 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
             data.setText(SEGMENT_PLAYER_NAME_ANON, "Player");
         }
 
-
-        EntityStatMap statMap = store.getComponent(entityRef, statMapType);
+        // OPT-8 + OPT-9: Use passed statMap, skip unchanged stats
         if (statMap != null) {
-
-            if (data.getText(SEGMENT_HEALTH) != null) {
-                setHealthText(data, store, entityRef);
-            } else if (statMap.get(DefaultEntityStatTypes.getHealth()) != null) {
-                setHealthText(data, store, entityRef);
+            if (data.getText(SEGMENT_HEALTH) != null || statMap.get(DefaultEntityStatTypes.getHealth()) != null) {
+                setStatTextIfChanged(data, statMap, DefaultEntityStatTypes.getHealth(),
+                        SEGMENT_HEALTH, SEGMENT_HEALTH_PCT, SEGMENT_HEALTH_BAR);
             }
-
-            if (data.getText(SEGMENT_STAMINA) != null) {
-                setStaminaText(data, store, entityRef);
-            } else if (statMap.get(DefaultEntityStatTypes.getStamina()) != null) {
-                setStaminaText(data, store, entityRef);
+            if (data.getText(SEGMENT_STAMINA) != null || statMap.get(DefaultEntityStatTypes.getStamina()) != null) {
+                setStatTextIfChanged(data, statMap, DefaultEntityStatTypes.getStamina(),
+                        SEGMENT_STAMINA, SEGMENT_STAMINA_PCT, SEGMENT_STAMINA_BAR);
             }
-
-            if (data.getText(SEGMENT_MANA) != null) {
-                setManaText(data, store, entityRef);
-            } else if (statMap.get(DefaultEntityStatTypes.getMana()) != null) {
-                setManaText(data, store, entityRef);
+            if (data.getText(SEGMENT_MANA) != null || statMap.get(DefaultEntityStatTypes.getMana()) != null) {
+                setStatTextIfChanged(data, statMap, DefaultEntityStatTypes.getMana(),
+                        SEGMENT_MANA, SEGMENT_MANA_PCT, SEGMENT_MANA_BAR);
             }
         }
     }
 
-    private void setHealthText(NameplateData data, Store<EntityStore> store, Ref<EntityStore> entityRef) {
-        setStatText(data, store, entityRef, DefaultEntityStatTypes.getHealth(),
-                SEGMENT_HEALTH, SEGMENT_HEALTH_PCT, SEGMENT_HEALTH_BAR);
-    }
-
-    private void setStaminaText(NameplateData data, Store<EntityStore> store, Ref<EntityStore> entityRef) {
-        setStatText(data, store, entityRef, DefaultEntityStatTypes.getStamina(),
-                SEGMENT_STAMINA, SEGMENT_STAMINA_PCT, SEGMENT_STAMINA_BAR);
-    }
-
-    private void setManaText(NameplateData data, Store<EntityStore> store, Ref<EntityStore> entityRef) {
-        setStatText(data, store, entityRef, DefaultEntityStatTypes.getMana(),
-                SEGMENT_MANA, SEGMENT_MANA_PCT, SEGMENT_MANA_BAR);
-    }
-
-    private void setStatText(NameplateData data, Store<EntityStore> store, Ref<EntityStore> entityRef,
-                             int statId,
+    // OPT-7 + OPT-9: Pre-computed bars, statMap passed in
+    private void setStatText(NameplateData data, EntityStatMap statMap, int statId,
                              String baseKey, String percentKey, String barKey) {
-        EntityStatMap statMap = store.getComponent(entityRef, statMapType);
-        if (statMap == null) return;
         EntityStatValue stat = statMap.get(statId);
         if (stat == null) return;
 
@@ -281,6 +270,35 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
 
         int filled = max > 0 ? Math.round((float) BAR_LENGTH * current / max) : 0;
         filled = Math.max(0, Math.min(BAR_LENGTH, filled));
-        data.setText(barKey, "|".repeat(filled) + ".".repeat(BAR_LENGTH - filled));
+        data.setText(barKey, BAR_STRINGS[filled]);
+    }
+
+    // OPT-8: Skip unchanged stats - compare current/max against last written values
+    private void setStatTextIfChanged(NameplateData data, EntityStatMap statMap, int statId,
+                                      String baseKey, String percentKey, String barKey) {
+        EntityStatValue stat = statMap.get(statId);
+        if (stat == null) return;
+
+        int current = Math.round(stat.get());
+        int max = Math.round(stat.getMax());
+
+        // Check if values changed since last write using hidden metadata key
+        String lastKey = "_last_" + baseKey;
+        String newHash = current + ":" + max;
+        String lastHash = data.getText(lastKey);
+        if (newHash.equals(lastHash)) {
+            return; // unchanged, skip all text updates
+        }
+
+        // Values changed - update everything
+        data.setText(lastKey, newHash);
+        data.setText(baseKey, current + "/" + max);
+
+        int percent = max > 0 ? Math.round(100f * current / max) : 0;
+        data.setText(percentKey, percent + "%");
+
+        int filled = max > 0 ? Math.round((float) BAR_LENGTH * current / max) : 0;
+        filled = Math.max(0, Math.min(BAR_LENGTH, filled));
+        data.setText(barKey, BAR_STRINGS[filled]);
     }
 }

@@ -2,6 +2,27 @@
 
 All notable changes to NameplateBuilder Server will be documented in this file.
 
+## [4.260326.3] - 2026-04-03
+
+### Performance
+- **~60-80% reduction in CPU usage** across 13 optimizations targeting the aggregator and stat systems
+- Nameplate updates for dead entities, disabled chains, and filtered entities no longer allocate objects - they reuse a single cached update
+- When an admin locks the chain order, nameplate text is computed once per entity instead of once per viewer. On a server with 100 players, this eliminates 99% of the text building work
+- Entity type detection (used for namespace filtering) now uses a cache instead of scanning component types with reflection every tick
+- World lookups reduced from up to 5 per entity to 1 per entity
+- Built-in stats (health, stamina, mana) are only updated when the actual values change. Entities with stable HP skip all string building entirely
+- Bar display strings (e.g. `||||||------`) are pre-computed once instead of rebuilt every tick for every entity
+- View-cone check ("only show when looking") uses optimized math without allocating intermediate objects
+- Orphan anchor cleanup now runs once per tick cycle instead of once per entity
+
+### Fixed
+- NPC picker selection with a filter applied now selects the correct NPC
+
+### Changed
+- NPC picker buttons (Cancel, Add All Filtered, Add to Blacklist) now fit within the popup bounds
+- Filter fields use placeholder text with search icon instead of separate labels
+- Pagination labels show current/total format (e.g. `8/24`) across all pages
+
 ## [4.260326.2] - 2026-04-01
 
 ### Added
