@@ -1,0 +1,123 @@
+name: Discord Changelog Backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      subproject:
+        description: 'Subproject to backfill'
+        required: true
+        type: choice
+        options:
+          - nameplate-server
+          - nameplate-api
+          - both
+      delay_seconds:
+        description: 'Delay between messages (seconds)'
+        required: false
+        default: '2'
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Post all changelog entries to Discord
+        env:
+          WEBHOOK_SERVER: ${{ secrets.DISCORD_WEBHOOK_NPB_SERVER }}
+          WEBHOOK_API: ${{ secrets.DISCORD_WEBHOOK_NPB_API }}
+        run: |
+          set -euo pipefail
+
+          DELAY=${{ inputs.delay_seconds }}
+
+          extract_entry() {
+            local file="$1"
+            local version="$2"
+            awk -v target="$version" '
+              $0 ~ "^## \\[" target "\\]" { found=1; next }
+              /^## \[/ { if(found) exit }
+              found { print }
+            ' "$file" | tr -d '\r' | sed '/^---$/d' | sed -e :a -e '/^\n*$/{$d;N;ba;}'
+          }
+
+          format_for_discord() {
+            sed -E 's/^### (.+)/**\1**/g' | head -c 4096
+          }
+
+          extract_date() {
+            local file="$1"
+            local version="$2"
+            grep -P "^## \[$version\]" "$file" | tr -d '\r' | grep -oP '\d{4}-\d{2}-\d{2}' || echo ""
+          }
+
+          post_discord() {
+            local webhook="$1"
+            local title="$2"
+            local description="$3"
+            local color="$4"
+            local date="$5"
+
+            description=$(echo "$description" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read())[1:-1])")
+
+            local footer="Backfill"
+            if [ -n "$date" ]; then
+              footer="Released $date"
+            fi
+
+            cat <<PAYLOAD | curl -sf -H "Content-Type: application/json" -d @- "$webhook"
+          {
+            "embeds": [{
+              "title": "$title",
+              "description": "$description",
+              "color": $color,
+              "footer": {
+                "text": "$footer"
+              }
+            }]
+          }
+          PAYLOAD
+          }
+
+          backfill_changelog() {
+            local file="$1"
+            local webhook="$2"
+            local label="$3"
+            local color="$4"
+
+            if [ -z "$webhook" ]; then
+              echo "Skipping $label - no webhook configured"
+              return
+            fi
+
+            local versions=$(grep -oP '(?<=^## \[)[^\]]+' "$file" | tr -d '\r')
+            local count=$(echo "$versions" | wc -l)
+            echo "Backfilling $label: $count entries"
+
+            local reversed=$(echo "$versions" | tac)
+
+            while IFS= read -r ver; do
+              local body=$(extract_entry "$file" "$ver" | format_for_discord)
+              local date=$(extract_date "$file" "$ver")
+              if [ -n "$body" ]; then
+                post_discord "$webhook" "$label v${ver}" "$body" "$color" "$date"
+                echo "  Posted $label v${ver}"
+                sleep "$DELAY"
+              else
+                echo "  Skipped $label v${ver} (empty)"
+              fi
+            done <<< "$reversed"
+          }
+
+          SUBPROJECT="${{ inputs.subproject }}"
+
+          if [ "$SUBPROJECT" = "nameplate-server" ] || [ "$SUBPROJECT" = "both" ]; then
+            backfill_changelog "nameplate-server/CHANGELOG.md" "$WEBHOOK_SERVER" "NameplateBuilder Server" 8076525
+          fi
+
+          if [ "$SUBPROJECT" = "nameplate-api" ] || [ "$SUBPROJECT" = "both" ]; then
+            backfill_changelog "nameplate-api/CHANGELOG.md" "$WEBHOOK_API" "NameplateBuilder API" 8076525
+          fi
+
+          echo "Backfill complete!"

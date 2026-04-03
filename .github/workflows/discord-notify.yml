@@ -1,0 +1,95 @@
+name: Discord Changelog Notification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'nameplate-server/CHANGELOG.md'
+      - 'nameplate-api/CHANGELOG.md'
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changes and notify Discord
+        env:
+          WEBHOOK_SERVER: ${{ secrets.DISCORD_WEBHOOK_NPB_SERVER }}
+          WEBHOOK_API: ${{ secrets.DISCORD_WEBHOOK_NPB_API }}
+        run: |
+          set -euo pipefail
+
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+
+          extract_latest_entry() {
+            local file="$1"
+            awk '
+              /^## \[/ {
+                if (found) exit
+                found = 1
+                next
+              }
+              found { print }
+            ' "$file" | tr -d '\r' | sed '/^---$/d' | sed -e :a -e '/^\n*$/{$d;N;ba;}'
+          }
+
+          format_for_discord() {
+            sed -E 's/^### (.+)/**\1**/g' | head -c 4096
+          }
+
+          extract_version() {
+            local file="$1"
+            grep -m1 -oP '(?<=^## \[)[^\]]+' "$file" || echo "unknown"
+          }
+
+          post_discord() {
+            local webhook="$1"
+            local title="$2"
+            local description="$3"
+            local color="$4"
+            local commit_url="$5"
+
+            description=$(echo "$description" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read())[1:-1])")
+
+            cat <<PAYLOAD | curl -sf -H "Content-Type: application/json" -d @- "$webhook"
+          {
+            "embeds": [{
+              "title": "$title",
+              "description": "$description",
+              "color": $color,
+              "footer": {
+                "text": "$(git log -1 --format='%h - %s')"
+              },
+              "url": "$commit_url"
+            }]
+          }
+          PAYLOAD
+          }
+
+          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
+
+          if echo "$CHANGED_FILES" | grep -q '^nameplate-server/CHANGELOG.md$'; then
+            if [ -n "$WEBHOOK_SERVER" ]; then
+              VERSION=$(extract_version "nameplate-server/CHANGELOG.md")
+              BODY=$(extract_latest_entry "nameplate-server/CHANGELOG.md" | format_for_discord)
+              if [ -n "$BODY" ]; then
+                post_discord "$WEBHOOK_SERVER" "NameplateBuilder Server v${VERSION}" "$BODY" 8076525 "$COMMIT_URL"
+                echo "Posted NameplateBuilder Server v${VERSION} to Discord"
+              fi
+            fi
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q '^nameplate-api/CHANGELOG.md$'; then
+            if [ -n "$WEBHOOK_API" ]; then
+              VERSION=$(extract_version "nameplate-api/CHANGELOG.md")
+              BODY=$(extract_latest_entry "nameplate-api/CHANGELOG.md" | format_for_discord)
+              if [ -n "$BODY" ]; then
+                post_discord "$WEBHOOK_API" "NameplateBuilder API v${VERSION}" "$BODY" 8076525 "$COMMIT_URL"
+                echo "Posted NameplateBuilder API v${VERSION} to Discord"
+              fi
+            fi
+          fi
