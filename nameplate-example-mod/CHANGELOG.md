@@ -8,15 +8,21 @@ All notable changes to NameplateBuilder Example Mod will be documented in this f
 - Updated to NameplateBuilder API v2.0.0
 - Uses `define()` and `setText()` instead of `describe()` and `register()`
 
+---
+
 ## [4.260326.0] - 2026-03-30
 
 ### Changed
 - Updated server version to 2026.03.26-89796e57b
 
+---
+
 ## [3.260219.0] - 2026-02-20
 
 ### Changed
 - Updated server version
+
+---
 
 ## [3.260218.0] - 2026-02-19
 
@@ -24,10 +30,14 @@ All notable changes to NameplateBuilder Example Mod will be documented in this f
 - Adopted new versioning scheme: `{hytale_update}.{YYMMDD}.{mod_build}`
 - Updated server version
 
+---
+
 ## [1.0.1] - 2026-02-17
 
 ### Changed
 - Updated target server version to 2026.02.17-255364b8e
+
+---
 
 ## [1.0.0] - 2026-02-11
 
