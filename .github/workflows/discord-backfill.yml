@@ -39,16 +39,16 @@ jobs:
               $0 ~ "^## \\[" target "\\]" { found=1; next }
               /^## \[/ { if(found) exit }
               found { print }
-            ' "$file" | tr -d '\r' | sed '/^---$/d' | sed -e :a -e '/^\n*$/{$d;N;ba;}'
+            ' "$file" | tr -d '\r' | sed '/^---$/d' | sed '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba;}'
           }
 
           format_for_discord() {
             local download_url="$1"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo ""
             sed -E 's/^### (.+)/**\1**/g'
             echo ""
             echo "**[Download the latest version here](${download_url})**"
+            echo "*(Available within a few minutes once approved by CurseForge)*"
             echo ""
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           }
