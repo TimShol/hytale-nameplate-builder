@@ -38,7 +38,10 @@ jobs:
           }
 
           format_for_discord() {
-            sed -E 's/^### (.+)/**\1**/g' | head -c 4096
+            local download_url="$1"
+            sed -E 's/^### (.+)/**\1**/g'
+            echo ""
+            echo "**[Download the latest version here](${download_url})**"
           }
 
           extract_version() {
@@ -51,33 +54,27 @@ jobs:
             local title="$2"
             local description="$3"
             local color="$4"
-            local commit_url="$5"
 
-            description=$(echo "$description" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read())[1:-1])")
+            description=$(echo "$description" | head -c 4096 | python3 -c "import sys,json; print(json.dumps(sys.stdin.read())[1:-1])")
 
             cat <<PAYLOAD | curl -sf -H "Content-Type: application/json" -d @- "$webhook"
           {
+            "content": "@everyone",
             "embeds": [{
               "title": "$title",
               "description": "$description",
-              "color": $color,
-              "footer": {
-                "text": "$(git log -1 --format='%h - %s')"
-              },
-              "url": "$commit_url"
+              "color": $color
             }]
           }
           PAYLOAD
           }
 
-          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
-
           if echo "$CHANGED_FILES" | grep -q '^nameplate-server/CHANGELOG.md$'; then
             if [ -n "$WEBHOOK_SERVER" ]; then
               VERSION=$(extract_version "nameplate-server/CHANGELOG.md")
-              BODY=$(extract_latest_entry "nameplate-server/CHANGELOG.md" | format_for_discord)
+              BODY=$(extract_latest_entry "nameplate-server/CHANGELOG.md" | format_for_discord "https://www.curseforge.com/hytale/mods/nameplatebuilder")
               if [ -n "$BODY" ]; then
-                post_discord "$WEBHOOK_SERVER" "NameplateBuilder Server v${VERSION}" "$BODY" 8076525 "$COMMIT_URL"
+                post_discord "$WEBHOOK_SERVER" "NameplateBuilder Server v${VERSION}" "$BODY" 8076525
                 echo "Posted NameplateBuilder Server v${VERSION} to Discord"
               fi
             fi
@@ -86,9 +83,9 @@ jobs:
           if echo "$CHANGED_FILES" | grep -q '^nameplate-api/CHANGELOG.md$'; then
             if [ -n "$WEBHOOK_API" ]; then
               VERSION=$(extract_version "nameplate-api/CHANGELOG.md")
-              BODY=$(extract_latest_entry "nameplate-api/CHANGELOG.md" | format_for_discord)
+              BODY=$(extract_latest_entry "nameplate-api/CHANGELOG.md" | format_for_discord "https://www.curseforge.com/hytale/mods/nameplatebuilder-api")
               if [ -n "$BODY" ]; then
-                post_discord "$WEBHOOK_API" "NameplateBuilder API v${VERSION}" "$BODY" 8076525 "$COMMIT_URL"
+                post_discord "$WEBHOOK_API" "NameplateBuilder API v${VERSION}" "$BODY" 8076525
                 echo "Posted NameplateBuilder API v${VERSION} to Discord"
               fi
             fi

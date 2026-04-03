@@ -43,13 +43,10 @@ jobs:
           }
 
           format_for_discord() {
-            sed -E 's/^### (.+)/**\1**/g' | head -c 4096
-          }
-
-          extract_date() {
-            local file="$1"
-            local version="$2"
-            grep -P "^## \[$version\]" "$file" | tr -d '\r' | grep -oP '\d{4}-\d{2}-\d{2}' || echo ""
+            local download_url="$1"
+            sed -E 's/^### (.+)/**\1**/g'
+            echo ""
+            echo "**[Download the latest version here](${download_url})**"
           }
 
           post_discord() {
@@ -57,24 +54,16 @@ jobs:
             local title="$2"
             local description="$3"
             local color="$4"
-            local date="$5"
 
-            description=$(echo "$description" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read())[1:-1])")
-
-            local footer="Backfill"
-            if [ -n "$date" ]; then
-              footer="Released $date"
-            fi
+            description=$(echo "$description" | head -c 4096 | python3 -c "import sys,json; print(json.dumps(sys.stdin.read())[1:-1])")
 
             cat <<PAYLOAD | curl -sf -H "Content-Type: application/json" -d @- "$webhook"
           {
+            "content": "@everyone",
             "embeds": [{
               "title": "$title",
               "description": "$description",
-              "color": $color,
-              "footer": {
-                "text": "$footer"
-              }
+              "color": $color
             }]
           }
           PAYLOAD
@@ -85,6 +74,7 @@ jobs:
             local webhook="$2"
             local label="$3"
             local color="$4"
+            local download_url="$5"
 
             if [ -z "$webhook" ]; then
               echo "Skipping $label - no webhook configured"
@@ -98,10 +88,9 @@ jobs:
             local reversed=$(echo "$versions" | tac)
 
             while IFS= read -r ver; do
-              local body=$(extract_entry "$file" "$ver" | format_for_discord)
-              local date=$(extract_date "$file" "$ver")
+              local body=$(extract_entry "$file" "$ver" | format_for_discord "$download_url")
               if [ -n "$body" ]; then
-                post_discord "$webhook" "$label v${ver}" "$body" "$color" "$date"
+                post_discord "$webhook" "$label v${ver}" "$body" "$color"
                 echo "  Posted $label v${ver}"
                 sleep "$DELAY"
               else
@@ -113,11 +102,11 @@ jobs:
           SUBPROJECT="${{ inputs.subproject }}"
 
           if [ "$SUBPROJECT" = "nameplate-server" ] || [ "$SUBPROJECT" = "both" ]; then
-            backfill_changelog "nameplate-server/CHANGELOG.md" "$WEBHOOK_SERVER" "NameplateBuilder Server" 8076525
+            backfill_changelog "nameplate-server/CHANGELOG.md" "$WEBHOOK_SERVER" "NameplateBuilder Server" 8076525 "https://www.curseforge.com/hytale/mods/nameplatebuilder"
           fi
 
           if [ "$SUBPROJECT" = "nameplate-api" ] || [ "$SUBPROJECT" = "both" ]; then
-            backfill_changelog "nameplate-api/CHANGELOG.md" "$WEBHOOK_API" "NameplateBuilder API" 8076525
+            backfill_changelog "nameplate-api/CHANGELOG.md" "$WEBHOOK_API" "NameplateBuilder API" 8076525 "https://www.curseforge.com/hytale/mods/nameplatebuilder-api"
           fi
 
           echo "Backfill complete!"
