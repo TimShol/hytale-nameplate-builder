@@ -17,6 +17,8 @@ All notable changes to NameplateBuilder API will be documented in this file.
 - `SegmentBuilder` interface with `resolver()`, `requires()`, and `cacheTicks()` methods
 - `define()` returns `SegmentBuilder` for fluent configuration of resolvers and optimization hints
 
+---
+
 ## [1.0.0] - 2026-02-11
 
 ### Added
