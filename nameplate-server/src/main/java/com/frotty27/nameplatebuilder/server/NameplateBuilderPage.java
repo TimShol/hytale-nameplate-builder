@@ -1994,10 +1994,9 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
         int end = Math.min(chain.size(), MAX_CHAIN_BLOCKS);
 
-        for (int i = 0; i < MAX_CHAIN_BLOCKS; i++) {
-            int index = i;
+        for (int index = 0; index < MAX_CHAIN_BLOCKS; index++) {
             boolean visible = index < end;
-            String prefix = "#ChainBlock" + i;
+            String prefix = "#ChainBlock" + index;
             commands.set(prefix + ".Visible", visible);
             if (visible) {
                 SegmentView view = chain.get(index);
@@ -2082,9 +2081,9 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             }
 
 
-            if (i < MAX_CHAIN_BLOCKS - 1) {
-                boolean sepVisible = visible && (i + 1) < end;
-                String sepId = "#ChainSep" + i;
+            if (index < MAX_CHAIN_BLOCKS - 1) {
+                boolean sepVisible = visible && (index + 1) < end;
+                String sepId = "#ChainSep" + index;
                 commands.set(sepId + ".Visible", sepVisible);
                 if (sepVisible) {
                     SegmentKey blockKey = chain.get(index).key();
@@ -2609,21 +2608,18 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
     private SegmentView getAvailableRow(int row) {
         List<SegmentView> list = getAvailableViews();
-        int start = availPage * AVAIL_PAGE_SIZE;
-        int index = row;
-        if (index < 0 || index >= list.size()) {
+        if (row < 0 || row >= list.size()) {
             return null;
         }
-        return list.get(index);
+        return list.get(row);
     }
 
     private SegmentView getChainRow(int row) {
         List<SegmentView> list = getChainViews();
-        int index = row;
-        if (index < 0 || index >= list.size()) {
+        if (row < 0 || row >= list.size()) {
             return null;
         }
-        return list.get(index);
+        return list.get(row);
     }
 
 
@@ -2937,7 +2933,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
     private void fillPreviewTargets(UICommandBuilder commands) {
-        // Player tab only shows the default chain preview - no target selection needed
         if (activeTab == ActiveTab.PLAYERS) {
             commands.set("#PreviewTargetBar.Visible", false);
             selectedPreviewTarget = 0;
@@ -2974,7 +2969,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             return "(no blocks enabled)";
         }
 
-        // Player tab shows all segments unfiltered - no target selection
         if (activeTab == ActiveTab.PLAYERS) {
             return buildSinglePreviewLine(views);
         }

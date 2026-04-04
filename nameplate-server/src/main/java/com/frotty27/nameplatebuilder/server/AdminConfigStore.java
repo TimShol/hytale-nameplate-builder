@@ -246,6 +246,14 @@ final class AdminConfigStore {
         return disabledSegments.contains(key);
     }
 
+    boolean areAllSegmentsDisabled(Set<SegmentKey> keys) {
+        if (disabledSegments.isEmpty()) return false;
+        for (SegmentKey key : keys) {
+            if (!disabledSegments.contains(key)) return false;
+        }
+        return true;
+    }
+
     void setDisabled(SegmentKey key, boolean disabled) {
         if (disabled) {
             disabledSegments.add(key);

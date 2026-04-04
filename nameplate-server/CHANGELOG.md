@@ -2,6 +2,19 @@
 
 All notable changes to NameplateBuilder Server will be documented in this file.
 
+## [4.260326.5] - 2026-04-04
+
+### Performance
+- Entities with no nearby players are now skipped entirely, reducing work by ~85% on servers with many loaded entities
+- Mod discovery for the admin UI now runs once per segment instead of every tick for every entity
+- Replaced internal stream operations with simple loops to reduce per-tick allocations
+
+### Fixed
+- Dead entities now correctly clean up their nameplate data even when no player is nearby
+- Anchor entities are now removed when all players leave the area
+
+---
+
 ## [4.260326.4] - 2026-04-03
 
 ### Fixed
@@ -34,6 +47,7 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 - NPC picker buttons (Cancel, Add All Filtered, Add to Blacklist) now fit within the popup bounds
 - Filter fields use placeholder text with search icon instead of separate labels
 - Pagination labels show current/total format (e.g. `8/24`) across all pages
+- Button spacing normalized to 16px from edges across all pages
 
 ---
 

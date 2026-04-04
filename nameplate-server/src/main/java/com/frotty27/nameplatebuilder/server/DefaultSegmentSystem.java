@@ -41,7 +41,6 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
 
     private static final int BAR_LENGTH = 20;
 
-    // OPT-7: Pre-computed bar strings - zero allocation at runtime
     private static final String[] BAR_STRINGS = new String[BAR_LENGTH + 1];
     static {
         for (int i = 0; i <= BAR_LENGTH; i++) {
@@ -94,7 +93,6 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
                 return;
             }
             NameplateData data = new NameplateData();
-            // OPT-9: Fetch statMap once, pass to all stat methods
             EntityStatMap statMap = store.getComponent(entityRef, statMapType);
             seedPlayerDefaults(data, player, statMap);
             commandBuffer.putComponent(entityRef, nameplateDataType, data);
@@ -170,7 +168,6 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
                         data.setText(SEGMENT_ENTITY_NAME, entityName);
                         adminConfig.trackNamespaceSegment("hytale", SEGMENT_ENTITY_NAME, true);
                     }
-                    // OPT-9: Pass statMap directly instead of re-fetching 3x
                     setStatText(data, statMap, DefaultEntityStatTypes.getHealth(),
                             SEGMENT_HEALTH, SEGMENT_HEALTH_PCT, SEGMENT_HEALTH_BAR);
                     setStatText(data, statMap, DefaultEntityStatTypes.getStamina(),
@@ -188,13 +185,11 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
         }
 
         if (existing != null) {
-            // OPT-9: Fetch statMap once, pass to updateBuiltInSegments
             EntityStatMap statMap = store.getComponent(entityRef, statMapType);
             updateBuiltInSegments(existing, player, store, entityRef, statMap);
         }
     }
 
-    // OPT-9: statMap passed in instead of re-fetching
     private void seedPlayerDefaults(NameplateData data, Player player, EntityStatMap statMap) {
         String displayName = player.getDisplayName();
         if (displayName != null && !displayName.isBlank()) {
@@ -212,7 +207,6 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
         }
     }
 
-    // OPT-9: statMap passed in instead of re-fetching
     private void updateBuiltInSegments(NameplateData data, Player player,
                                        Store<EntityStore> store, Ref<EntityStore> entityRef,
                                        EntityStatMap statMap) {
@@ -237,7 +231,6 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
             data.setText(SEGMENT_PLAYER_NAME_ANON, "Player");
         }
 
-        // OPT-8 + OPT-9: Use passed statMap, skip unchanged stats
         if (statMap != null) {
             if (data.getText(SEGMENT_HEALTH) != null || statMap.get(DefaultEntityStatTypes.getHealth()) != null) {
                 setStatTextIfChanged(data, statMap, DefaultEntityStatTypes.getHealth(),
@@ -254,7 +247,6 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
         }
     }
 
-    // OPT-7 + OPT-9: Pre-computed bars, statMap passed in
     private void setStatText(NameplateData data, EntityStatMap statMap, int statId,
                              String baseKey, String percentKey, String barKey) {
         EntityStatValue stat = statMap.get(statId);
@@ -273,7 +265,6 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
         data.setText(barKey, BAR_STRINGS[filled]);
     }
 
-    // OPT-8: Skip unchanged stats - compare current/max against last written values
     private void setStatTextIfChanged(NameplateData data, EntityStatMap statMap, int statId,
                                       String baseKey, String percentKey, String barKey) {
         EntityStatValue stat = statMap.get(statId);
@@ -282,7 +273,6 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
         int current = Math.round(stat.get());
         int max = Math.round(stat.getMax());
 
-        // Check if values changed since last write using hidden metadata key
         String lastKey = "_last_" + baseKey;
         String newHash = current + ":" + max;
         String lastHash = data.getText(lastKey);
@@ -290,7 +280,6 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
             return; // unchanged, skip all text updates
         }
 
-        // Values changed - update everything
         data.setText(lastKey, newHash);
         data.setText(baseKey, current + "/" + max);
 
