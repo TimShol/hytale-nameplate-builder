@@ -1,21 +1,82 @@
-MIT License
+NameplateBuilder Source-Available License
 
-Copyright (c) 2025 Frotty27
+Copyright (c) 2026 Frotty27
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Definitions
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+   "Software" means the NameplateBuilder source code, compiled binaries,
+   documentation, assets, and any associated files in this repository.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+   "Author" means Frotty27, the original creator and copyright holder.
+
+   "You" means any person or entity accessing the Software.
+
+   "Contribution" means any code, documentation, or other material
+   submitted to this repository by any person other than the Author
+   (e.g. via pull request, patch, or issue).
+
+2. Permitted Uses
+
+   You MAY:
+   a. View, read, and study the source code for personal or educational
+      purposes.
+   b. Use the compiled Software on servers and clients as intended by
+      the Author (i.e. as a Hytale mod).
+   c. Submit Contributions to this repository via pull requests or other
+      means approved by the Author.
+   d. Create mods that depend on the NameplateBuilder API at runtime,
+      provided they do not embed, bundle, or redistribute the Software
+      itself.
+   e. Fork this repository on hosting platforms solely for the purpose
+      of preparing Contributions to submit back to this repository.
+
+3. Restrictions
+
+   You MAY NOT:
+   a. Redistribute, publish, or share modified or unmodified copies of
+      the Software without prior written permission from the Author.
+   b. Use the Software, or substantial portions of it, as the basis for
+      a competing or derivative product.
+   c. Sell, sublicense, or commercially exploit the Software or any
+      derivative work.
+   d. Remove, alter, or obscure this license notice, the Author's name,
+      or any copyright notices.
+   e. Claim authorship of the Software or misrepresent its origin.
+
+4. Contributions
+
+   By submitting a Contribution, you:
+   a. Grant the Author a perpetual, worldwide, royalty-free, irrevocable
+      license to use, modify, incorporate, sublicense, and distribute
+      your Contribution as part of the Software under any license the
+      Author chooses.
+   b. Confirm that you have the legal right to grant the above license
+      and that your Contribution does not infringe any third-party
+      rights.
+   c. Understand that the Author is under no obligation to accept,
+      merge, or use your Contribution.
+
+5. No Warranty
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+6. Termination
+
+   This license is automatically terminated if you violate any of the
+   above terms. Upon termination, you must destroy all copies of the
+   Software in your possession.
+
+7. Governing Terms
+
+   The Author reserves the right to change the license for future
+   versions of the Software. Previously published versions remain under
+   the license they were released with.
+
+   For redistribution requests or commercial licensing inquiries,
+   contact the Author directly.
