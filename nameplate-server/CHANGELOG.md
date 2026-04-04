@@ -12,6 +12,8 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 - Debug flag visibility across threads (`volatile`)
 - Formatting issues in admin world/instance toggle handlers
 
+---
+
 ## [4.260326.3] - 2026-04-03
 
 ### Performance
@@ -32,6 +34,8 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 - NPC picker buttons (Cancel, Add All Filtered, Add to Blacklist) now fit within the popup bounds
 - Filter fields use placeholder text with search icon instead of separate labels
 - Pagination labels show current/total format (e.g. `8/24`) across all pages
+
+---
 
 ## [4.260326.2] - 2026-04-01
 
@@ -62,6 +66,8 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 ### Performance
 - Nameplate processing is now **~30-40%** faster due to reduced internal lookups and removal of per-tick string scanning overhead
 
+---
+
 ## [4.260326.1] - 2026-03-30
 
 ### Added
@@ -70,6 +76,8 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 - **Remove Filtered** - Remove all blacklisted NPCs matching the current filter
 - **Clear Blacklist** - Remove all blacklisted NPCs at once
 - **Blacklist now shows 18 entries per page** - Up from 8, with compact row spacing
+
+---
 
 ## [4.260326.0] - 2026-03-30
 
@@ -90,10 +98,14 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 - World crash when chunks unload while anchor entities are active
 - Nameplates from other mods being overwritten by NameplateBuilder on non-vanilla NPCs
 
+---
+
 ## [3.260219.0] - 2026-02-20
 
 ### Changed
 - Updated server version
+
+---
 
 ## [3.260218.0] - 2026-02-19
 
@@ -101,10 +113,14 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 - Adopted new versioning scheme: `{hytale_update}.{YYMMDD}.{mod_build}`
 - Updated server version
 
+---
+
 ## [1.0.3] - 2026-02-18
 
 ### Added
 - Admin setting to enable or disable welcome messages for all players
+
+---
 
 ## [1.0.2] - 2026-02-17
 
@@ -117,6 +133,8 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 - Updated target server version to 2026.02.17-255364b8e
 - Updated nameplate protocol to match the latest Hytale build
 
+---
+
 ## [1.0.1] - 2026-02-13
 
 ### Fixed
@@ -128,6 +146,8 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 ### Changed
 - Player nameplates now use client-side rendering for smoother display
 - NPC nameplates with vertical offset now use predictive positioning to reduce lag
+
+---
 
 ## [1.0.0] - 2026-02-11
 
