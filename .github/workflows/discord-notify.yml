@@ -40,9 +40,8 @@ jobs:
           format_for_discord() {
             local download_url="$1"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            sed -E 's/^### (.+)/**\1**/g'
             echo ""
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            sed -E 's/^### (.+)/**\1**/g'
             echo ""
             echo "**[Download the latest version here](${download_url})**"
             echo "*(Available within a few minutes once approved by CurseForge)*"
@@ -53,6 +52,11 @@ jobs:
           extract_version() {
             local file="$1"
             grep -m1 -oP '(?<=^## \[)[^\]]+' "$file" || echo "unknown"
+          }
+
+          extract_date() {
+            local file="$1"
+            grep -m1 -oP '\d{4}-\d{2}-\d{2}' "$file" || echo ""
           }
 
           post_discord() {
@@ -78,9 +82,10 @@ jobs:
           if echo "$CHANGED_FILES" | grep -q '^nameplate-server/CHANGELOG.md$'; then
             if [ -n "$WEBHOOK_SERVER" ]; then
               VERSION=$(extract_version "nameplate-server/CHANGELOG.md")
+              DATE=$(extract_date "nameplate-server/CHANGELOG.md")
               BODY=$(extract_latest_entry "nameplate-server/CHANGELOG.md" | format_for_discord "https://www.curseforge.com/hytale/mods/nameplatebuilder")
               if [ -n "$BODY" ]; then
-                post_discord "$WEBHOOK_SERVER" "NameplateBuilder v${VERSION}" "$BODY" 8076525
+                post_discord "$WEBHOOK_SERVER" "NameplateBuilder v${VERSION} - ${DATE}" "$BODY" 8076525
                 echo "Posted NameplateBuilder v${VERSION} to Discord"
               fi
             fi
@@ -89,9 +94,10 @@ jobs:
           if echo "$CHANGED_FILES" | grep -q '^nameplate-api/CHANGELOG.md$'; then
             if [ -n "$WEBHOOK_API" ]; then
               VERSION=$(extract_version "nameplate-api/CHANGELOG.md")
+              DATE=$(extract_date "nameplate-api/CHANGELOG.md")
               BODY=$(extract_latest_entry "nameplate-api/CHANGELOG.md" | format_for_discord "https://www.curseforge.com/hytale/mods/nameplatebuilder-api")
               if [ -n "$BODY" ]; then
-                post_discord "$WEBHOOK_API" "NameplateBuilder API v${VERSION}" "$BODY" 8076525
+                post_discord "$WEBHOOK_API" "NameplateBuilder API v${VERSION} - ${DATE}" "$BODY" 8076525
                 echo "Posted NameplateBuilder API v${VERSION} to Discord"
               fi
             fi

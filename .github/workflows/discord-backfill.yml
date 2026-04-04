@@ -45,6 +45,7 @@ jobs:
           format_for_discord() {
             local download_url="$1"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
             sed -E 's/^### (.+)/**\1**/g'
             echo ""
             echo "**[Download the latest version here](${download_url})**"
@@ -93,8 +94,9 @@ jobs:
 
             while IFS= read -r ver; do
               local body=$(extract_entry "$file" "$ver" | format_for_discord "$download_url")
+              local date=$(grep -P "^## \[$ver\]" "$file" | tr -d '\r' | grep -oP '\d{4}-\d{2}-\d{2}' || echo "")
               if [ -n "$body" ]; then
-                post_discord "$webhook" "$label v${ver}" "$body" "$color"
+                post_discord "$webhook" "$label v${ver} - ${date}" "$body" "$color"
                 echo "  Posted $label v${ver}"
                 sleep "$DELAY"
               else
