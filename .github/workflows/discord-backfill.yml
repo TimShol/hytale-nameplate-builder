@@ -12,9 +12,9 @@ on:
           - nameplate-api
           - both
       delay_seconds:
-        description: 'Delay between messages (seconds)'
+        description: 'Delay between messages in seconds (480+ to show bot name on each message)'
         required: false
-        default: '2'
+        default: '0.5'
 
 jobs:
   backfill:
