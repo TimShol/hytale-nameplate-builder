@@ -102,6 +102,14 @@ public final class NameplateData implements Component<EntityStore> {
         return Collections.unmodifiableMap(entries);
     }
 
+    /**
+     * Returns the raw entries map for internal iteration.
+     * <b>Do not modify the returned map.</b>
+     */
+    public Map<String, String> getEntriesDirect() {
+        return entries;
+    }
+
     @Override
     public NameplateData clone() {
         return new NameplateData(this.entries);

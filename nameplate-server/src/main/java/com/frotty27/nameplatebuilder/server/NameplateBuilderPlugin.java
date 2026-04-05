@@ -43,6 +43,7 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
     protected void setup() {
         registry = new NameplateRegistry();
         preferences = new NameplatePreferenceStore(getDataDirectory().resolve("preferences.txt"));
+        preferences.setRegistry(registry);
         preferences.load();
         adminConfig = new AdminConfigStore(getDataDirectory().resolve("admin_config.txt"));
         adminConfig.load();
@@ -118,11 +119,14 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
 
 
         adminConfig.prePopulateProfiles(registry.getSegments());
+        preferences.resolvePendingEntries(registry);
 
         getEntityStoreRegistry().registerSystem(new DefaultSegmentSystem(nameplateDataType, adminConfig));
         getEntityStoreRegistry().registerSystem(new NameplateAggregatorSystem(registry, preferences, adminConfig, nameplateDataType, anchorManager));
         getCommandRegistry().registerCommand(new NameplateBuilderCommand(registry, preferences, adminConfig, this));
         getCommandRegistry().registerCommand(new NameplateDebugCommand());
+        getCommandRegistry().registerCommand(new NameplateBenchmarkCommand(registry, preferences, adminConfig));
+        getCommandRegistry().registerCommand(new NameplateTestCommand(registry, preferences, adminConfig, this));
 
 
         getEventRegistry().registerGlobal(PlayerReadyEvent.class, event -> {

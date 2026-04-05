@@ -2,6 +2,14 @@
 
 All notable changes to NameplateBuilder API will be documented in this file.
 
+## [2.0.1] - 2026-04-05
+
+### Changed
+- `NameplateData.getEntriesDirect()` added for internal iteration without `UnmodifiableMap` wrapper overhead
+
+### Fixed
+- `NameplateData` unescape order causing data corruption on round-trip serialization for text containing backslash sequences
+
 ## [2.0.0] - 2026-04-01
 
 ### Breaking Changes

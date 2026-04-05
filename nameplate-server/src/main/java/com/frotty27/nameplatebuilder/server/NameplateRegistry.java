@@ -17,7 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 final class NameplateRegistry implements INameplateRegistry {
 
     private final Map<SegmentKey, Segment> segments = new ConcurrentHashMap<>();
+    private final Map<String, SegmentKey> segmentIdIndex = new ConcurrentHashMap<>();
     private final AtomicInteger version = new AtomicInteger();
+    private final AtomicInteger nextSegmentId = new AtomicInteger(0);
 
     @Override
     public SegmentBuilder define(JavaPlugin plugin, String segmentId, String displayName, SegmentTarget target, String example) {
@@ -36,9 +38,10 @@ final class NameplateRegistry implements INameplateRegistry {
         if (pluginAuthor != null && pluginAuthor.contains(":")) {
             pluginAuthor = pluginAuthor.substring(0, pluginAuthor.indexOf(':'));
         }
-        SegmentKey key = new SegmentKey(pluginId, segmentId);
+        SegmentKey key = new SegmentKey(pluginId, segmentId, nextSegmentId.getAndIncrement());
         segments.put(key, new Segment(pluginId, pluginName, pluginAuthor, displayName, target, example,
                 List.of(), false, false, null, null, 1));
+        segmentIdIndex.putIfAbsent(segmentId, key);
         version.incrementAndGet();
         return new SegmentBuilderImpl(key, segments, version);
     }
@@ -47,9 +50,10 @@ final class NameplateRegistry implements INameplateRegistry {
                                  SegmentTarget target, String example) {
         String pluginName = "NameplateBuilder";
         String pluginAuthor = pluginId.contains(":") ? pluginId.substring(0, pluginId.indexOf(':')) : pluginId;
-        SegmentKey key = new SegmentKey(pluginId, segmentId);
+        SegmentKey key = new SegmentKey(pluginId, segmentId, nextSegmentId.getAndIncrement());
         segments.put(key, new Segment(pluginId, pluginName, pluginAuthor, displayName, target, example,
                 List.of(), true, false, null, null, 1));
+        segmentIdIndex.put(segmentId, key);
         version.incrementAndGet();
         return new SegmentBuilderImpl(key, segments, version);
     }
@@ -115,6 +119,7 @@ final class NameplateRegistry implements INameplateRegistry {
 
     void clear() {
         segments.clear();
+        segmentIdIndex.clear();
         version.incrementAndGet();
     }
 
@@ -122,8 +127,16 @@ final class NameplateRegistry implements INameplateRegistry {
         return segments;
     }
 
+    SegmentKey findBySegmentId(String segmentId) {
+        return segmentIdIndex.get(segmentId);
+    }
+
     int getVersion() {
         return version.get();
+    }
+
+    int getMaxSegmentId() {
+        return nextSegmentId.get();
     }
 
     static String toPluginId(JavaPlugin plugin) {

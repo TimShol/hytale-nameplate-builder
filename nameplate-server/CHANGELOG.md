@@ -2,6 +2,31 @@
 
 All notable changes to NameplateBuilder Server will be documented in this file.
 
+## [4.260326.6] - 2026-04-05
+
+### Performance
+- **Overall aggregator cost reduced from 5.26% to 0.68% of world thread** (87% reduction, profiled with 2 viewers and ~700 entities)
+- **Integer segment IDs** - Preference lookups in `buildText` replaced from HashMap operations to direct array indexing, eliminating hashing, bucket lookup, and key comparison overhead
+- **SegmentKey rewritten** from Java record to class with cached hash and direct equals (removes 6-layer invokedynamic method handle chain that was the #1 profiler cost at 1.80%)
+- **Segment ID index** - `findSegmentKey` O(n) linear scan replaced with O(1) ConcurrentHashMap index lookup
+- **Resolver keys cached per archetype** - resolver-based available segment resolution runs once per entity type instead of once per entity
+- **Single PreferenceSet lookup per viewer** in `buildText` instead of 7 separate `getSet()` calls per segment
+- **Chain caching** - sorted segment chains cached per viewer and validated against available keys, eliminating redundant sorts across entities
+- **ThreadLocal StringBuilder** reuse in `buildText` to avoid allocation per call
+- **Raw NameplateData entries** exposed for internal iteration, bypassing `UnmodifiableMap` wrapper overhead
+- **Duplicate getComponent calls eliminated** - NPC/Player components resolved once per entity and reused across blacklist, world, and type checks
+- **Namespace cached per archetype** - `extractNamespace` with `String.toLowerCase` runs once per entity type instead of every entity
+- **`isBlank()` replaced with `isEmpty()`** in hot text-building loops
+- **View-cone distance** reduced from 30 to 10 blocks
+- Added `/npbbench [viewers] [seconds]` command for synthetic performance benchmarking with realistic viewer preference diversity
+
+### Benchmark results (synthetic, not gameplay)
+- 100 viewers, 170 entities (realistic), diverse preferences: 6.91ms/tick (20.7% of 33.3ms budget)
+- 100 viewers, 684 entities (extreme), diverse preferences: 28.77ms/tick (86.3% - edge case)
+- 50 viewers, 685 entities, default preferences: 8.01ms/tick (24.0%)
+
+---
+
 ## [4.260326.5] - 2026-04-04
 
 ### Performance

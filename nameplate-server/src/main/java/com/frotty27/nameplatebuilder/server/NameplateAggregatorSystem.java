@@ -31,7 +31,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
     static final UUID ADMIN_CHAIN_UUID = new UUID(0L, 0L);
 
-    private static final double VIEW_RANGE = 30.0;
+    private static final double VIEW_RANGE = 10.0;
     private static final double VIEW_CONE_THRESHOLD = 0.9;
     private static final String NO_DATA_HINT = "Type /npb to customize";
 
@@ -53,6 +53,12 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     private final AnchorEntityManager anchorManager;
 
     private final IdentityHashMap<Archetype<EntityStore>, String> entityTypeIdCache = new IdentityHashMap<>();
+    // OPT-21: Cache namespace per archetype to avoid toLowerCase every tick
+    private final IdentityHashMap<Archetype<EntityStore>, String> namespaceCache = new IdentityHashMap<>();
+
+    // OPT-18: Cache resolver-based available keys per archetype
+    private final IdentityHashMap<Archetype<EntityStore>, List<SegmentKey>> resolverKeysCache = new IdentityHashMap<>();
+    private int resolverKeysCacheVersion = -1;
 
     private final Set<SegmentKey> trackedSegmentKeys = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
@@ -60,6 +66,10 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
     private volatile Comparator<SegmentKey> cachedComparator;
     private volatile int cachedComparatorVersion = -1;
+
+    // OPT-15: ThreadLocal StringBuilder to avoid allocation per buildText call
+    private static final ThreadLocal<StringBuilder> TEXT_BUILDER =
+            ThreadLocal.withInitial(() -> new StringBuilder(128));
 
     NameplateAggregatorSystem(NameplateRegistry registry,
                               NameplatePreferenceStore preferences,
@@ -96,7 +106,11 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
         Ref<EntityStore> entityRef = chunk.getReferenceTo(index);
 
-        World entityWorld = resolveWorld(store, entityRef);
+        // OPT-19: Resolve NPC/Player components once, reuse across all checks
+        NPCEntity npcEntity = store.getComponent(entityRef, npcEntityType);
+        Player playerEntity = store.getComponent(entityRef, playerType);
+        World entityWorld = npcEntity != null ? npcEntity.getWorld()
+                : playerEntity != null ? playerEntity.getWorld() : null;
 
         if (index == 0 && lastCleanupEntityIndex != index) {
             lastCleanupEntityIndex = index;
@@ -149,12 +163,19 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
-        String entityTypeId = resolveEntityTypeId(chunk);
-        String namespace = AdminConfigStore.extractNamespace(entityTypeId);
-        if ("*".equals(namespace) || namespace.isEmpty()) {
-            namespace = "hytale";
+        // OPT-21: Cache namespace per archetype
+        Archetype<EntityStore> archetype = chunk.getArchetype();
+        String namespace = namespaceCache.get(archetype);
+        if (namespace == null) {
+            String entityTypeId = resolveEntityTypeId(chunk);
+            namespace = AdminConfigStore.extractNamespace(entityTypeId);
+            if ("*".equals(namespace) || namespace.isEmpty()) {
+                namespace = "hytale";
+            }
+            namespaceCache.put(archetype, namespace);
         }
-        boolean isPlayer = store.getComponent(entityRef, playerType) != null;
+        // OPT-19: Reuse playerEntity/npcEntity from above instead of extra getComponent calls
+        boolean isPlayer = playerEntity != null;
 
         if (isPlayer && !adminConfig.isPlayerChainEnabled()) {
             sendEmptyToAll(visible, entityRef);
@@ -168,14 +189,11 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             sendEmptyToAll(visible, entityRef);
             return;
         }
-        if (!isPlayer) {
-            NPCEntity blacklistNpc = store.getComponent(entityRef, npcEntityType);
-            if (blacklistNpc != null) {
-                String roleName = blacklistNpc.getRoleName();
-                if (roleName != null && adminConfig.isNpcBlacklisted(roleName)) {
-                    sendEmptyToAll(visible, entityRef);
-                    return;
-                }
+        if (!isPlayer && npcEntity != null) {
+            String roleName = npcEntity.getRoleName();
+            if (roleName != null && adminConfig.isNpcBlacklisted(roleName)) {
+                sendEmptyToAll(visible, entityRef);
+                return;
             }
         }
 
@@ -370,18 +388,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         return cachedComparator;
     }
 
-    private World resolveWorld(Store<EntityStore> store, Ref<EntityStore> entityRef) {
-        NPCEntity npc = store.getComponent(entityRef, npcEntityType);
-        if (npc != null) {
-            return npc.getWorld();
-        }
-        Player player = store.getComponent(entityRef, playerType);
-        if (player != null) {
-            return player.getWorld();
-        }
-        return null;
-    }
-
     private double resolveEntityHeight(Store<EntityStore> store, Ref<EntityStore> entityRef) {
         try {
             BoundingBox boundingBox = store.getComponent(entityRef, boundingBoxType);
@@ -395,33 +401,59 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         }
     }
 
+    // OPT-14/18: O(1) segmentId lookup + cached resolver keys per archetype
     private List<SegmentKey> resolveAvailableKeys(NameplateData entityData,
                                                    Map<SegmentKey, NameplateRegistry.Segment> segments,
                                                    Store<EntityStore> store,
                                                    Ref<EntityStore> entityRef,
                                                    ArchetypeChunk<EntityStore> chunk) {
-        Set<SegmentKey> keySet = new LinkedHashSet<>();
+        List<SegmentKey> result = new ArrayList<>();
 
-        for (String entryKey : entityData.getEntries().keySet()) {
-            if (entryKey.startsWith("_")) continue;
-            if (entryKey.contains(".")) continue;
-            SegmentKey matched = findSegmentKey(entryKey, segments);
+        // Per-entity: check NameplateData entries (different per entity)
+        for (String entryKey : entityData.getEntriesDirect().keySet()) {
+            if (entryKey.charAt(0) == '_') continue;
+            if (entryKey.indexOf('.') >= 0) continue;
+            SegmentKey matched = registry.findBySegmentId(entryKey);
             if (matched != null) {
                 if (!adminConfig.isDisabled(matched) && isNamespaceEnabledForSegment(matched, segments)) {
-                    keySet.add(matched);
+                    result.add(matched);
                 }
             } else {
-                keySet.add(new SegmentKey("_unknown", entryKey));
+                result.add(new SegmentKey("_unknown", entryKey));
             }
         }
 
-        Archetype<EntityStore> archetype = chunk.getArchetype();
+        // OPT-18: Per-archetype: resolver-based segments (same for all entities with same archetype)
+        List<SegmentKey> resolverKeys = getResolverKeysForArchetype(chunk.getArchetype(), segments);
+        for (int i = 0, size = resolverKeys.size(); i < size; i++) {
+            SegmentKey key = resolverKeys.get(i);
+            if (!result.contains(key)) {
+                result.add(key);
+            }
+        }
+
+        return result;
+    }
+
+    // OPT-18: Cache which resolver-based segments apply to each archetype
+    private List<SegmentKey> getResolverKeysForArchetype(Archetype<EntityStore> archetype,
+                                                          Map<SegmentKey, NameplateRegistry.Segment> segments) {
+        int currentVersion = registry.getVersion();
+        if (resolverKeysCacheVersion != currentVersion) {
+            resolverKeysCache.clear();
+            resolverKeysCacheVersion = currentVersion;
+        }
+
+        List<SegmentKey> cached = resolverKeysCache.get(archetype);
+        if (cached != null) return cached;
+
+        List<SegmentKey> keys = new ArrayList<>();
         for (Map.Entry<SegmentKey, NameplateRegistry.Segment> entry : segments.entrySet()) {
             NameplateRegistry.Segment segment = entry.getValue();
             if (segment.resolver() == null) continue;
-            if (adminConfig.isDisabled(entry.getKey())) continue;
-            if (keySet.contains(entry.getKey())) continue;
-            if (!isNamespaceEnabledForSegment(entry.getKey(), segments)) continue;
+            SegmentKey key = entry.getKey();
+            if (adminConfig.isDisabled(key)) continue;
+            if (!isNamespaceEnabledForSegment(key, segments)) continue;
 
             if (segment.requiredComponent() != null) {
                 boolean hasComponent = false;
@@ -434,10 +466,11 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 if (!hasComponent) continue;
             }
 
-            keySet.add(entry.getKey());
+            keys.add(key);
         }
 
-        return new ArrayList<>(keySet);
+        resolverKeysCache.put(archetype, keys);
+        return keys;
     }
 
     private boolean isNamespaceEnabledForSegment(SegmentKey key, Map<SegmentKey, NameplateRegistry.Segment> segments) {
@@ -454,31 +487,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         return adminConfig.isNamespaceEnabled(modNamespace);
     }
 
-    private SegmentKey findSegmentKey(String entryKey, Map<SegmentKey, NameplateRegistry.Segment> segments) {
-        SegmentKey best = null;
-        boolean bestBuiltIn = false;
-        for (Map.Entry<SegmentKey, NameplateRegistry.Segment> entry : segments.entrySet()) {
-            if (!entry.getKey().segmentId().equals(entryKey)) {
-                continue;
-            }
-            if (best == null) {
-                best = entry.getKey();
-                bestBuiltIn = entry.getValue().builtIn();
-                continue;
-            }
-            boolean candidateBuiltIn = entry.getValue().builtIn();
-            if (candidateBuiltIn && !bestBuiltIn) {
-                best = entry.getKey();
-                bestBuiltIn = true;
-            } else if (candidateBuiltIn == bestBuiltIn) {
-                if (entry.getKey().pluginId().compareTo(best.pluginId()) < 0) {
-                    best = entry.getKey();
-                }
-            }
-        }
-        return best;
-    }
-
+    // OPT-14: Single PreferenceSet lookup + ThreadLocal StringBuilder
     private String buildText(List<SegmentKey> ordered,
                              NameplateData entityData,
                              UUID viewerUuid,
@@ -486,26 +495,37 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                              Store<EntityStore> store,
                              Ref<EntityStore> entityRef,
                              Map<SegmentKey, NameplateRegistry.Segment> segments) {
-        StringBuilder builder = new StringBuilder();
+        StringBuilder builder = TEXT_BUILDER.get();
+        builder.setLength(0);
+
+        // Look up PreferenceSet once instead of per-preference-method
+        var prefs = preferences.getSetDirect(viewerUuid, entityTypeId);
+        String defaultSeparator = prefs != null ? prefs.separator : " - ";
+
         SegmentKey prevKey = null;
-        for (SegmentKey key : ordered) {
+        for (int i = 0, size = ordered.size(); i < size; i++) {
+            SegmentKey key = ordered.get(i);
             if (adminConfig.isDisabled(key)) {
                 continue;
             }
-            if (!adminConfig.isRequired(key) && !preferences.isEnabled(viewerUuid, entityTypeId, key)) {
-                continue;
+            if (!adminConfig.isRequired(key)) {
+                int id = key.id();
+                boolean disabled = prefs != null && id >= 0 && id < prefs.disabled.length && prefs.disabled[id];
+                if (disabled) continue;
             }
 
-            int variantIndex = preferences.getSelectedVariant(viewerUuid, entityTypeId, key);
+            int id = key.id();
+            int variantIndex = prefs != null && id >= 0 && id < prefs.selectedVariant.length ? prefs.selectedVariant[id] : 0;
+            String segId = key.segmentId();
             String text;
             if (variantIndex > 0) {
-                String variantText = entityData.getText(key.segmentId() + "." + variantIndex);
-                text = variantText != null && !variantText.isBlank() ? variantText : entityData.getText(key.segmentId());
+                String variantText = entityData.getText(segId + "." + variantIndex);
+                text = variantText != null && !variantText.isEmpty() ? variantText : entityData.getText(segId);
             } else {
-                text = entityData.getText(key.segmentId());
+                text = entityData.getText(segId);
             }
 
-            if (text == null || text.isBlank()) {
+            if (text == null || text.isEmpty()) {
                 NameplateRegistry.Segment segment = segments.get(key);
                 if (segment != null && segment.resolver() != null) {
                     try {
@@ -516,24 +536,27 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 }
             }
 
-            if (text == null || text.isBlank()) {
+            if (text == null || text.isEmpty()) {
                 continue;
             }
 
             NameplateRegistry.Segment segmentDefinition = segments.get(key);
             if (segmentDefinition != null && segmentDefinition.supportsPrefixSuffix() && variantIndex > 0) {
-                String barEmpty = preferences.getBarEmptyChar(viewerUuid, entityTypeId, key);
-                if (barEmpty.length() == 1) {
+                String barEmpty = prefs != null && id >= 0 && id < prefs.barEmptyChar.length && prefs.barEmptyChar[id] != null ? prefs.barEmptyChar[id] : "-";
+                if (barEmpty.length() == 1 && barEmpty.charAt(0) != '-') {
                     text = text.replace('.', barEmpty.charAt(0));
                 }
             }
 
             if (!builder.isEmpty() && prevKey != null) {
-                builder.append(preferences.getSeparatorAfter(viewerUuid, entityTypeId, prevKey));
+                int prevId = prevKey.id();
+                String sep = prefs != null && prevId >= 0 && prevId < prefs.separatorAfter.length && prefs.separatorAfter[prevId] != null
+                        ? prefs.separatorAfter[prevId] : defaultSeparator;
+                builder.append(sep);
             }
 
-            String prefix = preferences.getPrefix(viewerUuid, entityTypeId, key);
-            String suffix = preferences.getSuffix(viewerUuid, entityTypeId, key);
+            String prefix = prefs != null && id >= 0 && id < prefs.prefix.length && prefs.prefix[id] != null ? prefs.prefix[id] : "";
+            String suffix = prefs != null && id >= 0 && id < prefs.suffix.length && prefs.suffix[id] != null ? prefs.suffix[id] : "";
             if (!prefix.isEmpty()) {
                 builder.append(prefix);
             }
