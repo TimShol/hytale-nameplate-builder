@@ -2,13 +2,15 @@
 
 All notable changes to NameplateBuilder API will be documented in this file.
 
-## [2.0.1] - 2026-04-05
+## [2.0.1] - 2026-04-06
 
 ### Changed
 - `NameplateData.getEntriesDirect()` added for internal iteration without `UnmodifiableMap` wrapper overhead
 
 ### Fixed
 - `NameplateData` unescape order causing data corruption on round-trip serialization for text containing backslash sequences
+- Stale javadoc references in `NameplateData` pointing to removed 1.0.0 methods (`register`, `remove`) updated to `setText`, `clearText`
+- Stale javadoc references in `SegmentTarget` pointing to removed `describe()` updated to `define()`
 
 ## [2.0.0] - 2026-04-01
 

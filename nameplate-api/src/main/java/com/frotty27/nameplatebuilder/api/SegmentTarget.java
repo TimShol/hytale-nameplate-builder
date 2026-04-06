@@ -4,16 +4,16 @@ package com.frotty27.nameplatebuilder.api;
  * Indicates which entity types a nameplate segment is intended for.
  *
  * <p>Pass a {@code SegmentTarget} to
- * {@link NameplateAPI#describe(com.hypixel.hytale.server.core.plugin.JavaPlugin, String, String, SegmentTarget)}
+ * {@link NameplateAPI#define(com.hypixel.hytale.server.core.plugin.JavaPlugin, String, String, SegmentTarget, String)}
  * so that the Nameplate Builder UI can display a tag (e.g. {@code [All]},
  * {@code [Players]}, {@code [NPCs]}) next to each segment, helping players
  * understand which segments are relevant to which entities.</p>
  *
- * <p>This is purely a UI hint — it does <b>not</b> enforce any restrictions at
- * runtime. A mod can still call {@link NameplateAPI#register} with any segment
+ * <p>This is purely a UI hint - it does <b>not</b> enforce any restrictions at
+ * runtime. A mod can still call {@link NameplateAPI#define} with any segment
  * on any entity regardless of the declared target.</p>
  *
- * @see NameplateAPI#describe(com.hypixel.hytale.server.core.plugin.JavaPlugin, String, String, SegmentTarget)
+ * @see NameplateAPI#define(com.hypixel.hytale.server.core.plugin.JavaPlugin, String, String, SegmentTarget, String)
  */
 public enum SegmentTarget {
 

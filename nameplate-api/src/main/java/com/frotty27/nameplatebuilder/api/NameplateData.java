@@ -12,8 +12,8 @@ import java.util.Map;
 /**
  * ECS component that holds per-entity nameplate segment text.
  *
- * <p>This component is managed automatically by {@link NameplateAPI#register} and
- * {@link NameplateAPI#remove} — most mods should use those static methods
+ * <p>This component is managed automatically by {@link NameplateAPI#setText} and
+ * {@link NameplateAPI#clearText} — most mods should use those static methods
  * rather than interacting with this class directly.</p>
  *
  * <p>Each entry in the internal map is keyed by a segment ID (e.g.
@@ -24,8 +24,8 @@ import java.util.Map;
  * <p>This component is automatically removed when an entity dies (receives a
  * {@code DeathComponent}). Mods do not need to handle death cleanup.</p>
  *
- * @see NameplateAPI#register
- * @see NameplateAPI#remove
+ * @see NameplateAPI#setText
+ * @see NameplateAPI#clearText
  * @see NameplateAPI#getComponentType()
  */
 public final class NameplateData implements Component<EntityStore> {
