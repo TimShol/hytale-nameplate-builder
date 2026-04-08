@@ -326,13 +326,16 @@ $C.@PageOverlay {
             }
 
             FloatSliderNumberField #OffsetSlider {
-              Anchor: (Width: 260, Height: 28);
+              Anchor: (Width: 300, Height: 28);
               Min: -5.0;
               Max: 5.0;
               Step: 0.1;
               Value: 0.0;
               NumberFieldMaxDecimalPlaces: 1;
               NumberFieldDefaultValue: 0.0;
+              SliderStyle: (Background: #0a1119, Fill: #1a2840, Handle: #c9a84c, HandleWidth: 12, HandleHeight: 18);
+              NumberFieldStyle: (FontSize: 13, TextColor: #c8d6e5);
+              NumberFieldContainerAnchor: (Width: 50, Height: 28);
               TooltipText: "Adjust nameplate vertical position (-5.0 to 5.0)";
               TextTooltipShowDelay: 0.3;
             }

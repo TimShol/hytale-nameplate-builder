@@ -523,7 +523,7 @@ final class NameplatePreferenceStore {
     boolean isShowWelcomeMessage(UUID viewer) {
         ensureLoaded(viewer);
         PreferenceSet set = getSet(viewer, "*", false);
-        return set == null || set.showWelcomeMessage;
+        return set != null && set.showWelcomeMessage;
     }
 
     void setShowWelcomeMessage(UUID viewer, boolean show) {
@@ -566,7 +566,7 @@ final class NameplatePreferenceStore {
     boolean isOnlyShowWhenLooking(UUID viewer, String entityType) {
         ensureLoaded(viewer);
         PreferenceSet set = getSet(viewer, entityType, false);
-        return set != null && set.onlyShowWhenLooking;
+        return set == null || set.onlyShowWhenLooking;
     }
 
     void setOnlyShowWhenLooking(UUID viewer, String entityType, boolean value) {
@@ -726,7 +726,10 @@ final class NameplatePreferenceStore {
                 }
                 set = adminSet;
             } else {
-                seedDefaultChain(viewer, entityType, available);
+                List<SegmentKey> allSegments = registry != null
+                        ? new ArrayList<>(registry.getSegments().keySet())
+                        : available;
+                seedDefaultChain(viewer, entityType, allSegments);
                 set = getSet(viewer, entityType, false);
             }
         }
@@ -1007,9 +1010,9 @@ final class NameplatePreferenceStore {
 
         final Map<String, Boolean> worldEnabled = new HashMap<>();
         boolean useGlobal = false;
-        boolean onlyShowWhenLooking = false;
+        boolean onlyShowWhenLooking = true;
         boolean nameplatesEnabled = true;
-        boolean showWelcomeMessage = true;
+        boolean showWelcomeMessage = false;
         String separator = " - ";
         double offset = 0.0;
 

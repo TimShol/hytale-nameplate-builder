@@ -32,7 +32,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
     static final UUID ADMIN_CHAIN_UUID = new UUID(0L, 0L);
 
-    private static final double VIEW_RANGE = 10.0;
+    private static final double VIEW_RANGE = 12.0;
     private static final double VIEW_CONE_THRESHOLD = 0.9;
 
     private static final ComponentUpdate EMPTY_UPDATE = new NameplateUpdate(" ");

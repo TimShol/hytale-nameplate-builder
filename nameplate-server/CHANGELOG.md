@@ -21,9 +21,8 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 - Segment references are now namespace-safe, preventing conflicts between mods
 
 ### Performance
-- **Nameplate processing now uses less than 1% of the server tick budget** - down from over 5% before this update
-- Combined with optimizations from previous versions (.2 through .5), overall nameplate processing is now over **95% more efficient** than the original release
-- Added `/npbbench` command for server admins to test nameplate performance on their hardware
+- **Nameplate processing uses under 1ms per tick** with ~800 entities (~2.6% of tick budget). Use `/npbbench` to test on your own server
+- Numerous optimizations across versions .2 through .6 including array-based lookups, per-archetype caching, and entity skip logic
 
 ### New API Features
 - Mods can now mark up to 3 segments per mod as enabled by default for new players
@@ -37,7 +36,8 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 
 ### Gameplay
 - Player nameplates are now hidden when crouching (like Minecraft)
-- "Only Show NPC Nameplates When Looking" toggle restored, now applies only to NPCs
+- "Only Show NPC Nameplates When Looking" is now enabled by default for new players
+- NPC nameplate view range reduced from 30 to 12 blocks
 - Player nameplates are always visible regardless of look direction
 - Removed the "Type /npb to customize" hint text from entities with no configured segments
 
