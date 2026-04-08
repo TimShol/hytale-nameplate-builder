@@ -48,13 +48,18 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
         }
 
         String[] args = context.getInputString().trim().split("\\s+");
-        int viewerCount = 50;
-        int seconds = 3;
+        if (args.length < 3) {
+            player.sendMessage(Message.raw("Usage: /npbbench <players> <seconds>").color("#FFAA00"));
+            player.sendMessage(Message.raw("Example: /npbbench 50 5").color("#AAAAAA"));
+            return;
+        }
+        int viewerCount;
+        int seconds;
         try {
-            if (args.length > 1) viewerCount = Integer.parseInt(args[1]);
-            if (args.length > 2) seconds = Integer.parseInt(args[2]);
+            viewerCount = Integer.parseInt(args[1]);
+            seconds = Integer.parseInt(args[2]);
         } catch (NumberFormatException e) {
-            player.sendMessage(Message.raw("Usage: /npbbench [viewers] [seconds]").color("#FFAA00"));
+            player.sendMessage(Message.raw("Usage: /npbbench <players> <seconds>").color("#FFAA00"));
             return;
         }
         viewerCount = Math.max(1, Math.min(500, viewerCount));

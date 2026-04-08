@@ -21,8 +21,8 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 - Segment references are now namespace-safe, preventing conflicts between mods
 
 ### Performance
-- **Nameplate processing uses under 1ms per tick** with ~800 entities (~2.6% of tick budget). Use `/npbbench` to test on your own server
 - Numerous optimizations across versions .2 through .6 including array-based lookups, per-archetype caching, and entity skip logic
+- Use `/npbbench <players> <seconds>` to benchmark nameplate performance on your hardware (e.g. `/npbbench 50 5` simulates 50 players for 5 seconds)
 
 ### New API Features
 - Mods can now mark up to 3 segments per mod as enabled by default for new players
