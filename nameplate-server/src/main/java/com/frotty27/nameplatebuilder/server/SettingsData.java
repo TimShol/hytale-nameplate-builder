@@ -6,7 +6,6 @@ import com.hypixel.hytale.codec.builder.BuilderCodec;
 
 final class SettingsData {
 
-
     static final BuilderCodec<SettingsData> CODEC = BuilderCodec
             .builder(SettingsData.class, SettingsData::new)
             .append(new KeyedCodec<>("@Filter", Codec.STRING),
@@ -17,8 +16,8 @@ final class SettingsData {
                     (SettingsData data, String value) -> data.action = value,
                     (SettingsData data) -> data.action)
             .add()
-            .append(new KeyedCodec<>("@Offset", Codec.STRING),
-                    (SettingsData data, String value) -> data.offset = value,
+            .append(new KeyedCodec<>("@Offset", Codec.DOUBLE),
+                    (SettingsData data, Double value) -> data.offset = value,
                     (SettingsData data) -> data.offset)
             .add()
             .append(new KeyedCodec<>("@AdminFilter", Codec.STRING),
@@ -57,30 +56,38 @@ final class SettingsData {
                     (SettingsData data, String value) -> data.blacklistFilter = value,
                     (SettingsData data) -> data.blacklistFilter)
             .add()
+            .append(new KeyedCodec<>("@PatternField", Codec.STRING),
+                    (SettingsData data, String value) -> data.patternField = value,
+                    (SettingsData data) -> data.patternField)
+            .add()
+            .append(new KeyedCodec<>("@PatternFilterField", Codec.STRING),
+                    (SettingsData data, String value) -> data.patternFilter = value,
+                    (SettingsData data) -> data.patternFilter)
+            .add()
+            .append(new KeyedCodec<>("SourceIndex", Codec.INTEGER),
+                    (SettingsData data, Integer value) -> data.sourceIndex = value,
+                    (SettingsData data) -> data.sourceIndex)
+            .add()
+            .append(new KeyedCodec<>("TargetIndex", Codec.INTEGER),
+                    (SettingsData data, Integer value) -> data.targetIndex = value,
+                    (SettingsData data) -> data.targetIndex)
+            .add()
             .build();
 
-
     String filter;
-
     String action;
-
-    String offset;
-
+    Double offset;
     String adminFilter;
-
     String adminDisFilter;
-
     String adminServerName;
-
     String sepText;
-
     String prefixText;
-
     String suffixText;
-
     String barEmptyText;
-
     String npcPickerFilter;
-
     String blacklistFilter;
+    String patternField;
+    String patternFilter;
+    Integer sourceIndex;
+    Integer targetIndex;
 }

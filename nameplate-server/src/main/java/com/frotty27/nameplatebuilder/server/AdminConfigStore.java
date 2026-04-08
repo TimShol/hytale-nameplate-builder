@@ -3,22 +3,25 @@ package com.frotty27.nameplatebuilder.server;
 import com.hypixel.hytale.logger.HytaleLogger;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 final class AdminConfigStore {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
+    private static String pluginVersion = "unknown";
 
-    private static final Set<String> BUILT_IN_SEGMENT_IDS = Set.of(
-            "entity-name", "player-name", "player-name.1",
-            "health", "health.1", "health.2",
-            "stamina", "stamina.1", "stamina.2",
-            "mana", "mana.1", "mana.2");
+    static void setPluginVersion(String version) { pluginVersion = version; }
+
+    private final AtomicInteger configVersion = new AtomicInteger(0);
+
+    int getConfigVersion() { return configVersion.get(); }
+    private void bumpVersion() { configVersion.incrementAndGet(); }
 
     private final Path filePath;
     private final Set<SegmentKey> requiredSegments = ConcurrentHashMap.newKeySet();
@@ -37,6 +40,9 @@ final class AdminConfigStore {
     private final Set<String> integratedNamespaces = ConcurrentHashMap.newKeySet();
     private final Map<String, String> namespaceDisplayNames = new ConcurrentHashMap<>();
     private final Set<String> blacklistedNpcs = ConcurrentHashMap.newKeySet();
+    private final Set<String> blacklistPatterns = ConcurrentHashMap.newKeySet();
+    private volatile Pattern[] compiledPatterns = new Pattern[0];
+    private final Map<String, Boolean> entitySourceDefaults = new ConcurrentHashMap<>();
 
 
     AdminConfigStore(Path filePath) {
@@ -51,6 +57,9 @@ final class AdminConfigStore {
         namespaceEnabled.clear();
         worldEnabled.clear();
         blacklistedNpcs.clear();
+        blacklistPatterns.clear();
+        compiledPatterns = new Pattern[0];
+        entitySourceDefaults.clear();
         serverName = "";
         welcomeMessagesEnabled = false;
         npcChainLocked = false;
@@ -58,10 +67,95 @@ final class AdminConfigStore {
         masterEnabled = true;
         playerChainEnabled = true;
         npcChainEnabled = true;
-        if (!Files.exists(filePath)) {
+
+        if (Files.exists(filePath)) {
+            loadJson(filePath);
             return;
         }
-        try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+
+        Path legacyPath = filePath.getParent().resolve("admin_config.txt");
+        if (Files.exists(legacyPath)) {
+            LOGGER.atInfo().log("Migrating admin config from %s to %s", legacyPath, filePath);
+            loadLegacy(legacyPath);
+            seedDefaultPatterns();
+            save();
+            try {
+                Files.delete(legacyPath);
+            } catch (IOException e) {
+                LOGGER.atWarning().withCause(e).log("Failed to delete legacy config %s", legacyPath);
+            }
+            return;
+        }
+
+        seedDefaultPatterns();
+        save();
+    }
+
+    private void seedDefaultPatterns() {
+        if (blacklistPatterns.isEmpty()) {
+            addBlacklistPattern("Citizen.*");
+            addBlacklistPattern("Mount_.*");
+            addBlacklistPattern("Pet_.*");
+        }
+    }
+
+
+    private void loadJson(Path path) {
+        try {
+            String content = Files.readString(path);
+            Map<String, Object> root = SimpleJson.parseObject(content);
+            if (root == null) return;
+
+            serverName = SimpleJson.getString(root, "serverName", "");
+            welcomeMessagesEnabled = SimpleJson.getBoolean(root, "welcomeMessagesEnabled", false);
+            masterEnabled = SimpleJson.getBoolean(root, "masterEnabled", true);
+            playerChainEnabled = SimpleJson.getBoolean(root, "playerChainEnabled", true);
+            npcChainEnabled = SimpleJson.getBoolean(root, "npcChainEnabled", true);
+            npcChainLocked = SimpleJson.getBoolean(root, "npcChainLocked", false);
+            playerChainLocked = SimpleJson.getBoolean(root, "playerChainLocked", false);
+
+            Map<String, Boolean> nsMap = SimpleJson.getBooleanMap(root, "namespaceEnabled");
+            namespaceEnabled.putAll(nsMap);
+
+            Map<String, Boolean> weMap = SimpleJson.getBooleanMap(root, "worldEnabled");
+            worldEnabled.putAll(weMap);
+
+            List<String> reqList = SimpleJson.getStringList(root, "requiredSegments");
+            for (String entry : reqList) {
+                int pipeIndex = entry.indexOf('|');
+                if (pipeIndex > 0 && pipeIndex < entry.length() - 1) {
+                    requiredSegments.add(new SegmentKey(entry.substring(0, pipeIndex), entry.substring(pipeIndex + 1)));
+                }
+            }
+
+            List<String> disList = SimpleJson.getStringList(root, "disabledSegments");
+            for (String entry : disList) {
+                int pipeIndex = entry.indexOf('|');
+                if (pipeIndex > 0 && pipeIndex < entry.length() - 1) {
+                    disabledSegments.add(new SegmentKey(entry.substring(0, pipeIndex), entry.substring(pipeIndex + 1)));
+                }
+            }
+
+            List<String> blList = SimpleJson.getStringList(root, "blacklistedNpcs");
+            blacklistedNpcs.addAll(blList);
+
+            List<String> patList = SimpleJson.getStringList(root, "blacklistPatterns");
+            for (String pat : patList) {
+                blacklistPatterns.add(pat);
+            }
+            recompilePatterns();
+
+            Map<String, Boolean> esMap = SimpleJson.getBooleanMap(root, "entitySourceDefaults");
+            entitySourceDefaults.putAll(esMap);
+
+        } catch (IOException | RuntimeException exception) {
+            LOGGER.atWarning().withCause(exception).log("Failed to load admin config from %s", path);
+        }
+    }
+
+
+    private void loadLegacy(Path path) {
+        try (BufferedReader reader = Files.newBufferedReader(path)) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank() || line.startsWith("#")) {
@@ -122,15 +216,16 @@ final class AdminConfigStore {
                             disabledSegments.add(new SegmentKey(parts[1], parts[2]));
                         }
                     }
-                    case "BL" -> {
-                        if (parts.length >= 2) {
-                            blacklistedNpcs.add(parts[1]);
+                    case "BL" -> blacklistedNpcs.add(parts[1]);
+                    case "ES" -> {
+                        if (parts.length >= 3) {
+                            entitySourceDefaults.put(parts[1].trim().toLowerCase(Locale.ROOT), Boolean.parseBoolean(parts[2]));
                         }
                     }
                 }
             }
         } catch (IOException | RuntimeException exception) {
-            LOGGER.atWarning().withCause(exception).log("Failed to load admin config from %s", filePath);
+            LOGGER.atWarning().withCause(exception).log("Failed to load legacy admin config from %s", path);
         }
     }
 
@@ -142,85 +237,46 @@ final class AdminConfigStore {
             LOGGER.atWarning().withCause(exception).log("Failed to create admin config directory");
         }
 
-        try (BufferedWriter writer = Files.newBufferedWriter(filePath)) {
-            writer.write("# Server name for welcome message");
-            writer.newLine();
-            writer.write("S|" + serverName);
-            writer.newLine();
-            writer.newLine();
-            writer.write("# Show welcome messages for all players");
-            writer.newLine();
-            writer.write("G|" + welcomeMessagesEnabled);
-            writer.newLine();
-            writer.newLine();
-            writer.write("# Lock nameplate order to admin-configured chain (per-chain)");
-            writer.newLine();
-            writer.write("LN|" + npcChainLocked);
-            writer.newLine();
-            writer.write("LP|" + playerChainLocked);
-            writer.newLine();
-            writer.newLine();
-            writer.write("# Master enable - when false, NameplateBuilder does nothing");
-            writer.newLine();
-            writer.write("M|" + masterEnabled);
-            writer.newLine();
-            writer.newLine();
-            writer.write("# Player chain enable - when false, no player nameplates");
-            writer.newLine();
-            writer.write("PC|" + playerChainEnabled);
-            writer.newLine();
-            writer.newLine();
-            writer.write("# NPC chain enable - when false, no NPC nameplates");
-            writer.newLine();
-            writer.write("NC|" + npcChainEnabled);
-            writer.newLine();
-            writer.newLine();
-            writer.write("# Per-namespace enable/disable");
-            writer.newLine();
-            writer.write("# NS|namespace|true/false");
-            writer.newLine();
-            for (Map.Entry<String, Boolean> entry : namespaceEnabled.entrySet()) {
-                writer.write("NS|" + entry.getKey() + "|" + entry.getValue());
-                writer.newLine();
-            }
-            writer.newLine();
-            writer.write("# Per-world enable/disable");
-            writer.newLine();
-            writer.write("# WE|worldName|true/false");
-            writer.newLine();
-            for (Map.Entry<String, Boolean> entry : worldEnabled.entrySet()) {
-                writer.write("WE|" + entry.getKey() + "|" + entry.getValue());
-                writer.newLine();
-            }
-            writer.newLine();
-            writer.write("# Required segments - always displayed for all players");
-            writer.newLine();
-            writer.write("# R|pluginId|segmentId");
-            writer.newLine();
-            for (SegmentKey key : requiredSegments) {
-                writer.write("R|" + key.pluginId() + "|" + key.segmentId());
-                writer.newLine();
-            }
-            writer.newLine();
-            writer.write("# Disabled segments - hidden from all players");
-            writer.newLine();
-            writer.write("# D|pluginId|segmentId");
-            writer.newLine();
-            for (SegmentKey key : disabledSegments) {
-                writer.write("D|" + key.pluginId() + "|" + key.segmentId());
-                writer.newLine();
-            }
-            writer.newLine();
-            writer.write("# Blacklisted NPCs - these entity types never get nameplates");
-            writer.newLine();
-            writer.write("# BL|entityTypeId");
-            writer.newLine();
-            for (String npc : blacklistedNpcs) {
-                writer.write("BL|" + npc);
-                writer.newLine();
-            }
+        Path tempPath = filePath.resolveSibling(filePath.getFileName() + ".tmp");
+
+        SimpleJson.Writer w = new SimpleJson.Writer();
+        w.beginObject();
+        w.keyValue("version", pluginVersion);
+        w.keyValue("serverName", serverName);
+        w.keyValue("welcomeMessagesEnabled", welcomeMessagesEnabled);
+        w.keyValue("masterEnabled", masterEnabled);
+        w.keyValue("playerChainEnabled", playerChainEnabled);
+        w.keyValue("npcChainEnabled", npcChainEnabled);
+        w.keyValue("npcChainLocked", npcChainLocked);
+        w.keyValue("playerChainLocked", playerChainLocked);
+        w.keyBooleanMap("namespaceEnabled", namespaceEnabled);
+        w.keyBooleanMap("worldEnabled", worldEnabled);
+
+        w.key("requiredSegments");
+        w.beginArray();
+        for (SegmentKey key : requiredSegments) {
+            w.value(key.pluginId() + "|" + key.segmentId());
+        }
+        w.endArray();
+
+        w.key("disabledSegments");
+        w.beginArray();
+        for (SegmentKey key : disabledSegments) {
+            w.value(key.pluginId() + "|" + key.segmentId());
+        }
+        w.endArray();
+
+        w.keyStringArray("blacklistedNpcs", blacklistedNpcs);
+        w.keyStringArray("blacklistPatterns", blacklistPatterns);
+        w.keyBooleanMap("entitySourceDefaults", entitySourceDefaults);
+        w.endObject();
+
+        try {
+            Files.writeString(tempPath, w.toString());
+            Files.move(tempPath, filePath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException exception) {
             LOGGER.atWarning().withCause(exception).log("Failed to save admin config to %s", filePath);
+            try { Files.deleteIfExists(tempPath); } catch (IOException ignored) {}
         }
     }
 
@@ -339,6 +395,7 @@ final class AdminConfigStore {
     void setNamespaceEnabled(String namespace, boolean enabled) {
         if (namespace != null && !namespace.isBlank()) {
             namespaceEnabled.put(namespace.trim(), enabled);
+            bumpVersion();
         }
     }
 
@@ -417,16 +474,16 @@ final class AdminConfigStore {
             profiles.put("Vanilla", new HashSet<>(vanillaSegments));
         }
 
-        for (String ns : integratedNamespaces) {
-            if (ns == null || ns.isEmpty() || "hytale".equals(ns) || "nameplatebuilder".equals(ns)
-                    || "npc".equals(ns) || ns.startsWith("_")) {
+        for (String namespace : integratedNamespaces) {
+            if (namespace == null || namespace.isEmpty() || "hytale".equals(namespace) || "nameplatebuilder".equals(namespace)
+                    || "npc".equals(namespace) || namespace.startsWith("_")) {
                 continue;
             }
-            Set<String> nsSegments = segmentsByNamespace.get(ns);
+            Set<String> nsSegments = segmentsByNamespace.get(namespace);
             if (nsSegments != null && !nsSegments.isEmpty()) {
                 Set<String> combined = new HashSet<>(vanillaSegments);
                 combined.addAll(nsSegments);
-                String displayName = getNamespaceDisplayName(ns);
+                String displayName = getNamespaceDisplayName(namespace);
                 profiles.put(displayName, combined);
             }
         }
@@ -437,15 +494,15 @@ final class AdminConfigStore {
     void prePopulateProfiles(Map<SegmentKey, NameplateRegistry.Segment> segments) {
         for (var entry : segments.entrySet()) {
             SegmentKey key = entry.getKey();
-            NameplateRegistry.Segment seg = entry.getValue();
-            if (seg.builtIn()) {
+            NameplateRegistry.Segment segment = entry.getValue();
+            if (segment.builtIn()) {
                 trackNamespaceSegment("hytale", key.segmentId(), true);
             } else {
-                String modNs = extractModName(seg.pluginId());
-                if (modNs.isEmpty()) modNs = extractNamespace(seg.pluginId());
-                trackNamespaceSegment(modNs, key.segmentId(), false);
-                if (seg.pluginName() != null) {
-                    trackNamespaceDisplayName(modNs, seg.pluginName());
+                String modNamespace = extractModName(segment.pluginId());
+                if (modNamespace.isEmpty()) modNamespace = extractNamespace(segment.pluginId());
+                trackNamespaceSegment(modNamespace, key.segmentId(), false);
+                if (segment.pluginName() != null) {
+                    trackNamespaceDisplayName(modNamespace, segment.pluginName());
                 }
             }
         }
@@ -473,25 +530,87 @@ final class AdminConfigStore {
         blacklistedNpcs.clear();
     }
 
-    boolean isBuiltInSegmentId(String segmentId) {
-        return BUILT_IN_SEGMENT_IDS.contains(segmentId);
+
+    Set<String> getBlacklistPatterns() {
+        return Collections.unmodifiableSet(blacklistPatterns);
+    }
+
+    void addBlacklistPattern(String pattern) {
+        if (pattern != null && !pattern.isBlank()) {
+            String trimmed = pattern.trim();
+            if (blacklistPatterns.add(trimmed)) {
+                recompilePatterns();
+                bumpVersion();
+            }
+        }
+    }
+
+    void removeBlacklistPattern(String pattern) {
+        if (blacklistPatterns.remove(pattern)) {
+            recompilePatterns();
+            bumpVersion();
+        }
+    }
+
+    void clearBlacklistPatterns() {
+        blacklistPatterns.clear();
+        compiledPatterns = new Pattern[0];
+        bumpVersion();
+    }
+
+    boolean matchesBlacklistPattern(String roleName) {
+        Pattern[] patterns = compiledPatterns;
+        if (patterns.length == 0) return false;
+        for (Pattern pattern : patterns) {
+            if (pattern.matcher(roleName).matches()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void recompilePatterns() {
+        List<Pattern> compiled = new ArrayList<>();
+        for (String pat : blacklistPatterns) {
+            try {
+                compiled.add(Pattern.compile(pat));
+            } catch (PatternSyntaxException e) {
+                LOGGER.atWarning().log("Invalid blacklist pattern '%s': %s", pat, e.getMessage());
+            }
+        }
+        compiledPatterns = compiled.toArray(new Pattern[0]);
+    }
+
+
+    boolean isEntitySourceDefaultsEnabled(String modName) {
+        if (modName == null) return true;
+        return entitySourceDefaults.getOrDefault(modName.toLowerCase(Locale.ROOT), true);
+    }
+
+    void autoPopulateEntitySourceDefault(String modName, boolean isIntegrated) {
+        String normalizedModName = modName.toLowerCase(Locale.ROOT);
+        if (!entitySourceDefaults.containsKey(normalizedModName)) {
+            entitySourceDefaults.put(normalizedModName, isIntegrated);
+        } else if (isIntegrated && !entitySourceDefaults.getOrDefault(normalizedModName, false)) {
+            entitySourceDefaults.put(normalizedModName, true);
+        }
     }
 
     static String extractNamespace(String entityTypeId) {
         if (entityTypeId == null || entityTypeId.isEmpty()) {
             return "";
         }
-        int colon = entityTypeId.indexOf(':');
-        String ns = colon > 0 ? entityTypeId.substring(0, colon) : entityTypeId;
-        return ns.toLowerCase(Locale.ROOT);
+        int colonIndex = entityTypeId.indexOf(':');
+        String namespace = colonIndex > 0 ? entityTypeId.substring(0, colonIndex) : entityTypeId;
+        return namespace.toLowerCase(Locale.ROOT);
     }
 
     static String extractModName(String pluginId) {
         if (pluginId == null || pluginId.isEmpty()) {
             return "";
         }
-        int colon = pluginId.indexOf(':');
-        String name = colon >= 0 ? pluginId.substring(colon + 1) : pluginId;
+        int colonIndex = pluginId.indexOf(':');
+        String name = colonIndex >= 0 ? pluginId.substring(colonIndex + 1) : pluginId;
         return name.toLowerCase(Locale.ROOT);
     }
 }

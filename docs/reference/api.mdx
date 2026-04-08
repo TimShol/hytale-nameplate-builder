@@ -4,7 +4,7 @@ icon: terminal
 description: Complete method tables for NameplateAPI, SegmentBuilder, SegmentResolver, NameplateData, and related types.
 ---
 
-<Info>This documentation is for **NameplateBuilder v4.260326.2** with **API v2.0.0**.</Info>
+<Info>This documentation is written for **NameplateBuilder >= v4.260326.6** with **API >= v2.1.0**.</Info>
 
 ## NameplateAPI - Static Methods
 
@@ -61,6 +61,8 @@ Returned by `define()`. Methods chain fluently and write through to the registry
 | `resolver(resolver)` | `SegmentBuilder` | Register a function that computes text per entity every tick. |
 | `requires(componentType)` | `SegmentBuilder` | Optimization hint: only call the resolver for entities whose archetype contains this component. |
 | `cacheTicks(ticks)` | `SegmentBuilder` | How many ticks to cache the resolver result per entity. Default: 1 (every tick). |
+| `enabledByDefault()` | `SegmentBuilder` | Mark this segment as enabled by default on both NPC and Player chains for new players. Max 3 per mod. |
+| `enabledByDefault(target)` | `SegmentBuilder` | Mark this segment as enabled by default on specific chain(s) for new players. Max 3 per mod. |
 
 ## SegmentResolver - Functional Interface
 

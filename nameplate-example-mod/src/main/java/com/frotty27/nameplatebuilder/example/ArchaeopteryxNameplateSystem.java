@@ -16,40 +16,6 @@ import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
-/**
- * Spawn initializer and per-tick updater for Archaeopteryx NPC nameplates.
- *
- * <p>This is the <b>recommended pattern</b> for giving NPCs nameplate data on spawn
- * and keeping live data (like health) up to date. To adapt it for your own mod:</p>
- * <ol>
- *   <li>Change {@link #ROLE_NAME} to match your target NPC role (e.g. {@code "Kweebec"}).</li>
- *   <li>Replace the segment IDs and default values in {@link #initializeEntity} with your own.</li>
- *   <li>Adjust the per-tick update logic in {@link #updateEntity} for your segments.</li>
- *   <li>Register the system in your plugin's {@code setup()} via
- *       {@code getEntityStoreRegistry().registerSystem(new YourSystem(nameplateDataType))}.</li>
- * </ol>
- *
- * <h3>How it works</h3>
- * <p>The system queries all entities with an {@link NPCEntity} component. Each tick:</p>
- * <ul>
- *   <li><b>New entities</b> (no {@link NameplateData}): seeds all default segments
- *       via the {@link CommandBuffer}.</li>
- *   <li><b>Existing entities</b> (has {@link NameplateData}): updates the "health"
- *       segment from the entity's actual {@link EntityStatMap} values, so the
- *       nameplate reflects real-time health unique to each entity.</li>
- * </ul>
- *
- * <h3>Why CommandBuffer?</h3>
- * <p>Inside an {@code EntityTickingSystem}, the {@code Store} is locked for writes.
- * Calling {@code store.addComponent()} directly throws
- * {@code IllegalStateException: Store is currently processing}. All structural
- * changes (add/remove components) must go through the {@link CommandBuffer}, which
- * defers execution until after the system finishes. Reading via
- * {@code store.getComponent()} and mutating component data in place are safe.</p>
- *
- * @see NameplateExamplePlugin#setup()
- * @see LifetimeNameplateSystem
- */
 final class ArchaeopteryxNameplateSystem extends EntityTickingSystem<EntityStore> {
 
     private static final String ROLE_NAME = "Archaeopteryx";
@@ -93,20 +59,12 @@ final class ArchaeopteryxNameplateSystem extends EntityTickingSystem<EntityStore
         }
     }
 
-    /**
-     * One-shot initialization for a newly spawned Archaeopteryx.
-     * Seeds all NPC-applicable segments with default values.
-     */
     private void initializeEntity(Ref<EntityStore> entityRef,
                                   Store<EntityStore> store,
                                   CommandBuffer<EntityStore> commandBuffer) {
 
-        // Read actual health for the initial value
         String healthText = readHealthText(store, entityRef);
 
-        // Seed all NPC-applicable segments.
-        // putComponent is an upsert — safe even if another system adds the
-        // component between our read and the command buffer executing.
         NameplateData data = new NameplateData();
         data.setText("health", healthText);
         data.setText("tier", "[Elite]");
@@ -120,25 +78,15 @@ final class ArchaeopteryxNameplateSystem extends EntityTickingSystem<EntityStore
         commandBuffer.putComponent(entityRef, nameplateDataType, data);
     }
 
-    /**
-     * Per-tick update for entities that already have nameplate data.
-     * Updates the "health" segment from the entity's real stats.
-     */
     private void updateEntity(Ref<EntityStore> entityRef,
                               Store<EntityStore> store,
                               NameplateData data) {
 
-        // Only update health if the entity has that segment set
         if (data.getText("health") != null) {
             data.setText("health", readHealthText(store, entityRef));
         }
     }
 
-    /**
-     * Read the entity's current and max health from its {@link EntityStatMap}.
-     *
-     * @return formatted health string, e.g. {@code "42/67"}
-     */
     private String readHealthText(Store<EntityStore> store, Ref<EntityStore> entityRef) {
         EntityStatMap statMap = store.getComponent(entityRef, statMapType);
         if (statMap != null) {

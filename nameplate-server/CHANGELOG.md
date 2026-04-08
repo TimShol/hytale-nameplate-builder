@@ -2,6 +2,54 @@
 
 All notable changes to NameplateBuilder Server will be documented in this file.
 
+## [4.260326.6] - 2026-04-08
+
+### UI Improvements
+- Segments in the chain can now be reordered by dragging and dropping
+- Vertical offset now uses a slider instead of a text input
+- Tooltips added to all buttons and controls
+- Scrollbars updated with a gold tint for better visibility
+- Save button is now greyed out when there are no unsaved changes
+- Available, disabled, and blacklist sections now show more items at once
+- Plugin version is now displayed in the UI title bar
+- Fixed a typo in the separator editor
+
+### Storage Improvements
+- Player preferences and admin configuration now use JSON format
+- Each player's preferences are stored in a separate file for better reliability
+- Old `.txt` preferences are automatically migrated on first load
+- Segment references are now namespace-safe, preventing conflicts between mods
+
+### Performance
+- Numerous optimizations across versions .2 through .6 including array-based lookups, per-archetype caching, and entity skip logic
+- Use `/npbbench <players> <seconds>` to benchmark nameplate performance on your hardware (e.g. `/npbbench 50 5` simulates 50 players for 5 seconds)
+
+### New API Features
+- Mods can now mark up to 3 segments per mod as enabled by default for new players
+- Default segments can target NPC chains, Player chains, or both
+
+### Admin Features
+- Regex pattern blacklist for bulk NPC exclusion (e.g. `Citizen.*` blocks all Citizen NPCs)
+- Default blacklist patterns for known non-combat NPCs (Citizen, Mount, Pet) added on first install
+- Admins can now edit locked chains directly while players see a read-only view
+- Locked chains show "Chain is locked by the server admin" tooltip for players
+
+### Gameplay
+- Player nameplates are now hidden when crouching (like Minecraft)
+- "Only Show NPC Nameplates When Looking" is now enabled by default for new players
+- NPC nameplate view range reduced from 30 to 12 blocks
+- Player nameplates are always visible regardless of look direction
+- Removed the "Type /npb to customize" hint text from entities with no configured segments
+
+### Bug Fixes
+- Fixed wrong segment being added when clicking Add on page 2 or later
+- Fixed the Enable Nameplates toggle in General settings not disabling nameplates in-game
+- Fixed namespace toggle in chain settings not taking effect immediately
+- Fixed a crash that could occur when entities were removed during nameplate processing
+- New players now start with only Entity Name and Health in their chain by default
+
+---
+
 ## [4.260326.5] - 2026-04-04
 
 ### Performance

@@ -6,6 +6,35 @@ description: Hidden keys, cleanup, undefine, and common mistakes.
 
 This page covers features you'll rarely need, but are good to know about.
 
+## Default Segments
+
+By default, new players start with empty chains and have to manually add segments via `/npb`. If you want your segment to appear in a player's chain automatically (so it works out of the box), use `enabledByDefault()`:
+
+```java
+NameplateAPI.define(this, "health", "Health",
+        SegmentTarget.ALL, "67/69")
+    .enabledByDefault()
+    .resolver((store, entityRef, variantIndex) -> {
+        // ...
+    });
+```
+
+This adds the segment to both the NPC and Player chains for any player who hasn't customized their chains yet. Once a player edits their chain in `/npb`, their preferences take over and the default no longer applies.
+
+You can also target a specific chain:
+
+```java
+// Only default-enable on the NPC chain
+NameplateAPI.define(this, "faction", "Faction",
+        SegmentTarget.NPCS, "<Undead>")
+    .enabledByDefault(SegmentTarget.NPCS)
+    .resolver((store, entityRef, variantIndex) -> {
+        // ...
+    });
+```
+
+**Limit:** Each mod can mark at most **3 segments** as `enabledByDefault`. This prevents mods from flooding new players' chains. If you exceed the limit, NameplateBuilder logs a warning and ignores the extra defaults.
+
 ## Hidden Metadata Keys
 
 Sometimes you need to store per-entity data alongside your visible segments - things like spawn timestamps, internal state flags, or tracking counters. You don't want players to see this data in their nameplate.
@@ -92,7 +121,7 @@ commandBuffer.putComponent(entityRef, nameplateDataType, data);
 ```json
 {
   "Dependencies": {
-    "Frotty27:NameplateBuilder": ">=4.260326.2"
+    "Frotty27:NameplateBuilder": ">=4.260326.6"
   }
 }
 ```
