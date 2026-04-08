@@ -9,10 +9,6 @@ All notable changes to NameplateBuilder API will be documented in this file.
 - `SegmentBuilder.enabledByDefault(SegmentTarget)` - mark a segment as enabled by default on a specific chain (ALL, NPCS, or PLAYERS)
 - Maximum of 3 segments per mod can be marked as enabled by default
 
----
-
-## [2.0.1] - 2026-04-06
-
 ### Changed
 - `NameplateData.getEntriesDirect()` added for internal iteration without `UnmodifiableMap` wrapper overhead
 
