@@ -273,4 +273,4 @@ This compiles all three modules, packages shadow JARs, and deploys the server pl
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [NameplateBuilder Source-Available License](LICENSE). Forking is permitted only for contributions back to this repository. Redistribution of modified copies requires written permission.

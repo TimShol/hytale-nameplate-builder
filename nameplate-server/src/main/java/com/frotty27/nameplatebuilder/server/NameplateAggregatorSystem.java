@@ -51,14 +51,14 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     private final NameplatePreferenceStore preferences;
     private final AdminConfigStore adminConfig;
     private final AnchorEntityManager anchorManager;
+    private final EntitySourceService entitySourceService;
 
     private final IdentityHashMap<Archetype<EntityStore>, String> entityTypeIdCache = new IdentityHashMap<>();
-    // OPT-21: Cache namespace per archetype to avoid toLowerCase every tick
     private final IdentityHashMap<Archetype<EntityStore>, String> namespaceCache = new IdentityHashMap<>();
 
-    // OPT-18: Cache resolver-based available keys per archetype
     private final IdentityHashMap<Archetype<EntityStore>, List<SegmentKey>> resolverKeysCache = new IdentityHashMap<>();
     private int resolverKeysCacheVersion = -1;
+    private int resolverKeysAdminVersion = -1;
 
     private final Set<SegmentKey> trackedSegmentKeys = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
@@ -67,7 +67,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     private volatile Comparator<SegmentKey> cachedComparator;
     private volatile int cachedComparatorVersion = -1;
 
-    // OPT-15: ThreadLocal StringBuilder to avoid allocation per buildText call
     private static final ThreadLocal<StringBuilder> TEXT_BUILDER =
             ThreadLocal.withInitial(() -> new StringBuilder(128));
 
@@ -75,7 +74,8 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                               NameplatePreferenceStore preferences,
                               AdminConfigStore adminConfig,
                               ComponentType<EntityStore, NameplateData> nameplateDataType,
-                              AnchorEntityManager anchorManager) {
+                              AnchorEntityManager anchorManager,
+                              EntitySourceService entitySourceService) {
         this.visibleComponentType = EntityTrackerSystems.Visible.getComponentType();
         this.uuidComponentType = UUIDComponent.getComponentType();
         this.transformComponentType = TransformComponent.getComponentType();
@@ -89,6 +89,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         this.preferences = preferences;
         this.adminConfig = adminConfig;
         this.anchorManager = anchorManager;
+        this.entitySourceService = entitySourceService;
     }
 
     @Override
@@ -105,8 +106,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     public void tick(float deltaTime, int index, ArchetypeChunk<EntityStore> chunk, @NonNull Store<EntityStore> store, @NonNull CommandBuffer<EntityStore> commandBuffer) {
 
         Ref<EntityStore> entityRef = chunk.getReferenceTo(index);
-
-        // OPT-19: Resolve NPC/Player components once, reuse across all checks
+        try {
         NPCEntity npcEntity = store.getComponent(entityRef, npcEntityType);
         Player playerEntity = store.getComponent(entityRef, playerType);
         World entityWorld = npcEntity != null ? npcEntity.getWorld()
@@ -163,7 +163,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
-        // OPT-21: Cache namespace per archetype
         Archetype<EntityStore> archetype = chunk.getArchetype();
         String namespace = namespaceCache.get(archetype);
         if (namespace == null) {
@@ -174,7 +173,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             }
             namespaceCache.put(archetype, namespace);
         }
-        // OPT-19: Reuse playerEntity/npcEntity from above instead of extra getComponent calls
         boolean isPlayer = playerEntity != null;
 
         if (isPlayer && !adminConfig.isPlayerChainEnabled()) {
@@ -192,6 +190,16 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         if (!isPlayer && npcEntity != null) {
             String roleName = npcEntity.getRoleName();
             if (roleName != null && adminConfig.isNpcBlacklisted(roleName)) {
+                sendEmptyToAll(visible, entityRef);
+                return;
+            }
+        }
+
+        if (!isPlayer && npcEntity != null) {
+            var source = entitySourceService.getSource(npcEntity);
+            if (source.type() == EntitySourceService.SourceType.MOD
+                    && !registry.isModIntegrated(source.modName())
+                    && !adminConfig.isEntitySourceDefaultsEnabled(source.modName())) {
                 sendEmptyToAll(visible, entityRef);
                 return;
             }
@@ -266,6 +274,8 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         for (Map.Entry<Ref<EntityStore>, EntityTrackerSystems.EntityViewer> viewerEntry : visible.visibleTo.entrySet()) {
             Ref<EntityStore> viewerRef = viewerEntry.getKey();
             UUID viewerUuid = getUuid(store, viewerRef);
+            if (viewerUuid == null) { viewerIndex++; continue; }
+            if (!preferences.isNameplatesEnabled(viewerUuid)) { viewerIndex++; continue; }
             viewerUuids[viewerIndex] = viewerUuid;
 
             double userOffset = preferences.getOffset(viewerUuid, "*");
@@ -368,6 +378,8 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 }
             }
         }
+        } catch (IllegalStateException ignored) {
+        }
     }
 
     private Comparator<SegmentKey> getOrBuildComparator(Map<SegmentKey, NameplateRegistry.Segment> segments) {
@@ -401,7 +413,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         }
     }
 
-    // OPT-14/18: O(1) segmentId lookup + cached resolver keys per archetype
     private List<SegmentKey> resolveAvailableKeys(NameplateData entityData,
                                                    Map<SegmentKey, NameplateRegistry.Segment> segments,
                                                    Store<EntityStore> store,
@@ -409,7 +420,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                                                    ArchetypeChunk<EntityStore> chunk) {
         List<SegmentKey> result = new ArrayList<>();
 
-        // Per-entity: check NameplateData entries (different per entity)
         for (String entryKey : entityData.getEntriesDirect().keySet()) {
             if (entryKey.charAt(0) == '_') continue;
             if (entryKey.indexOf('.') >= 0) continue;
@@ -423,7 +433,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             }
         }
 
-        // OPT-18: Per-archetype: resolver-based segments (same for all entities with same archetype)
         List<SegmentKey> resolverKeys = getResolverKeysForArchetype(chunk.getArchetype(), segments);
         for (int i = 0, size = resolverKeys.size(); i < size; i++) {
             SegmentKey key = resolverKeys.get(i);
@@ -435,17 +444,18 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         return result;
     }
 
-    // OPT-18: Cache which resolver-based segments apply to each archetype
     private List<SegmentKey> getResolverKeysForArchetype(Archetype<EntityStore> archetype,
                                                           Map<SegmentKey, NameplateRegistry.Segment> segments) {
         int currentVersion = registry.getVersion();
-        if (resolverKeysCacheVersion != currentVersion) {
+        int currentAdminVersion = adminConfig.getConfigVersion();
+        if (resolverKeysCacheVersion != currentVersion || resolverKeysAdminVersion != currentAdminVersion) {
             resolverKeysCache.clear();
             resolverKeysCacheVersion = currentVersion;
+            resolverKeysAdminVersion = currentAdminVersion;
         }
 
-        List<SegmentKey> cached = resolverKeysCache.get(archetype);
-        if (cached != null) return cached;
+        List<SegmentKey> cachedKeys = resolverKeysCache.get(archetype);
+        if (cachedKeys != null) return cachedKeys;
 
         List<SegmentKey> keys = new ArrayList<>();
         for (Map.Entry<SegmentKey, NameplateRegistry.Segment> entry : segments.entrySet()) {
@@ -487,7 +497,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         return adminConfig.isNamespaceEnabled(modNamespace);
     }
 
-    // OPT-14: Single PreferenceSet lookup + ThreadLocal StringBuilder
     private String buildText(List<SegmentKey> ordered,
                              NameplateData entityData,
                              UUID viewerUuid,
@@ -498,11 +507,10 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         StringBuilder builder = TEXT_BUILDER.get();
         builder.setLength(0);
 
-        // Look up PreferenceSet once instead of per-preference-method
         var prefs = preferences.getSetDirect(viewerUuid, entityTypeId);
         String defaultSeparator = prefs != null ? prefs.separator : " - ";
 
-        SegmentKey prevKey = null;
+        SegmentKey previousSegmentKey = null;
         for (int i = 0, size = ordered.size(); i < size; i++) {
             SegmentKey key = ordered.get(i);
             if (adminConfig.isDisabled(key)) {
@@ -516,13 +524,13 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
             int id = key.id();
             int variantIndex = prefs != null && id >= 0 && id < prefs.selectedVariant.length ? prefs.selectedVariant[id] : 0;
-            String segId = key.segmentId();
+            String segmentId = key.segmentId();
             String text;
             if (variantIndex > 0) {
-                String variantText = entityData.getText(segId + "." + variantIndex);
-                text = variantText != null && !variantText.isEmpty() ? variantText : entityData.getText(segId);
+                String variantText = entityData.getText(segmentId + "." + variantIndex);
+                text = variantText != null && !variantText.isEmpty() ? variantText : entityData.getText(segmentId);
             } else {
-                text = entityData.getText(segId);
+                text = entityData.getText(segmentId);
             }
 
             if (text == null || text.isEmpty()) {
@@ -548,8 +556,8 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 }
             }
 
-            if (!builder.isEmpty() && prevKey != null) {
-                int prevId = prevKey.id();
+            if (!builder.isEmpty() && previousSegmentKey != null) {
+                int prevId = previousSegmentKey.id();
                 String sep = prefs != null && prevId >= 0 && prevId < prefs.separatorAfter.length && prefs.separatorAfter[prevId] != null
                         ? prefs.separatorAfter[prevId] : defaultSeparator;
                 builder.append(sep);
@@ -565,7 +573,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 builder.append(suffix);
             }
 
-            prevKey = key;
+            previousSegmentKey = key;
         }
         return builder.toString();
     }
@@ -586,10 +594,10 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         Vector3d viewerPos = viewerTransform.getPosition();
         Vector3d entityPos = entityTransform.getPosition();
 
-        double toX = entityPos.getX() - viewerPos.getX();
-        double toY = entityPos.getY() - viewerPos.getY();
-        double toZ = entityPos.getZ() - viewerPos.getZ();
-        double distanceSq = toX * toX + toY * toY + toZ * toZ;
+        double deltaX = entityPos.getX() - viewerPos.getX();
+        double deltaY = entityPos.getY() - viewerPos.getY();
+        double deltaZ = entityPos.getZ() - viewerPos.getZ();
+        double distanceSq = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
 
         if (distanceSq > VIEW_RANGE * VIEW_RANGE || distanceSq < 0.25) {
             return false;
@@ -605,8 +613,8 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             lookDir = directionFromPitchYaw(rotation.getPitch(), rotation.getYaw());
         }
 
-        double dot = lookDir.getX() * toX + lookDir.getY() * toY + lookDir.getZ() * toZ;
-        return dot >= VIEW_CONE_THRESHOLD * Math.sqrt(distanceSq);
+        double dotProduct = lookDir.getX() * deltaX + lookDir.getY() * deltaY + lookDir.getZ() * deltaZ;
+        return dotProduct >= VIEW_CONE_THRESHOLD * Math.sqrt(distanceSq);
     }
 
     private static Vector3d directionFromPitchYaw(float pitchDeg, float yawDeg) {
@@ -648,18 +656,21 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     }
 
     private UUID getUuid(Store<EntityStore> store, Ref<EntityStore> entityRef) {
-        UUIDComponent uuidComponent = store.getComponent(entityRef, uuidComponentType);
-        if (uuidComponent != null) {
-            return uuidComponent.getUuid();
+        try {
+            UUIDComponent uuidComponent = store.getComponent(entityRef, uuidComponentType);
+            if (uuidComponent != null) {
+                return uuidComponent.getUuid();
+            }
+        } catch (IllegalStateException ignored) {
         }
-        return ADMIN_CHAIN_UUID;
+        return null;
     }
 
     private String resolveEntityTypeId(ArchetypeChunk<EntityStore> chunk) {
         Archetype<EntityStore> archetype = chunk.getArchetype();
-        String cached = entityTypeIdCache.get(archetype);
-        if (cached != null) {
-            return cached;
+        String cachedEntityTypeId = entityTypeIdCache.get(archetype);
+        if (cachedEntityTypeId != null) {
+            return cachedEntityTypeId;
         }
         String result = computeEntityTypeId(archetype);
         entityTypeIdCache.put(archetype, result);
@@ -672,10 +683,10 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             if (type == null) {
                 continue;
             }
-            Class<?> cls = type.getTypeClass();
-            if (cls != null && Entity.class.isAssignableFrom(cls)) {
+            Class<?> typeClass = type.getTypeClass();
+            if (typeClass != null && Entity.class.isAssignableFrom(typeClass)) {
                 @SuppressWarnings("unchecked")
-                Class<? extends Entity> entityClass = (Class<? extends Entity>) cls;
+                Class<? extends Entity> entityClass = (Class<? extends Entity>) typeClass;
                 String id = EntityModule.get().getIdentifier(entityClass);
                 if (id != null && !id.isBlank()) {
                     return id;

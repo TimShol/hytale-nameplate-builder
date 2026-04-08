@@ -13,17 +13,6 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.*;
 
-/**
- * Synthetic benchmark that measures the aggregator's computation cost
- * without requiring real player connections.
- *
- * <p>Usage: {@code /npbbench [viewers] [ticks]}</p>
- * <p>Defaults: 50 viewers, 100 ticks</p>
- *
- * <p>Measures the per-tick cost of building nameplate text for all
- * visible entities across N simulated viewers. Reports total time,
- * average per tick, and per entity-viewer pair.</p>
- */
 final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
 
     private final NameplateRegistry registry;
@@ -58,7 +47,6 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
             return;
         }
 
-        // Parse arguments: /npbbench [viewers] [seconds]
         String[] args = context.getInputString().trim().split("\\s+");
         int viewerCount = 50;
         int seconds = 3;
@@ -71,17 +59,15 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
         }
         viewerCount = Math.max(1, Math.min(500, viewerCount));
         seconds = Math.max(1, Math.min(30, seconds));
-        int tickCount = seconds * 30; // 30 TPS
+        int tickCount = seconds * 30;
 
         player.sendMessage(Message.raw("Starting benchmark...").color("#FFAA00"));
 
-        // Generate fake viewers with realistic preference diversity
         UUID[] viewers = new UUID[viewerCount];
         for (int i = 0; i < viewerCount; i++) {
             viewers[i] = new UUID(0xBE_0000_0000_0000L, i);
         }
 
-        // Collect all entities with NameplateData in this world
         ComponentType<EntityStore, NameplateData> nameplateDataType =
                 com.frotty27.nameplatebuilder.api.NameplateAPI.getComponentType();
 
@@ -91,18 +77,16 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
             return;
         }
 
-        // Build comparator once (same as aggregator)
         Comparator<SegmentKey> comparator = Comparator
                 .comparing((SegmentKey key) -> {
-                    NameplateRegistry.Segment seg = segments.get(key);
-                    return seg != null ? seg.pluginName() : key.pluginId();
+                    NameplateRegistry.Segment segment = segments.get(key);
+                    return segment != null ? segment.pluginName() : key.pluginId();
                 })
                 .thenComparing(key -> {
-                    NameplateRegistry.Segment seg = segments.get(key);
-                    return seg != null ? seg.displayName() : key.segmentId();
+                    NameplateRegistry.Segment segment = segments.get(key);
+                    return segment != null ? segment.displayName() : key.segmentId();
                 });
 
-        // Scan for entities with NameplateData
         EntityStore entityStore = world.getEntityStore();
         if (entityStore == null) {
             player.sendMessage(Message.raw("No entity store available.").color("RED"));
@@ -140,44 +124,37 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
             return;
         }
 
-        // Set up realistic viewer preferences
-        // ~40% default (no customization), ~30% custom order, ~20% some segments disabled, ~10% heavy customization
         List<SegmentKey> allKeys = new ArrayList<>(segments.keySet());
-        Random rng = new Random(42); // deterministic for reproducibility
+        Random random = new Random(42);
         int defaultCount = 0, customOrderCount = 0, partialDisableCount = 0, heavyCustomCount = 0;
         for (int i = 0; i < viewerCount; i++) {
             UUID viewerUuid = viewers[i];
-            double roll = (double) i / viewerCount; // deterministic distribution
+            double roll = (double) i / viewerCount;
             if (roll < 0.40) {
-                // 40%: default preferences - no setup needed, getChain will seed defaults
                 defaultCount++;
             } else if (roll < 0.70) {
-                // 30%: custom segment order (all enabled, different ordering)
                 customOrderCount++;
                 for (int s = 0; s < allKeys.size(); s++) {
                     SegmentKey key = allKeys.get(s);
                     preferences.enable(viewerUuid, "_npcs", key);
                 }
-                // Shuffle order by moving random segments
                 for (int m = 0; m < 3; m++) {
-                    SegmentKey key = allKeys.get(rng.nextInt(allKeys.size()));
-                    preferences.move(viewerUuid, "_npcs", key, rng.nextInt(3) - 1, allKeys, comparator);
+                    SegmentKey key = allKeys.get(random.nextInt(allKeys.size()));
+                    preferences.move(viewerUuid, "_npcs", key, random.nextInt(3) - 1, allKeys, comparator);
                 }
             } else if (roll < 0.90) {
-                // 20%: some segments disabled
                 partialDisableCount++;
                 for (SegmentKey key : allKeys) {
-                    if (rng.nextDouble() < 0.3) {
+                    if (random.nextDouble() < 0.3) {
                         preferences.disable(viewerUuid, "_npcs", key);
                     } else {
                         preferences.enable(viewerUuid, "_npcs", key);
                     }
                 }
             } else {
-                // 10%: heavy customization (different order, disabled segments, custom prefix/suffix)
                 heavyCustomCount++;
                 for (SegmentKey key : allKeys) {
-                    if (rng.nextDouble() < 0.4) {
+                    if (random.nextDouble() < 0.4) {
                         preferences.disable(viewerUuid, "_npcs", key);
                     } else {
                         preferences.enable(viewerUuid, "_npcs", key);
@@ -187,20 +164,18 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
                         var prefs = preferences.getSetDirect(viewerUuid, "_npcs");
                         if (prefs != null) {
                             prefs.ensureCapacity(id);
-                            if (rng.nextDouble() < 0.3) prefs.prefix[id] = "[";
-                            if (rng.nextDouble() < 0.3) prefs.suffix[id] = "]";
-                            if (rng.nextDouble() < 0.2) prefs.selectedVariant[id] = 1;
+                            if (random.nextDouble() < 0.3) prefs.prefix[id] = "[";
+                            if (random.nextDouble() < 0.3) prefs.suffix[id] = "]";
+                            if (random.nextDouble() < 0.2) prefs.selectedVariant[id] = 1;
                         }
                     }
                 }
-                // Randomize order
                 for (int m = 0; m < 5; m++) {
-                    SegmentKey key = allKeys.get(rng.nextInt(allKeys.size()));
-                    preferences.move(viewerUuid, "_npcs", key, rng.nextInt(5) - 2, allKeys, comparator);
+                    SegmentKey key = allKeys.get(random.nextInt(allKeys.size()));
+                    preferences.move(viewerUuid, "_npcs", key, random.nextInt(5) - 2, allKeys, comparator);
                 }
             }
         }
-        // Clear chain cache so benchmark starts fresh
         preferences.invalidateChainCache();
 
         player.sendMessage(Message.raw(String.format(
@@ -212,18 +187,16 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
                 entityCount, viewerCount, seconds, tickCount,
                 (long) entityCount * viewerCount * tickCount)).color("#AAAAAA"));
 
-        // --- Run the benchmark ---
         long resolverTimeNs = 0;
         long buildTextTimeNs = 0;
         long filterTimeNs = 0;
         int totalCalls = 0;
 
         for (int tick = 0; tick < tickCount; tick++) {
-            for (int e = 0; e < entityCount; e++) {
-                Ref<EntityStore> entityRef = entities.get(e);
-                NameplateData entityData = entityDataList.get(e);
+            for (int entityIndex = 0; entityIndex < entityCount; entityIndex++) {
+                Ref<EntityStore> entityRef = entities.get(entityIndex);
+                NameplateData entityData = entityDataList.get(entityIndex);
 
-                // Phase 1: Resolve available keys (filtering)
                 long filterStart = System.nanoTime();
 
                 List<SegmentKey> available = new ArrayList<>();
@@ -235,7 +208,6 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
                     }
                 }
 
-                // Add resolver-based segments
                 for (Map.Entry<SegmentKey, NameplateRegistry.Segment> entry : segments.entrySet()) {
                     if (entry.getValue().resolver() == null) continue;
                     if (adminConfig.isDisabled(entry.getKey())) continue;
@@ -245,9 +217,8 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
 
                 filterTimeNs += System.nanoTime() - filterStart;
 
-                // Phase 2: Per-viewer text building
-                for (int v = 0; v < viewerCount; v++) {
-                    UUID viewerUuid = viewers[v];
+                for (int viewerIndex = 0; viewerIndex < viewerCount; viewerIndex++) {
+                    UUID viewerUuid = viewers[viewerIndex];
 
                     long buildStart = System.nanoTime();
 
@@ -256,10 +227,10 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
                     var prefs = preferences.getSetDirect(viewerUuid, "_npcs");
                     String defaultSep = prefs != null ? prefs.separator : " - ";
                     StringBuilder builder = new StringBuilder();
-                    SegmentKey prevKey = null;
+                    SegmentKey previousKey = null;
 
-                    for (int si = 0, ssize = chain.size(); si < ssize; si++) {
-                        SegmentKey key = chain.get(si);
+                    for (int segmentIndex = 0, segmentCount = chain.size(); segmentIndex < segmentCount; segmentIndex++) {
+                        SegmentKey key = chain.get(segmentIndex);
                         if (adminConfig.isDisabled(key)) continue;
                         int id = key.id();
                         if (!adminConfig.isRequired(key)) {
@@ -268,22 +239,21 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
                         }
 
                         int variantIndex = prefs != null && id >= 0 && id < prefs.selectedVariant.length ? prefs.selectedVariant[id] : 0;
-                        String segId = key.segmentId();
+                        String segmentId = key.segmentId();
                         String text;
                         if (variantIndex > 0) {
-                            String variantText = entityData.getText(segId + "." + variantIndex);
-                            text = variantText != null && !variantText.isBlank() ? variantText : entityData.getText(segId);
+                            String variantText = entityData.getText(segmentId + "." + variantIndex);
+                            text = variantText != null && !variantText.isBlank() ? variantText : entityData.getText(segmentId);
                         } else {
-                            text = entityData.getText(segId);
+                            text = entityData.getText(segmentId);
                         }
 
-                        // Phase 2b: Resolver fallback
                         if (text == null || text.isBlank()) {
-                            NameplateRegistry.Segment seg = segments.get(key);
-                            if (seg != null && seg.resolver() != null) {
+                            NameplateRegistry.Segment segment = segments.get(key);
+                            if (segment != null && segment.resolver() != null) {
                                 long resolverStart = System.nanoTime();
                                 try {
-                                    text = seg.resolver().resolve(ecsStore, entityRef, variantIndex);
+                                    text = segment.resolver().resolve(ecsStore, entityRef, variantIndex);
                                 } catch (Exception ignored) {
                                     text = null;
                                 }
@@ -293,10 +263,10 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
 
                         if (text == null || text.isBlank()) continue;
 
-                        if (!builder.isEmpty() && prevKey != null) {
-                            int prevId = prevKey.id();
-                            String sep = prefs != null && prevId >= 0 && prevId < prefs.separatorAfter.length && prefs.separatorAfter[prevId] != null
-                                    ? prefs.separatorAfter[prevId] : defaultSep;
+                        if (!builder.isEmpty() && previousKey != null) {
+                            int previousKeyId = previousKey.id();
+                            String sep = prefs != null && previousKeyId >= 0 && previousKeyId < prefs.separatorAfter.length && prefs.separatorAfter[previousKeyId] != null
+                                    ? prefs.separatorAfter[previousKeyId] : defaultSep;
                             builder.append(sep);
                         }
 
@@ -306,10 +276,9 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
                         builder.append(text);
                         if (!suffix.isEmpty()) builder.append(suffix);
 
-                        prevKey = key;
+                        previousKey = key;
                     }
 
-                    // Simulate the NameplateUpdate creation (allocation cost)
                     String result = builder.toString();
 
                     buildTextTimeNs += System.nanoTime() - buildStart;
@@ -318,13 +287,12 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
             }
         }
 
-        // --- Report ---
         double totalMs = (filterTimeNs + buildTextTimeNs) / 1_000_000.0;
         double avgPerTick = totalMs / tickCount;
         double resolverMs = resolverTimeNs / 1_000_000.0;
         double buildMs = buildTextTimeNs / 1_000_000.0;
         double filterMs = filterTimeNs / 1_000_000.0;
-        double tickBudget = 1000.0 / 30.0; // 30 TPS = 33.3ms per tick
+        double tickBudget = 1000.0 / 30.0;
         double tickPercent = (avgPerTick / tickBudget) * 100.0;
 
         player.sendMessage(Message.raw("--- NPB Benchmark Results ---").color("#55FF55"));
@@ -342,7 +310,6 @@ final class NameplateBenchmarkCommand extends AbstractPlayerCommand {
                 "Per entity-viewer: %.3fus | Total buildText calls: %,d",
                 (buildTextTimeNs / 1000.0) / totalCalls, totalCalls)).color("#AAAAAA"));
 
-        // Cleanup fake viewer preferences so they don't persist or get saved
         preferences.removeFakeViewers(viewers);
     }
 }

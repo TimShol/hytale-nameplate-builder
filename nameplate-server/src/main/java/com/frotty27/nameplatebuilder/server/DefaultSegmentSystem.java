@@ -54,15 +54,21 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
     private final ComponentType<EntityStore, EntityStatMap> statMapType;
     private final ComponentType<EntityStore, NPCEntity> npcEntityType;
     private final AdminConfigStore adminConfig;
+    private final EntitySourceService entitySourceService;
+    private final NameplateRegistry registry;
 
     DefaultSegmentSystem(ComponentType<EntityStore, NameplateData> nameplateDataType,
-                         AdminConfigStore adminConfig) {
+                         AdminConfigStore adminConfig,
+                         EntitySourceService entitySourceService,
+                         NameplateRegistry registry) {
         this.visibleType = EntityTrackerSystems.Visible.getComponentType();
         this.nameplateDataType = nameplateDataType;
         this.playerType = Player.getComponentType();
         this.statMapType = EntityStatMap.getComponentType();
         this.npcEntityType = NPCEntity.getComponentType();
         this.adminConfig = adminConfig;
+        this.entitySourceService = entitySourceService;
+        this.registry = registry;
     }
 
     @Override
@@ -84,7 +90,7 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
         }
 
         Ref<EntityStore> entityRef = chunk.getReferenceTo(index);
-
+        try {
         Player player = store.getComponent(entityRef, playerType);
         NameplateData existing = store.getComponent(entityRef, nameplateDataType);
 
@@ -112,6 +118,18 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
                 if (roleName != null && adminConfig.isNpcBlacklisted(roleName)) {
                     if (debugEnabled) LOGGER.atInfo().log("[Seed] Skipped NPC - blacklisted: %s", roleName);
                     return;
+                }
+            }
+
+            if (npcEntity != null) {
+                var source = entitySourceService.getSource(npcEntity);
+                if (source.type() == EntitySourceService.SourceType.MOD) {
+                    boolean isIntegrated = registry.isModIntegrated(source.modName());
+                    adminConfig.autoPopulateEntitySourceDefault(source.modName(), isIntegrated);
+                    if (!isIntegrated && !adminConfig.isEntitySourceDefaultsEnabled(source.modName())) {
+                        if (debugEnabled) LOGGER.atInfo().log("[Seed] Skipped NPC - non-integrated mod source: %s", source.modName());
+                        return;
+                    }
                 }
             }
 
@@ -185,8 +203,18 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
         }
 
         if (existing != null) {
+            NPCEntity updateNpc = store.getComponent(entityRef, npcEntityType);
+            if (updateNpc != null) {
+                var source = entitySourceService.getSource(updateNpc);
+                if (source.type() == EntitySourceService.SourceType.MOD
+                        && !adminConfig.isEntitySourceDefaultsEnabled(source.modName())) {
+                    return;
+                }
+            }
             EntityStatMap statMap = store.getComponent(entityRef, statMapType);
             updateBuiltInSegments(existing, player, store, entityRef, statMap);
+        }
+        } catch (IllegalStateException ignored) {
         }
     }
 
@@ -247,13 +275,13 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
         }
     }
 
-    private void setStatText(NameplateData data, EntityStatMap statMap, int statId,
+    private void setStatText(NameplateData data, EntityStatMap statMap, int statisticId,
                              String baseKey, String percentKey, String barKey) {
-        EntityStatValue stat = statMap.get(statId);
-        if (stat == null) return;
+        EntityStatValue statValue = statMap.get(statisticId);
+        if (statValue == null) return;
 
-        int current = Math.round(stat.get());
-        int max = Math.round(stat.getMax());
+        int current = Math.round(statValue.get());
+        int max = Math.round(statValue.getMax());
 
         data.setText(baseKey, current + "/" + max);
 
@@ -265,19 +293,19 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
         data.setText(barKey, BAR_STRINGS[filled]);
     }
 
-    private void setStatTextIfChanged(NameplateData data, EntityStatMap statMap, int statId,
+    private void setStatTextIfChanged(NameplateData data, EntityStatMap statMap, int statisticId,
                                       String baseKey, String percentKey, String barKey) {
-        EntityStatValue stat = statMap.get(statId);
-        if (stat == null) return;
+        EntityStatValue statValue = statMap.get(statisticId);
+        if (statValue == null) return;
 
-        int current = Math.round(stat.get());
-        int max = Math.round(stat.getMax());
+        int current = Math.round(statValue.get());
+        int max = Math.round(statValue.getMax());
 
         String lastKey = "_last_" + baseKey;
         String newHash = current + ":" + max;
         String lastHash = data.getText(lastKey);
         if (newHash.equals(lastHash)) {
-            return; // unchanged, skip all text updates
+            return;
         }
 
         data.setText(lastKey, newHash);

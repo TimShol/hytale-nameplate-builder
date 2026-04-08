@@ -2,6 +2,15 @@
 
 All notable changes to NameplateBuilder API will be documented in this file.
 
+## [2.1.0] - 2026-04-08
+
+### Added
+- `SegmentBuilder.enabledByDefault()` - mark a segment as enabled by default for new players on both chains
+- `SegmentBuilder.enabledByDefault(SegmentTarget)` - mark a segment as enabled by default on a specific chain (ALL, NPCS, or PLAYERS)
+- Maximum of 3 segments per mod can be marked as enabled by default
+
+---
+
 ## [2.0.1] - 2026-04-06
 
 ### Changed

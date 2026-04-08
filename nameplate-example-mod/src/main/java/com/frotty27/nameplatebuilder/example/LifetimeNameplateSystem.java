@@ -11,28 +11,13 @@ import com.hypixel.hytale.server.core.modules.entity.tracker.EntityTrackerSystem
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
-/**
- * Example {@link EntityTickingSystem} that updates a per-entity "lifetime" segment.
- *
- * <p>Each entity's lifetime is tracked individually by storing the spawn tick
- * inside the {@link NameplateData} component under a hidden key
- * ({@code "_lifetime_tick"}). On each tick, the system reads the spawn tick,
- * computes the elapsed time, and formats it as human-readable text
- * (e.g. {@code "1m 23s"}).</p>
- *
- * <p>This demonstrates that calling {@link NameplateData#setText} each tick does
- * <b>not</b> cause flashing — the component stays on the entity and only its
- * internal map value is updated in place.</p>
- */
 final class LifetimeNameplateSystem extends EntityTickingSystem<EntityStore> {
 
     private static final String SEGMENT_ID = "lifetime";
-    /** Hidden key storing the global tick at which this entity was initialized. */
     private static final String SPAWN_TICK_KEY = "_lifetime_tick";
 
     private final ComponentType<EntityStore, NameplateData> nameplateDataType;
 
-    /** Global tick counter, incremented once per system tick. */
     private long globalTick;
 
     LifetimeNameplateSystem(ComponentType<EntityStore, NameplateData> nameplateDataType) {
@@ -59,17 +44,14 @@ final class LifetimeNameplateSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
-        // Only update entities that have a "lifetime" entry already set
         String existing = data.getText(SEGMENT_ID);
         if (existing == null) {
             return;
         }
 
-        // Read or initialize the per-entity spawn tick
         String spawnTickStr = data.getText(SPAWN_TICK_KEY);
         long spawnTick;
         if (spawnTickStr == null) {
-            // First tick for this entity — record the current global tick
             spawnTick = globalTick;
             data.setText(SPAWN_TICK_KEY, String.valueOf(spawnTick));
         } else {
@@ -81,17 +63,16 @@ final class LifetimeNameplateSystem extends EntityTickingSystem<EntityStore> {
             }
         }
 
-        // Compute elapsed time for this specific entity
         long elapsed = globalTick - spawnTick;
-        int seconds = (int) (elapsed / 20); // 20 ticks per second
+        int seconds = (int) (elapsed / 20);
         int minutes = seconds / 60;
-        int secs = seconds % 60;
+        int remainingSeconds = seconds % 60;
 
         String text;
         if (minutes > 0) {
-            text = minutes + "m " + secs + "s";
+            text = minutes + "m " + remainingSeconds + "s";
         } else {
-            text = secs + "s";
+            text = remainingSeconds + "s";
         }
 
         data.setText(SEGMENT_ID, text);

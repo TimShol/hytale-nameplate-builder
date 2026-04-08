@@ -41,11 +41,15 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
 
     @Override
     protected void setup() {
+        String version = getManifest().getVersion().toString();
+        AdminConfigStore.setPluginVersion(version);
+        NameplatePreferenceStore.setPluginVersion(version);
+
         registry = new NameplateRegistry();
-        preferences = new NameplatePreferenceStore(getDataDirectory().resolve("preferences.txt"));
+        preferences = new NameplatePreferenceStore(getDataDirectory());
         preferences.setRegistry(registry);
         preferences.load();
-        adminConfig = new AdminConfigStore(getDataDirectory().resolve("admin_config.txt"));
+        adminConfig = new AdminConfigStore(getDataDirectory().resolve("config.json"));
         adminConfig.load();
 
         NameplateAPI.setRegistry(registry);
@@ -65,7 +69,7 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
         registry.defineBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_ENTITY_NAME,
                 "Entity Name", SegmentTarget.NPCS, "Archaeopteryx")
                 .requires(npcEntityType)
-                .resolver((store, entityRef, variantIndex) -> {
+                .resolver((store, entityRef, _variantIndex) -> {
                     NPCEntity npcEntity = store.getComponent(entityRef, npcEntityType);
                     if (npcEntity == null) return null;
                     String roleName = npcEntity.getRoleName();
@@ -119,14 +123,16 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
 
 
         adminConfig.prePopulateProfiles(registry.getSegments());
-        preferences.resolvePendingEntries(registry);
+        preferences.setRegistry(registry);
 
-        getEntityStoreRegistry().registerSystem(new DefaultSegmentSystem(nameplateDataType, adminConfig));
-        getEntityStoreRegistry().registerSystem(new NameplateAggregatorSystem(registry, preferences, adminConfig, nameplateDataType, anchorManager));
+        var entitySourceService = new EntitySourceService();
+
+        getEntityStoreRegistry().registerSystem(new DefaultSegmentSystem(nameplateDataType, adminConfig, entitySourceService, registry));
+        getEntityStoreRegistry().registerSystem(new NameplateAggregatorSystem(registry, preferences, adminConfig, nameplateDataType, anchorManager, entitySourceService));
         getCommandRegistry().registerCommand(new NameplateBuilderCommand(registry, preferences, adminConfig, this));
         getCommandRegistry().registerCommand(new NameplateDebugCommand());
         getCommandRegistry().registerCommand(new NameplateBenchmarkCommand(registry, preferences, adminConfig));
-        getCommandRegistry().registerCommand(new NameplateTestCommand(registry, preferences, adminConfig, this));
+        getCommandRegistry().registerCommand(new NameplateIdentifyCommand(registry));
 
 
         getEventRegistry().registerGlobal(PlayerReadyEvent.class, event -> {
@@ -134,7 +140,6 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
                 var player = event.getPlayer();
                 @SuppressWarnings("removal")
                 UUID playerUuid = player.getPlayerRef().getUuid();
-                if (playerUuid == null) return;
 
                 if (!adminConfig.isWelcomeMessagesEnabled()) return;
                 if (!preferences.isShowWelcomeMessage(playerUuid)) return;
@@ -164,12 +169,6 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
         if (registry != null) {
             registry.clear();
         }
-        if (preferences != null) {
-            preferences.save();
-        }
-        if (adminConfig != null) {
-            adminConfig.save();
-        }
         if (anchorManager != null) {
             anchorManager.clear();
         }
@@ -178,20 +177,16 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
     void discoverWorlds() {
         try {
             var worlds = Universe.get().getWorlds();
-            if (worlds != null) {
-                discoveredWorldNames.clear();
-                discoveredWorldNames.addAll(worlds.keySet());
-                discoveredWorldNames.sort(String.CASE_INSENSITIVE_ORDER);
-            }
+            discoveredWorldNames.clear();
+            discoveredWorldNames.addAll(worlds.keySet());
+            discoveredWorldNames.sort(String.CASE_INSENSITIVE_ORDER);
         } catch (Throwable _) {
         }
         try {
             var instanceAssets = InstancesPlugin.get().getInstanceAssets();
-            if (instanceAssets != null) {
-                discoveredInstanceNames.clear();
-                discoveredInstanceNames.addAll(instanceAssets);
-                discoveredInstanceNames.sort(String.CASE_INSENSITIVE_ORDER);
-            }
+            discoveredInstanceNames.clear();
+            discoveredInstanceNames.addAll(instanceAssets);
+            discoveredInstanceNames.sort(String.CASE_INSENSITIVE_ORDER);
         } catch (Throwable _) {
         }
     }

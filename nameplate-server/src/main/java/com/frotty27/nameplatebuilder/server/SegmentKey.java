@@ -1,10 +1,5 @@
 package com.frotty27.nameplatebuilder.server;
 
-/**
- * Identifier for a registered segment. The integer {@link #id()} is assigned
- * sequentially by the registry and used for array-based lookups in hot paths.
- * Equality is based on pluginId + segmentId only (id is not included).
- */
 final class SegmentKey {
 
     static final int UNASSIGNED = -1;
@@ -35,12 +30,12 @@ final class SegmentKey {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof SegmentKey other)) return false;
-        return hash == other.hash
-                && pluginId.equals(other.pluginId)
-                && segmentId.equals(other.segmentId);
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (!(other instanceof SegmentKey that)) return false;
+        return hash == that.hash
+                && pluginId.equals(that.pluginId)
+                && segmentId.equals(that.segmentId);
     }
 
     @Override

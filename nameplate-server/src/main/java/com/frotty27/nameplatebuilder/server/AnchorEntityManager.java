@@ -116,13 +116,13 @@ final class AnchorEntityManager {
             return List.of();
         }
         List<Ref<EntityStore>> orphanedAnchors = null;
-        Iterator<Map.Entry<Ref<EntityStore>, AnchorState>> it = anchors.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<Ref<EntityStore>, AnchorState> entry = it.next();
+        Iterator<Map.Entry<Ref<EntityStore>, AnchorState>> iterator = anchors.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Ref<EntityStore>, AnchorState> entry = iterator.next();
             Ref<EntityStore> realRef = entry.getKey();
             if (!realRef.isValid()) {
                 AnchorState state = entry.getValue();
-                it.remove();
+                iterator.remove();
 
                 if (!state.spawnPending && state.anchorRef != null && state.anchorRef.isValid()) {
                     if (orphanedAnchors == null) {
