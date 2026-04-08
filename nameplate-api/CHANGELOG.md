@@ -17,6 +17,8 @@ All notable changes to NameplateBuilder API will be documented in this file.
 - Stale javadoc references in `NameplateData` pointing to removed 1.0.0 methods (`register`, `remove`) updated to `setText`, `clearText`
 - Stale javadoc references in `SegmentTarget` pointing to removed `describe()` updated to `define()`
 
+---
+
 ## [2.0.0] - 2026-04-01
 
 ### Breaking Changes
