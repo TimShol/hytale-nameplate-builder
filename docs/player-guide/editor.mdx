@@ -12,7 +12,7 @@ The top of the editor shows your active **segment chain** - the ordered list of 
 
 * **Segment name** and author mod
 * **Preview bar** - example output text for that segment
-* **Move left/right buttons** - reorder the segment in the chain
+* **Drag-and-drop reordering** - drag segments left and right to reorder them in the chain
 * **Remove button** - take the segment out of the chain (not available for admin-required segments)
 * **Format button** - opens the [format popup](/player-guide/format-popup) when the segment has multiple display variants. Shows "Formatted" in green when a non-default variant is selected
 
@@ -43,11 +43,13 @@ Built-in segments (Health, Player Name, Stamina, Mana) appear with a warm-purple
 
 A search field at the top of the Available Blocks section lets you filter by name. Pagination buttons appear when there are more blocks than fit on one page.
 
+All controls in the editor show tooltips on hover describing what they do.
+
 ## Clear All & Save
 
 * **Clear All** - removes all segments from the chain (except admin-required ones)
-* **Save** - persists your current chain, separators, and format selections to disk
+* **Save** - persists your current chain, separators, and format selections to disk. The Save button is greyed out when there are no unsaved changes
 
 ## Disabled Tab
 
-Under the NAMEPLATES section, the **Disabled** tab shows a read-only 4x4 grid of all admin-disabled segments. These segments are hidden from all players and cannot be added to chains. The blocks appear with red-tinted backgrounds and no action buttons. Pagination is available when there are more than 16 disabled segments.
+Under the NAMEPLATES section, the **Disabled** tab shows a read-only grid of all admin-disabled segments. These segments are hidden from all players and cannot be added to chains. The blocks appear with red-tinted backgrounds and no action buttons. Pagination is available when there are more disabled segments than fit on one page.

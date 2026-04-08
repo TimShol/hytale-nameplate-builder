@@ -8,76 +8,75 @@ NameplateBuilder persists all player settings and admin configuration to disk so
 
 ## Player Preferences
 
-**File:** `preferences.txt`
+**Directory:** `players/`
 
-One line per record, pipe-delimited. Each line starts with a single-character prefix indicating the record type.
+Each player's preferences are stored in a separate JSON file named by their UUID. Segments are referenced by composite key in the format `pluginId|segmentId`.
 
-| Prefix | Format | Description |
-| :--- | :--- | :--- |
-| `N` | `N\|uuid\|pluginId:segmentId,...` | NPC segment chain order |
-| `P` | `P\|uuid\|pluginId:segmentId,...` | Player segment chain order |
-| `E` | `E\|uuid\|true/false` | Master enable toggle |
-| `L` | `L\|uuid\|true/false` | Look-at (view-cone) toggle |
-| `O` | `O\|uuid\|0.5` | Vertical offset value |
-| `S` | `S\|uuid\|pluginId:segmentId\|separator` | Per-block separator |
-| `V` | `V\|uuid\|pluginId:segmentId\|variantIndex` | Selected format variant |
-| `X` | `X\|uuid\|pluginId:segmentId\|prefix` | Prefix text |
-| `U` | `U\|uuid\|pluginId:segmentId\|suffix` | Suffix text |
-| `B` | `B\|uuid\|pluginId:segmentId\|char` | Bar empty-fill character |
-| `W` | `W\|uuid\|true/false` | Welcome message toggle |
+**File:** `players/{uuid}.json`
 
-### Example
-
+```json
+{
+  "npcChain": ["EliteMobs|health", "EliteMobs|tier"],
+  "playerChain": ["NameplateBuilder|player_name", "MyMod|guild"],
+  "enabled": true,
+  "lookAt": false,
+  "offset": 0.5,
+  "welcomeMessage": true,
+  "separators": {
+    "EliteMobs|health": " - "
+  },
+  "variants": {
+    "EliteMobs|health": 2
+  },
+  "prefixes": {
+    "EliteMobs|health": "HP: ["
+  },
+  "suffixes": {
+    "EliteMobs|health": "]"
+  },
+  "barFills": {
+    "EliteMobs|health": "."
+  }
+}
 ```
-N|550e8400-e29b-41d4-a716-446655440000|EliteMobs:health,EliteMobs:tier
-P|550e8400-e29b-41d4-a716-446655440000|NameplateBuilder:player_name,MyMod:guild
-E|550e8400-e29b-41d4-a716-446655440000|true
-L|550e8400-e29b-41d4-a716-446655440000|false
-O|550e8400-e29b-41d4-a716-446655440000|0.5
-S|550e8400-e29b-41d4-a716-446655440000|EliteMobs:health| -
-V|550e8400-e29b-41d4-a716-446655440000|EliteMobs:health|2
-X|550e8400-e29b-41d4-a716-446655440000|EliteMobs:health|HP: [
-U|550e8400-e29b-41d4-a716-446655440000|EliteMobs:health|]
-B|550e8400-e29b-41d4-a716-446655440000|EliteMobs:health|.
-W|550e8400-e29b-41d4-a716-446655440000|true
-```
+
+Per-player files provide thread safety on busy servers - concurrent joins never contend on a single file. All writes are atomic (write to a temp file, then rename) for crash safety.
 
 ## Admin Configuration
 
-**File:** `admin_config.txt`
+**File:** `config.json`
 
-| Prefix | Format | Description |
-| :--- | :--- | :--- |
-| `S` | `S\|serverName` | Server display name for welcome message |
-| `R` | `R\|pluginId\|segmentId` | Required segment |
-| `D` | `D\|pluginId\|segmentId` | Disabled segment |
-
-Lines starting with `#` are comments. Blank lines are ignored.
-
-### Example
-
+```json
+{
+  "serverName": "My Awesome Server",
+  "required": ["NameplateBuilder|player_name", "EliteMobs|health"],
+  "disabled": ["MyMod|debug_info"]
+}
 ```
-# Server display name
-S|My Awesome Server
 
-# Required segments - always shown for all players
-R|NameplateBuilder|player_name
-R|EliteMobs|health
-
-# Disabled segments - hidden from all players
-D|MyMod|debug_info
-```
+Segments are referenced by the composite key `pluginId|segmentId`.
 
 ### Mutual Exclusion
 
 A segment cannot be both required and disabled. If an admin marks a required segment as disabled, it is automatically removed from the required set (and vice versa). This is enforced both in the UI and in the persistence layer.
 
+## Migration from Pre-v4.260326.6
+
+Older versions stored player preferences in a single `preferences.txt` file and admin configuration in `admin_config.txt`. On first load, NameplateBuilder automatically migrates both files to the new JSON format:
+
+- `preferences.txt` is split into individual `players/{uuid}.json` files
+- `admin_config.txt` is converted to `config.json`
+
+The old files are left in place but are no longer read after migration completes. You can safely delete them once you've confirmed the server is running correctly on the new version.
+
 ## File Location
 
-Both files are stored in the mod's data directory:
+All files are stored in the mod's data directory:
 
 ```
 %APPDATA%/Hytale/UserData/Saves/<save>/mods/NameplateBuilder/
-  preferences.txt
-  admin_config.txt
+  config.json
+  players/
+    550e8400-e29b-41d4-a716-446655440000.json
+    ...
 ```

@@ -4,12 +4,12 @@ icon: arrows-rotate
 description: Upgrade your mod to the latest NameplateBuilder API version.
 ---
 
-<Info>This documentation is written for **NameplateBuilder >= v4.260326.2** with **API >= v2.0.0**.</Info>
+<Info>This documentation is written for **NameplateBuilder >= v4.260326.6** with **API >= v2.1.0**.</Info>
 
 Select your current API version below to see what needs to change.
 
 <Tabs>
-  <Tab title="From API 1.0.0 to 2.0.0">
+  <Tab title="From API 1.0.0 to 2.1.0">
 
     ## What Changed
 
@@ -25,7 +25,7 @@ Select your current API version below to see what needs to change.
     **`build.gradle`:**
     ```groovy
     dependencies {
-        compileOnly files('libs/NameplateBuilder-API-2.0.0.jar')
+        compileOnly files('libs/NameplateBuilder-API-2.1.0.jar')
     }
     ```
 
@@ -33,7 +33,7 @@ Select your current API version below to see what needs to change.
     ```json
     {
       "Dependencies": {
-        "Frotty27:NameplateBuilder": ">=4.260326.2"
+        "Frotty27:NameplateBuilder": ">=4.260326.6"
       }
     }
     ```
@@ -144,15 +144,81 @@ Select your current API version below to see what needs to change.
 
     | What | Required? | Action |
     | :--- | :--- | :--- |
-    | API jar | Yes | Replace with `NameplateBuilder-API-2.0.0.jar` |
-    | Manifest version | Yes | Change to `">=4.260326.2"` |
+    | API jar | Yes | Replace with `NameplateBuilder-API-2.1.0.jar` |
+    | Manifest version | Yes | Change to `">=4.260326.6"` |
     | Rename 5 methods | Yes | `describe` -> `define`, `register` -> `setText`, `remove` -> `clearText`, etc. |
     | Switch tick systems to resolvers | Recommended | Replace component-reading tick systems with `.resolver()` |
     | Keep `setText()` for external data | Keep as-is | No change needed for event/command/database-driven segments |
     | `NameplateData` methods | No change | `data.setText()`, `data.getText()`, etc. are identical |
 
   </Tab>
-  <Tab title="Already on 2.0.0">
+  <Tab title="From API 2.0.0 to 2.1.0">
+
+    ## What Changed
+
+    API 2.1.0 is a backward-compatible addition. Existing 2.0.0 code compiles and runs without changes. Two new methods were added to `SegmentBuilder`:
+
+    1. **`enabledByDefault()`** - marks a segment as enabled by default on both chains for new players
+    2. **`enabledByDefault(SegmentTarget target)`** - marks a segment as enabled by default on specific chain(s) for new players
+
+    Each mod can mark at most 3 segments as `enabledByDefault`.
+
+    ## Step 1: Update Dependencies
+
+    Replace the API jar in your `libs/` folder and update both files:
+
+    **`build.gradle`:**
+    ```groovy
+    dependencies {
+        compileOnly files('libs/NameplateBuilder-API-2.1.0.jar')
+    }
+    ```
+
+    **`manifest.json`:**
+    ```json
+    {
+      "Dependencies": {
+        "Frotty27:NameplateBuilder": ">=4.260326.6"
+      }
+    }
+    ```
+
+    ## Step 2: Use `enabledByDefault()` (Optional)
+
+    If you want your segment to appear in new players' chains automatically, chain `enabledByDefault()` onto your `define()` call:
+
+    ```java
+    NameplateAPI.define(this, "health", "Health",
+            SegmentTarget.ALL, "67/69")
+        .enabledByDefault()
+        .resolver((store, entityRef, variantIndex) -> {
+            // ...
+        });
+    ```
+
+    You can also target a specific chain:
+
+    ```java
+    NameplateAPI.define(this, "faction", "Faction",
+            SegmentTarget.NPCS, "<Undead>")
+        .enabledByDefault(SegmentTarget.NPCS)
+        .resolver((store, entityRef, variantIndex) -> {
+            // ...
+        });
+    ```
+
+    See [Advanced - Default Segments](/modding/advanced#default-segments) for full details.
+
+    ## Summary
+
+    | What | Required? | Action |
+    | :--- | :--- | :--- |
+    | API jar | Yes | Replace with `NameplateBuilder-API-2.1.0.jar` |
+    | Manifest version | Yes | Change to `">=4.260326.6"` |
+    | `enabledByDefault()` | Optional | Chain onto `define()` for up to 3 segments per mod |
+
+  </Tab>
+  <Tab title="Already on 2.1.0">
 
     ## You're up to date
 
