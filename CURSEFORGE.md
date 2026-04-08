@@ -1,6 +1,8 @@
 # **NameplateBuilder**
 
-Customize the text above every entity in Hytale. Health bars, titles, ranks, guild tags - if a mod adds it, you control how it looks.
+Customize the text above every entity in Hytale. Any mod can add to it - you control how it looks.
+
+Health bars, elite titles, guild tags, ranks for both NPCs & Players - drag and drop them into any order, pick display formats, and tweak separators. Talking about interesting features...
 
 <p align="center">
 <img src="https://media.forgecdn.net/attachments/description/1460057/description_9c714cb4-6935-49ee-87fe-c2b493e7634c.gif" alt="NameplateBuilder Preview"/>
