@@ -4,15 +4,17 @@ icon: circle-question
 description: Frequently asked questions and troubleshooting.
 ---
 
+<Info>This documentation is written for **NameplateBuilder >= v4.260326.6** with **API >= v2.1.0**.</Info>
+
 ## Players
 
 ### How do I open the nameplate editor?
 
 Type `/npb` in chat (aliases: `/nameplatebuilder`, `/nameplateui`).
 
-### Why does an entity show "Type /npb to customize"?
+### Why does an entity show an empty nameplate?
 
-You have no segments enabled. Open `/npb`, go to the NPCs or Players tab, and add segments from the Available Blocks section.
+You have no segments enabled in your chain. Open `/npb`, go to the NPCs or Players tab, and add segments from the Available Blocks section.
 
 ### Why can't I remove a segment from my chain?
 
@@ -25,6 +27,14 @@ A server admin may have **disabled** those segments. Check the Disabled tab unde
 ### How do I change the health display format?
 
 Click the **Format** button on the Health segment in your chain. Select a variant (Current/Max, Percentage, or Bar), optionally set prefix/suffix text, then click **Confirm** and **Save**.
+
+### Why do NPC nameplates only appear when I look at them?
+
+The "Only Show NPC Nameplates When Looking" setting is enabled by default. You can turn it off in the General tab under `/npb`. This only affects NPCs - player nameplates are always visible.
+
+### Why does my nameplate disappear when I crouch?
+
+Player nameplates are automatically hidden when crouching. This is built-in behavior and cannot be toggled off.
 
 ### How do I hide nameplates entirely?
 
@@ -51,6 +61,18 @@ No. A segment cannot be both required and disabled. Marking one automatically re
 ### How do I change the server name in the welcome message?
 
 Open `/npb`, go to the **Settings** tab under ADMIN, type the name, and click **Save**.
+
+### How do I block groups of NPCs from getting nameplates?
+
+Use the regex pattern blacklist in the Blacklist sub-tab under Configuration. Add a pattern like `Citizen.*` to block all NPCs whose role name starts with "Citizen". Default patterns for Citizen, Mount, and Pet NPCs are added on first install.
+
+### How do I lock the chain order for all players?
+
+Open `/npb`, go to the admin NPCs or Players tab, switch to the Settings sub-tab, and toggle **Lock Chain Order** on. Players will see a read-only view. You can still edit the chain while it's locked.
+
+### How do I benchmark nameplate performance?
+
+Run `/npbbench <players> <seconds>` (e.g. `/npbbench 50 5`). This simulates the specified number of players viewing all entities with nameplates in the current world and reports tick budget usage.
 
 ### Where is the config stored?
 
@@ -89,6 +111,10 @@ Yes. Segment IDs are scoped to your plugin. Two mods can both register a `"healt
 ### How do I update segment text efficiently?
 
 Call `data.setText()` - it's a `HashMap.put()` internally. Calling it every tick is safe and cheap. The aggregator reads the latest value when it composites the nameplate.
+
+### How do I make my segment enabled by default for new players?
+
+Chain `.enabledByDefault()` onto your `define()` call. You can also target specific chains with `.enabledByDefault(SegmentTarget.NPCS)`. Each mod can mark at most 3 segments as enabled by default. See [Advanced - Default Segments](/modding/advanced#default-segments).
 
 ### Can I register a PLAYERS-targeted segment on an NPC?
 

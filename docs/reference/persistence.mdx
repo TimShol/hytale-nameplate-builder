@@ -4,6 +4,8 @@ icon: database
 description: File formats for player preferences and admin configuration.
 ---
 
+<Info>This documentation is written for **NameplateBuilder >= v4.260326.6** with **API >= v2.1.0**.</Info>
+
 NameplateBuilder persists all player settings and admin configuration to disk so they survive server restarts.
 
 ## Player Preferences
@@ -19,9 +21,9 @@ Each player's preferences are stored in a separate JSON file named by their UUID
   "npcChain": ["EliteMobs|health", "EliteMobs|tier"],
   "playerChain": ["NameplateBuilder|player_name", "MyMod|guild"],
   "enabled": true,
-  "lookAt": false,
+  "lookAt": true,
   "offset": 0.5,
-  "welcomeMessage": true,
+  "welcomeMessage": false,
   "separators": {
     "EliteMobs|health": " - "
   },

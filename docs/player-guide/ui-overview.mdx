@@ -4,19 +4,21 @@ icon: display
 description: Navigate the NameplateBuilder player interface.
 ---
 
+<Info>This documentation is written for **NameplateBuilder >= v4.260326.6** with **API >= v2.1.0**.</Info>
+
 Open the editor with `/npb` (aliases: `/nameplatebuilder`, `/nameplateui`). The UI features a sidebar on the left with three sections. The current version number is displayed in the title bar. Scrollable areas use gold-tinted scrollbars.
 
 ## Sidebar Layout
 
 | Section | Tab | Description |
 | :--- | :--- | :--- |
-| **GENERAL** | Settings | Master enable/disable, look-at toggle, vertical offset, welcome message toggle |
+| **GENERAL** | Settings | Master enable/disable, NPC look-at toggle, vertical offset, welcome message toggle |
 | **NAMEPLATES** | NPCs | Segment chain editor for NPC nameplates |
 | | Players | Segment chain editor for player nameplates |
 | | Disabled | Read-only view of all admin-disabled segments |
-| **ADMIN** | Required | Required segments panel (admin only) |
-| | Disabled | Disabled segments panel (admin only) |
-| | Settings | Server name configuration (admin only) |
+| **ADMIN** | NPCs | Admin NPC chain order editor (Chain / Settings sub-tabs) |
+| | Players | Admin Player chain order editor (Chain / Settings sub-tabs) |
+| | Configuration | Required, Disabled, Settings, and Blacklist sub-tabs |
 
 The **ADMIN** section is only visible to players with the `nameplatebuilder.admin` permission.
 
@@ -45,10 +47,4 @@ NameplateBuilder ships with four built-in segments, shown with a warm-purple tin
 
 ## Empty State
 
-When no segments are enabled, entities display the hint text:
-
-```
-Type /npb to customize
-```
-
-This hint appears instead of the raw entity ID, letting new players know the system exists.
+When no segments are enabled, entities display an empty nameplate (no text).

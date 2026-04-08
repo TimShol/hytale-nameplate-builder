@@ -4,6 +4,8 @@ description: Features, permissions, and how NameplateBuilder works.
 icon: circle-info
 ---
 
+<Info>This documentation is written for **NameplateBuilder >= v4.260326.6** with **API >= v2.1.0**.</Info>
+
 ## The Problem
 
 Hytale gives each entity a single `Nameplate` component. When multiple mods try to set it, they overwrite each other. NameplateBuilder fixes this by acting as a central aggregator - mods register named **segments**, and the system composites them into one nameplate string per entity, per viewer, every tick.
@@ -14,7 +16,8 @@ Hytale gives each entity a single `Nameplate` component. When multiple mods try 
 * **Opt-in NPC model** - Only Hytale-namespace NPCs are auto-seeded with nameplates. Other mods use resolvers or `NameplateAPI.setText()` to opt in, preventing conflicts
 * **Built-in segments** - Player Name (with anonymize variant), Health, Stamina, and Mana (each with Current/Max, Percentage, and Bar variants). Built-in segments are shown with a distinct warm-purple tint in the UI
 * **Death cleanup** - Nameplates are automatically cleared when an entity dies, instead of lingering through the death animation
-* **Persistent preferences** - All player settings and admin config are saved to disk and survive server restarts
+* **Crouch hiding** - Player nameplates are hidden when crouching
+* **Persistent preferences** - All player settings and admin config are saved as JSON to disk and survive server restarts
 
 ## Welcome Message
 
@@ -29,7 +32,8 @@ Admins can enable/disable welcome messages server-wide. Players can also individ
 
 Players open `/npb` (aliases: `/nameplatebuilder`, `/nameplateui`) to access a full UI with:
 
-* **One chain per entity type** - A single NPC chain and a single Player chain. All segments from all mods appear in one ordered list with full interleaving control
+* **One chain per entity type** - A single NPC chain and a single Player chain. All segments from all mods appear in one ordered list
+* **Drag-and-drop reordering** - Segments in the chain can be reordered by dragging and dropping
 * **Per-block separators** - Each segment can have its own separator to the next
 * **Format variants** - Mods can register multiple display formats (e.g. health as `42/67`, `63%`, or `||||||------`)
 * **Prefix/suffix wrapping** - Custom text to wrap segment output (e.g. `HP: [` and `]`)
@@ -48,11 +52,13 @@ Admins with the `nameplatebuilder.admin` permission can:
 * **Per-chain killswitches** - Disable NPC nameplates, Player nameplates, or both independently
 * **Per-mod killswitches** - Enable/disable segments from specific mods (namespace-level control)
 * **Per-world/instance killswitches** - Two-column layout for worlds and instances. Disabled locations show no nameplates for any player
-* **Chain locking** - Lock the NPC and/or Player chain order so all players see the admin's configured segment order
+* **Chain locking** - Lock the NPC and/or Player chain order so all players see the admin's configured segment order. Admins can still edit locked chains directly while players see a read-only view
 * **Required segments** - Force specific segments to always display for all players
 * **Disabled segments** - Hide specific segments from all players entirely
 * **NPC blacklist** - Blacklist specific NPC types from ever receiving nameplates
+* **Regex pattern blacklist** - Add patterns (e.g. `Citizen.*`) to bulk-exclude NPCs by role name. Default patterns for Citizen, Mount, and Pet NPCs are seeded on first install
 * **Server name** - Set a custom display name for the join welcome message
+* **Welcome messages** - Global toggle for join messages. Disabled by default
 
 All admin killswitches override player settings. Players see "(Disabled by Admin)" on affected toggles and cannot re-enable them.
 

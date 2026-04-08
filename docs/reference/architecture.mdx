@@ -4,6 +4,8 @@ icon: sitemap
 description: Internal systems, data flow, and project structure.
 ---
 
+<Info>This documentation is written for **NameplateBuilder >= v4.260326.6** with **API >= v2.1.0**.</Info>
+
 ## Project Modules
 
 NameplateBuilder is split into three Gradle modules:
@@ -36,10 +38,15 @@ NameplateBuilder/
       NameplateRegistry.java               Segment metadata store
       NameplateBuilderPage.java            Player UI page
       NameplateBuilderCommand.java         /npb command
-      NameplatePreferenceStore.java        Per-player persistence
-      AdminConfigStore.java                Admin config persistence
+      NameplateBenchmarkCommand.java       /npbbench benchmark command
+      NameplateIdentifyCommand.java        /npbid entity identification
+      NameplatePreferenceStore.java        Per-player JSON persistence
+      AdminConfigStore.java                Admin JSON config persistence
       AnchorEntityManager.java             Anchor entity lifecycle
+      EntitySourceService.java             NPC source detection (vanilla vs mod)
+      SimpleJson.java                      Minimal JSON reader/writer
       SegmentKey.java                      record(pluginId, segmentId)
+      SegmentBuilderImpl.java              SegmentBuilder implementation
       ActiveTab.java                       Sidebar tab enum
       AdminSubTab.java                     Admin sub-tab enum
       UiState.java                         UI state snapshot
