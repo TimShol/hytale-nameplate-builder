@@ -52,7 +52,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
     private static final int DISABLED_PAGE_SIZE = 48;
 
-    private static final int BLACKLIST_ROW_COUNT = 30;
+    private static final int BLACKLIST_ROW_COUNT = 5;
+    private static final int PATTERN_ROW_COUNT = 50;
 
     private final NameplateRegistry registry;
     private final NameplatePreferenceStore preferences;
@@ -118,6 +119,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     private long lastRemoveTime = 0;
     private final List<String> npcPickerFiltered = new ArrayList<>();
     private String blacklistFilter = "";
+    private int blacklistPage = 0;
+    private String patternFieldValue = "";
+    private String patternFilter = "";
+    private boolean patternPopupOpen = false;
     private static final int NPC_PICKER_ROW_COUNT = 10;
     private static volatile List<String> cachedNpcIds = null;
 
@@ -295,6 +300,26 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         bindAction(events, "#NpcPickerAdd", "NpcPickerAddConfirm");
         bindAction(events, "#NpcPickerAddAllFiltered", "NpcPickerAddAllFiltered");
         bindAction(events, "#BlacklistClearAll", "BlacklistClearAll");
+        bindAction(events, "#BlacklistFirst", "BlacklistFirst");
+        bindAction(events, "#BlacklistPrev", "BlacklistPrev");
+        bindAction(events, "#BlacklistNext", "BlacklistNext");
+        bindAction(events, "#BlacklistLast", "BlacklistLast");
+
+        bindAction(events, "#PatternAddBtn", "PatternAdd");
+        bindAction(events, "#PatternConfirm", "PatternConfirm");
+        bindAction(events, "#PatternCancel", "PatternCancel");
+        events.addEventBinding(CustomUIEventBindingType.ValueChanged,
+                "#PatternFilterField", EventData.of("@PatternFilterField", "#PatternFilterField.Value"), false);
+        for (int i = 0; i < PATTERN_ROW_COUNT; i++) {
+            bindAction(events, "#PatternRow" + i + "Remove", "PatternRemove_" + i);
+        }
+
+        events.addEventBinding(
+                CustomUIEventBindingType.ValueChanged,
+                "#PatternField",
+                EventData.of("@PatternField", "#PatternField.Value"),
+                false);
+
         for (int i = 0; i < NPC_PICKER_ROW_COUNT; i++) {
             bindAction(events, "#NpcPickerRowBtn" + i, "NpcPickerRow_" + i);
         }
@@ -365,13 +390,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 EventData.of("Action", "ToggleWelcome"),
                 false);
 
-        bindAction(events, "#ClearChainButton", "ClearChain");
-
         events.addEventBinding(
                 CustomUIEventBindingType.ValueChanged,
                 "#LookToggle",
                 EventData.of("Action", "ToggleLook"),
                 false);
+
+        bindAction(events, "#ClearChainButton", "ClearChain");
 
         events.addEventBinding(
                 CustomUIEventBindingType.ValueChanged,
@@ -490,7 +515,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         if ((!"Save".equals(data.action) && !"SaveAdmin".equals(data.action) && !"SaveSettings".equals(data.action) && !"SaveBlacklist".equals(
                 data.action) && !"SaveAdminSettings".equals(data.action) && !"SaveAdminDis".equals(data.action)
                 && !"NpcPickerAddAllFiltered".equals(data.action) && !"BlacklistClearAll".equals(data.action)
-                && !"BlacklistRemoveFiltered".equals(data.action))) {
+                && !"BlacklistRemoveFiltered".equals(data.action) && !"PatternAdd".equals(data.action))) {
             saveMessage = null;
         }
 
@@ -532,6 +557,14 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
         if (data.blacklistFilter != null) {
             blacklistFilter = data.blacklistFilter.trim();
+            blacklistPage = 0;
+        }
+
+        if (data.patternField != null) {
+            patternFieldValue = data.patternField;
+        }
+        if (data.patternFilter != null) {
+            patternFilter = data.patternFilter.trim();
         }
 
         if (data.sepText != null) {
@@ -775,6 +808,60 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     sendUpdate(buildUpdate());
                     return;
                 }
+                case "BlacklistFirst" -> {
+                    blacklistPage = 0;
+                    sendUpdate(buildUpdate());
+                    return;
+                }
+                case "BlacklistPrev" -> {
+                    blacklistPage = Math.max(0, blacklistPage - 1);
+                    sendUpdate(buildUpdate());
+                    return;
+                }
+                case "BlacklistNext" -> {
+                    blacklistPage++;
+                    sendUpdate(buildUpdate());
+                    return;
+                }
+                case "BlacklistLast" -> {
+                    // page count will be clamped in fillBlacklist
+                    blacklistPage = Integer.MAX_VALUE;
+                    sendUpdate(buildUpdate());
+                    return;
+                }
+                case "PatternAdd" -> {
+                    if (isAdmin) {
+                        patternPopupOpen = true;
+                        patternFieldValue = "";
+                    }
+                    sendUpdate(buildUpdate());
+                    return;
+                }
+                case "PatternConfirm" -> {
+                    if (isAdmin && patternFieldValue != null && !patternFieldValue.isBlank()) {
+                        try {
+                            java.util.regex.Pattern.compile(patternFieldValue.trim());
+                            adminConfig.addBlacklistPattern(patternFieldValue.trim());
+                            dirty = true;
+                            adminConfig.save();
+                            saveMessage = "Pattern added!";
+                            saveMessageSuccess = true;
+                        } catch (java.util.regex.PatternSyntaxException e) {
+                            saveMessage = "Invalid regex: " + e.getDescription();
+                            saveMessageSuccess = false;
+                        }
+                    }
+                    patternPopupOpen = false;
+                    patternFieldValue = "";
+                    sendUpdate(buildUpdate());
+                    return;
+                }
+                case "PatternCancel" -> {
+                    patternPopupOpen = false;
+                    patternFieldValue = "";
+                    sendUpdate(buildUpdate());
+                    return;
+                }
                 case "NpcPickerFirstPage" -> {
                     npcPickerPage = 0;
                     sendUpdate(buildUpdate());
@@ -908,6 +995,13 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     sendUpdate(buildUpdate());
                     return;
                 }
+                case "ToggleLook" -> {
+                    boolean current = preferences.isOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE_GLOBAL);
+                    preferences.setOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE_GLOBAL, !current);
+                    dirty = true;
+                    sendUpdate(buildUpdate());
+                    return;
+                }
                 case "Close" -> {
                     close();
                     return;
@@ -1007,13 +1101,6 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     sendUpdate(buildUpdate());
                     return;
                 }
-                case "ToggleLook" -> {
-                    boolean current = preferences.isOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE_GLOBAL);
-                    preferences.setOnlyShowWhenLooking(viewerUuid, ENTITY_TYPE_GLOBAL, !current);
-                    dirty = true;
-                    sendUpdate(buildUpdate());
-                    return;
-                }
                 case "ClearChain" -> {
                     clearChain();
                     dirty = true;
@@ -1062,7 +1149,12 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     return;
                 }
                 case "Reordered" -> {
-                    LOGGER.atInfo().log("[NPB] ElementReordered: source='%s' target='%s'", data.sourceIndex, data.targetIndex);
+                    boolean isNpcCtx = activeTab == ActiveTab.NPCS || (activeTab == ActiveTab.ADMIN && adminOrderIsNpc);
+                    boolean locked = isNpcCtx ? adminConfig.isNpcChainLocked() : adminConfig.isPlayerChainLocked();
+                    if (locked && !isAdmin) {
+                        rebuild();
+                        return;
+                    }
                     if (data.sourceIndex != null && data.targetIndex != null) {
                         int source = data.sourceIndex;
                         int target = data.targetIndex;
@@ -1111,7 +1203,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     String lowerFilter = blacklistFilter.toLowerCase(java.util.Locale.ROOT);
                     blacklist.removeIf(npcId -> !npcId.toLowerCase(java.util.Locale.ROOT).contains(lowerFilter));
                 }
-                int index = row;
+                int index = blacklistPage * BLACKLIST_ROW_COUNT + row;
                 if (index >= 0 && index < blacklist.size()) {
                     adminConfig.removeBlacklistedNpc(blacklist.get(index));
                     dirty = true;
@@ -1122,6 +1214,24 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             }
         } catch (Throwable e) {
             LOGGER.atWarning().withCause(e).log("[NPB] Error handling BlacklistRemove action");
+        }
+
+        try {
+            if (data.action.startsWith("PatternRemove_")) {
+                int row = parseRowIndex(data.action, "PatternRemove_");
+                List<String> patterns = new ArrayList<>(adminConfig.getBlacklistPatterns());
+                patterns.sort(String.CASE_INSENSITIVE_ORDER);
+                int index = row;
+                if (index >= 0 && index < patterns.size()) {
+                    adminConfig.removeBlacklistPattern(patterns.get(index));
+                    dirty = true;
+                    adminConfig.save();
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+        } catch (Throwable e) {
+            LOGGER.atWarning().withCause(e).log("[NPB] Error handling PatternRemove action");
         }
 
         try {
@@ -2195,7 +2305,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     private void fillChain(UICommandBuilder commands, List<SegmentView> chain, boolean chainLocked) {
         boolean hasChain = !chain.isEmpty();
         boolean singleBlock = chain.size() <= 1;
-        boolean editable = !chainLocked;
+        boolean editable = !chainLocked || isAdmin;
         commands.set("#ChainEmpty.Visible", !hasChain);
         commands.set("#ChainStrip.Visible", hasChain);
 
@@ -2209,6 +2319,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
             String prefix = "#ChainBlock" + index;
             if (visible) {
                 SegmentView view = chain.get(index);
+                commands.set(prefix + ".TooltipText", editable ? "Drag to reorder" : "Chain is locked by the server admin");
                 commands.set(prefix + "Label.Text", view.displayName());
                 commands.set(prefix + "Sub.Text", truncateModName(view.modName()));
 
@@ -2299,7 +2410,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
     private void fillAvailable(UICommandBuilder commands, List<SegmentView> available, boolean chainLocked) {
-        if (chainLocked) {
+        if (chainLocked && !isAdmin) {
             commands.set("#ClearChainButton.Visible", false);
             commands.set("#FilterField.Visible", false);
             for (int i = 0; i < 12; i++) {
@@ -3032,6 +3143,10 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
     private void fillBlacklist(UICommandBuilder commands) {
+        // Patterns section
+        fillPatterns(commands);
+
+        // Exact-match blacklist section
         List<String> allBlacklisted = new ArrayList<>(adminConfig.getBlacklistedNpcs());
         allBlacklisted.sort(String.CASE_INSENSITIVE_ORDER);
 
@@ -3053,14 +3168,58 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
         commands.set("#BlacklistEmpty.Visible", filtered.isEmpty());
 
-        int displayCount = Math.min(filtered.size(), BLACKLIST_ROW_COUNT);
+        int totalBlacklistPages = Math.max(1, (int) Math.ceil(filtered.size() / (double) BLACKLIST_ROW_COUNT));
+        if (blacklistPage >= totalBlacklistPages) blacklistPage = totalBlacklistPages - 1;
+        if (blacklistPage < 0) blacklistPage = 0;
+        int blStart = blacklistPage * BLACKLIST_ROW_COUNT;
 
         for (int i = 0; i < BLACKLIST_ROW_COUNT; i++) {
-            if (i < displayCount) {
+            int index = blStart + i;
+            if (index < filtered.size()) {
                 commands.set("#BlacklistRow" + i + ".Visible", true);
-                commands.set("#BlacklistRow" + i + "Label.Text", filtered.get(i));
+                commands.set("#BlacklistRow" + i + "Label.Text", filtered.get(index));
             } else {
                 commands.set("#BlacklistRow" + i + ".Visible", false);
+            }
+        }
+
+        boolean showBlacklistPagination = totalBlacklistPages > 1;
+        commands.set("#BlacklistPagination.Visible", showBlacklistPagination);
+        if (showBlacklistPagination) {
+            commands.set("#BlacklistPageLabel.Text", paginationLabel(blStart, BLACKLIST_ROW_COUNT, filtered.size()));
+        }
+    }
+
+    private void fillPatterns(UICommandBuilder commands) {
+        commands.set("#PatternPopupOverlay.Visible", patternPopupOpen);
+        if (patternPopupOpen) {
+            commands.set("#PatternField.Value", patternFieldValue);
+        }
+
+        List<String> allPatterns = new ArrayList<>(adminConfig.getBlacklistPatterns());
+        allPatterns.sort(String.CASE_INSENSITIVE_ORDER);
+
+        List<String> patterns;
+        if (patternFilter.isEmpty()) {
+            patterns = allPatterns;
+        } else {
+            String lower = patternFilter.toLowerCase(java.util.Locale.ROOT);
+            patterns = new ArrayList<>();
+            for (String p : allPatterns) {
+                if (p.toLowerCase(java.util.Locale.ROOT).contains(lower)) {
+                    patterns.add(p);
+                }
+            }
+        }
+
+        commands.set("#PatternEmpty.Visible", patterns.isEmpty());
+
+        for (int i = 0; i < PATTERN_ROW_COUNT; i++) {
+            if (i < patterns.size()) {
+                commands.set("#PatternRow" + i + ".Visible", true);
+                commands.set("#PatternRow" + i + "Label.Text", patterns.get(i));
+            } else {
+                commands.set("#PatternRow" + i + ".Visible", false);
             }
         }
     }

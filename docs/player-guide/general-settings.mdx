@@ -16,11 +16,15 @@ Master toggle to show or hide all nameplates. When disabled, entities display no
 If the server admin has disabled the master killswitch, this toggle shows **(Disabled by Admin)** and cannot be re-enabled by the player.
 </Note>
 
-### Only Show When Looking
+### Only Show NPC Nameplates When Looking
 
-When enabled, nameplates are only visible for entities you're currently looking at. Uses a ~25 degree half-angle view cone with a maximum range of 30 blocks.
+When enabled, NPC nameplates are only visible for entities you're currently looking at. Uses a ~25 degree half-angle view cone with a maximum range of 30 blocks. Player nameplates are always visible regardless of this setting.
 
 Entities outside the cone receive an empty nameplate update to prevent the default entity ID from showing through.
+
+### Crouch Hiding
+
+Player nameplates are automatically hidden when you are crouching. This is detected via `MovementStatesComponent.crouching` and does not require any toggle - it applies automatically.
 
 ### Show Welcome Message
 

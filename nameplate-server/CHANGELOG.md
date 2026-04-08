@@ -29,11 +29,22 @@ All notable changes to NameplateBuilder Server will be documented in this file.
 - Mods can now mark up to 3 segments per mod as enabled by default for new players
 - Default segments can target NPC chains, Player chains, or both
 
+### Admin Features
+- Regex pattern blacklist for bulk NPC exclusion (e.g. `Citizen.*` blocks all Citizen NPCs)
+- Default blacklist patterns for known non-combat NPCs (Citizen, Mount, Pet) added on first install
+- Admins can now edit locked chains directly while players see a read-only view
+- Locked chains show "Chain is locked by the server admin" tooltip for players
+
+### Gameplay
+- Player nameplates are now hidden when crouching (like Minecraft)
+- "Only Show NPC Nameplates When Looking" toggle restored, now applies only to NPCs
+- Player nameplates are always visible regardless of look direction
+- Removed the "Type /npb to customize" hint text from entities with no configured segments
+
 ### Bug Fixes
 - Fixed wrong segment being added when clicking Add on page 2 or later
-- Fixed nameplates not appearing for some integrated mods after restarting
+- Fixed the Enable Nameplates toggle in General settings not disabling nameplates in-game
 - Fixed namespace toggle in chain settings not taking effect immediately
-- Fixed the Enable Nameplates toggle in General settings not working
 - Fixed a crash that could occur when entities were removed during nameplate processing
 - New players now start with only Entity Name and Health in their chain by default
 

@@ -56,6 +56,14 @@ final class SettingsData {
                     (SettingsData data, String value) -> data.blacklistFilter = value,
                     (SettingsData data) -> data.blacklistFilter)
             .add()
+            .append(new KeyedCodec<>("@PatternField", Codec.STRING),
+                    (SettingsData data, String value) -> data.patternField = value,
+                    (SettingsData data) -> data.patternField)
+            .add()
+            .append(new KeyedCodec<>("@PatternFilterField", Codec.STRING),
+                    (SettingsData data, String value) -> data.patternFilter = value,
+                    (SettingsData data) -> data.patternFilter)
+            .add()
             .append(new KeyedCodec<>("SourceIndex", Codec.INTEGER),
                     (SettingsData data, Integer value) -> data.sourceIndex = value,
                     (SettingsData data) -> data.sourceIndex)
@@ -78,6 +86,8 @@ final class SettingsData {
     String barEmptyText;
     String npcPickerFilter;
     String blacklistFilter;
+    String patternField;
+    String patternFilter;
     Integer sourceIndex;
     Integer targetIndex;
 }

@@ -50,6 +50,7 @@ Players get a UI to choose which segments they see, reorder them, customize sepa
 - **Multi-mod nameplate aggregation** - Any number of mods can register their own named segments (health, guild tag, tier, title, etc.) and NameplateBuilder composites them into a single nameplate per entity
 - **Built-in segments** - Ships with **Player Name** (with an anonymize variant), **Health**, **Stamina**, and **Mana** (each with current/max, percentage, and visual bar variants). Built-in segments are shown with a distinct warm-purple tint
 - **Death cleanup** - Nameplates are automatically cleared when an entity dies, instead of lingering through the death animation
+- **Immediate disable cleanup** - Nameplates are cleared immediately when disabled (sends an empty update rather than waiting for the next tick)
 - **Persistent preferences** - All player settings and admin config are saved to disk and survive server restarts
 
 ### Welcome Message
@@ -66,15 +67,18 @@ Players get a UI to choose which segments they see, reorder them, customize sepa
 - **Bar empty-fill customization** - Customize the empty-slot character in visual bar variants (default: `"-"`)
 - **Confirm/cancel workflow** - Format changes are previewed live but only persisted on Confirm
 - **Nameplate offset** - Configurable vertical offset using invisible anchor entities for hologram-style rendering
-- **View-cone filtering** - Optional "only show when looking at" mode (~25 degree cone, up to 30 blocks)
+- **View-cone filtering** - Optional "Only Show NPC Nameplates When Looking" mode (~25 degree cone, up to 30 blocks). Only applies to NPCs - player nameplates are always visible
+- **Crouch hiding** - Player nameplates are automatically hidden when crouching
 
 ### Admin
 
 - **Required segments** - Force specific segments to always display for all players. Move segments between "Available" and "Required" columns; required segments appear with a yellow tint and cannot be removed
 - **Disabled segments** - Globally disable specific segments so they are hidden from all players entirely. When every segment is disabled, nameplates are blanked globally
 - **Killswitches** - Master enable/disable, per-chain NPC/Player toggles, per-mod namespace killswitches, and per-world/instance killswitches. All admin killswitches override player settings with clear "(Disabled by Admin)" indicators
-- **Chain locking** - Lock the NPC and/or Player chain order so all players see the admin's configured segment order (read-only for players)
+- **Chain locking** - Lock the NPC and/or Player chain order so all players see the admin's configured segment order (read-only for players). Locked chains show a "Chain is locked by the server admin" tooltip for players
 - **NPC blacklist** - Blacklist specific NPC types from ever receiving nameplates. Searchable NPC picker popup with filter and pagination
+- **Regex pattern blacklist** - Add Java regex patterns (e.g. `Citizen.*`) that match NPC role names. Any NPC matching a pattern is excluded from nameplates. Default patterns `Citizen.*`, `Mount_.*`, `Pet_.*` are seeded on first install
+- **Locked chain editing** - Admins can edit locked chains (move, add, remove segments) while the chain remains locked for players
 - **World/instance killswitches** - Two-column layout for worlds (left) and instances (right) with independent pagination. Disabled worlds show no nameplates for any player
 - **Server name** - Set a custom display name for the join welcome message (defaults to "NameplateBuilder")
 
@@ -92,7 +96,7 @@ Players open the editor via `/npb` (aliases: `/nameplatebuilder`, `/nameplateui`
 
 | Section | Contents |
 |---------|----------|
-| **GENERAL** | Settings - master enable/disable, look-at toggle, vertical offset, welcome message toggle |
+| **GENERAL** | Settings - master enable/disable, NPC look-at toggle, vertical offset, welcome message toggle |
 | **NAMEPLATES** | NPCs - segment chain editor for NPC nameplates |
 | | Players - segment chain editor for player nameplates |
 | | Disabled - read-only view of all admin-disabled segments |
@@ -103,7 +107,7 @@ Players open the editor via `/npb` (aliases: `/nameplatebuilder`, `/nameplateui`
 ### General Tab
 
 - **Enable Nameplates** - master toggle to show/hide all nameplates
-- **Only Show When Looking** - view-cone filter toggle
+- **Only Show NPC Nameplates When Looking** - view-cone filter toggle (only applies to NPCs - player nameplates are always visible)
 - **Show Welcome Message** - toggle the coloured join message on/off
 - **Offset** - vertical nameplate offset (accepts both `,` and `.` as decimal separators, clamped to -5.0 to 5.0)
 
@@ -157,13 +161,14 @@ Has Save and Reset buttons.
 #### Blacklist Sub-Tab
 
 - **NPC Blacklist** - Blacklisted NPC types never receive nameplates. Add NPCs via a searchable picker popup with filter and pagination. Remove entries individually
+- **Regex Pattern Blacklist** - Add Java regex patterns (e.g. `Citizen.*`) that match NPC role names. Any NPC matching a pattern is excluded from nameplates. Default patterns `Citizen.*`, `Mount_.*`, `Pet_.*` are seeded on first install
 - Has its own Save button with success feedback
 
 Admin configuration is persisted in `admin_config.txt`.
 
 ---
 
-When a player has no blocks enabled, entities show "Type /npb to customize" as a hint.
+When a player has no blocks enabled, entities show an empty nameplate (no text).
 
 ## Screenshots
 
@@ -254,9 +259,9 @@ When a player has no blocks enabled, entities show "Type /npb to customize" as a
 ![Anonymized name](docs/screenshots/nameplate-anonymized.png)
 <!-- SCREENSHOT: A player entity showing "Player" instead of their real name, demonstrating the anonymize variant -->
 
-#### Empty nameplate hint
-![Empty hint](docs/screenshots/nameplate-empty-hint.png)
-<!-- SCREENSHOT: An entity (player or NPC) showing "Type /npb to customize" as nameplate text when no blocks are enabled -->
+#### Empty nameplate (no blocks enabled)
+![Empty nameplate](docs/screenshots/nameplate-empty-hint.png)
+<!-- SCREENSHOT: An entity (player or NPC) showing an empty nameplate when no blocks are enabled -->
 
 ## Building
 

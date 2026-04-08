@@ -15,14 +15,14 @@ Admins can configure a default chain order that all players see when chain locki
 
 ### Chain Sub-Tab
 
-Same editor as the player view, but changes are saved to the admin chain (UUID `0`). When the chain is locked, all players see this exact order.
+Same editor as the player view, but changes are saved to the admin chain (UUID `0`). When the chain is locked, all players see this exact order. Admins can continue to edit locked chains - move, add, and remove segments - while the chain remains locked for players.
 
 ### Settings Sub-Tab
 
 Contains per-chain settings:
 
 * **NPC/Player Nameplates** - ON/OFF toggle for this chain type. When disabled, no nameplates of this type are shown for any player
-* **Lock Chain Order** - When locked, all players see the admin's chain order (read-only). Players cannot reorder, add, or remove segments
+* **Lock Chain Order** - When locked, all players see the admin's chain order (read-only). Players cannot reorder, add, or remove segments. Players see a "Chain is locked by the server admin" tooltip
 * **Mods** - Per-mod namespace killswitches. Disabled mods have all their segments stripped from nameplates
 * **Worlds / Instances** - Two-column layout with ON/OFF toggles and independent pagination per column
 
@@ -107,6 +107,15 @@ Blacklisted NPC types never receive nameplates from NameplateBuilder, regardless
 * **Add NPC** - Opens a searchable picker popup with all discovered NPC types. Filter by name, paginate through results, select and confirm
 * **Remove** - Click the remove button next to any blacklisted entry
 * **Save** - Persist the blacklist to disk
+
+### Regex Pattern Blacklist
+
+In addition to the individual NPC blacklist, admins can add Java regex patterns that match NPC role names. Any NPC whose role name matches a pattern is excluded from receiving nameplates.
+
+* **Add Pattern** - Enter a Java regex pattern (e.g. `Citizen.*`, `Mount_.*`, `Pet_.*`)
+* **Remove** - Click the remove button next to any pattern entry
+* **Default patterns** - On first install, the patterns `Citizen.*`, `Mount_.*`, and `Pet_.*` are seeded automatically
+* **Save** - Persist the pattern list to disk
 
 ## Admin Override Behavior
 

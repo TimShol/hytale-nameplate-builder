@@ -278,7 +278,7 @@ $C.@PageOverlay {
             Padding: (Left: 16, Right: 16);
 
             Label {
-              Text: "Only Show When Looking";
+              Text: "Only Show NPC Nameplates When Looking";
               Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center);
               Anchor: (Width: 300, Height: 28);
             }
@@ -287,7 +287,7 @@ $C.@PageOverlay {
               Anchor: (Width: 50, Height: 28);
               IsChecked: false;
               Background: (Color: #1e2530);
-              TooltipText: "Only show nameplates when looking at the entity";
+              TooltipText: "Only show NPC nameplates when looking at them";
               TextTooltipShowDelay: 0.3;
               Label #LookToggleText { Style: (FontSize: 13, TextColor: #5a6d82, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); Text: "OFF"; }
             }
@@ -2851,10 +2851,232 @@ $C.@PageOverlay {
             Padding: (Left: 8, Top: 12);
 
             Label { Text: "NPC BLACKLIST"; Style: (TextColor: #96a9be, FontSize: 13, RenderBold: true, RenderUppercase: true, LetterSpacing: 1); Anchor: (Height: 24, Bottom: 4); }
-            Label { Text: "Blacklisted NPCs will never receive nameplates from NameplateBuilder."; Style: (TextColor: #5a6d82, FontSize: 13); Anchor: (Height: 18, Bottom: 12); }
+            Label { Text: "Blacklisted NPCs will never receive nameplates from NameplateBuilder."; Style: (TextColor: #5a6d82, FontSize: 13); Anchor: (Height: 18, Bottom: 8); }
 
-            Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 10);
-              TextButton #BlacklistAddBtn { Text: "[+] Add NPC(s) to Blacklist"; Anchor: (Width: 230, Height: 30); Style: @SaveButtonStyle; }
+            // Pattern-based blacklist
+            Label { Text: "PATTERNS (REGEX)"; Style: (TextColor: #96a9be, FontSize: 12, RenderBold: true, RenderUppercase: true, LetterSpacing: 1); Anchor: (Height: 20, Bottom: 4); }
+            Label { Text: "Patterns use Java regex. NPCs whose role name matches any pattern are blacklisted."; Style: (TextColor: #5a6d82, FontSize: 12); Anchor: (Height: 16, Bottom: 6); }
+
+            Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 6);
+              TextButton #PatternAddBtn { Text: "[+] Add Pattern"; Anchor: (Width: 180, Height: 30); Style: @SaveButtonStyle; TooltipText: "Add a regex pattern to blacklist matching NPCs"; TextTooltipShowDelay: 0.3; }
+            }
+            $C.@TextField #PatternFilterField { Anchor: (Height: 32, Bottom: 6); PlaceholderText: "Filter patterns..."; }
+
+            Group #PatternList {
+              LayoutMode: TopScrolling;
+              Anchor: (Height: 130, Bottom: 6);
+              ScrollbarStyle: (Spacing: 4, Size: 6, Background: #2a2610, Handle: #8b7a3a, HoveredHandle: #a08840, DraggedHandle: #b89848);
+
+              Group #PatternRow0 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow0Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow0Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow1 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow1Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow1Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow2 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow2Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow2Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow3 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow3Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow3Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow4 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow4Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow4Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow5 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow5Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow5Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow6 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow6Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow6Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow7 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow7Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow7Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow8 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow8Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow8Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow9 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow9Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow9Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow10 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow10Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow10Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow11 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow11Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow11Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow12 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow12Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow12Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow13 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow13Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow13Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow14 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow14Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow14Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow15 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow15Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow15Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow16 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow16Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow16Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow17 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow17Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow17Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow18 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow18Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow18Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow19 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow19Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow19Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow20 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow20Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow20Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow21 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow21Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow21Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow22 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow22Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow22Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow23 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow23Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow23Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow24 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow24Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow24Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow25 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow25Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow25Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow26 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow26Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow26Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow27 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow27Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow27Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow28 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow28Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow28Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow29 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow29Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow29Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow30 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow30Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow30Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow31 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow31Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow31Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow32 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow32Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow32Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow33 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow33Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow33Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow34 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow34Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow34Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow35 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow35Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow35Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow36 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow36Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow36Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow37 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow37Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow37Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow38 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow38Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow38Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow39 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow39Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow39Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow40 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow40Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow40Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow41 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow41Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow41Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow42 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow42Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow42Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow43 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow43Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow43Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow44 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow44Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow44Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow45 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow45Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow45Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow46 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow46Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow46Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow47 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow47Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow47Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow48 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow48Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow48Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+              Group #PatternRow49 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
+                Label #PatternRow49Label { Style: (TextColor: #e2c97e, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
+                TextButton #PatternRow49Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              }
+            }
+
+            Label #PatternEmpty { Text: "No patterns defined."; Style: (TextColor: #5a6d82, FontSize: 12); Anchor: (Height: 18, Bottom: 8); }
+
+            // Exact-match blacklist
+            Label { Text: "EXACT MATCH"; Style: (TextColor: #96a9be, FontSize: 12, RenderBold: true, RenderUppercase: true, LetterSpacing: 1); Anchor: (Height: 20, Bottom: 4); }
+            Label { Text: "Individually blacklisted NPCs that will never receive nameplates."; Style: (TextColor: #5a6d82, FontSize: 11); Anchor: (Height: 16, Bottom: 6); }
+
+            Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 6);
+              TextButton #BlacklistAddBtn { Text: "[+] Add NPC(s)"; Anchor: (Width: 180, Height: 30); Style: @SaveButtonStyle; }
               Group { FlexWeight: 1; }
               TextButton #BlacklistRemoveFiltered { Text: "Remove Filtered"; Anchor: (Width: 150, Height: 30); Style: @ResetButtonStyle; Visible: false; }
             }
@@ -2862,10 +3084,7 @@ $C.@PageOverlay {
             $C.@TextField #BlacklistFilterField { Anchor: (Height: 32, Bottom: 6); PlaceholderText: "Filter NPCs..."; }
 
             Group #BlacklistList {
-              LayoutMode: TopScrolling;
-              FlexWeight: 1;
-              KeepScrollPosition: true;
-              ScrollbarStyle: (Spacing: 2, Size: 4, Background: #2a2610, Handle: #8b7a3a, HoveredHandle: #a08840, DraggedHandle: #b89848);
+              LayoutMode: Top;
 
               Group #BlacklistRow0 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
                 Label #BlacklistRow0Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
@@ -2887,109 +3106,18 @@ $C.@PageOverlay {
                 Label #BlacklistRow4Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
                 TextButton #BlacklistRow4Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
               }
-              Group #BlacklistRow5 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow5Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow5Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
+              Group #BlacklistPagination {
+                LayoutMode: Left;
+                Anchor: (Width: 160, Height: 22, Top: 4);
+                Visible: false;
+                TextButton #BlacklistFirst { Text: "<<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                TextButton #BlacklistPrev { Text: "<"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                Label #BlacklistPageLabel { Text: "1/1"; Style: (TextColor: #5a6d82, FontSize: 11, HorizontalAlignment: Center, VerticalAlignment: Center); FlexWeight: 1; }
+                TextButton #BlacklistNext { Text: ">"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
+                TextButton #BlacklistLast { Text: ">>"; Style: @PaginationButtonStyle; Anchor: (Width: 26, Height: 22); }
               }
-              Group #BlacklistRow6 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow6Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow6Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow7 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow7Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow7Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow8 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow8Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow8Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow9 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow9Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow9Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow10 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow10Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow10Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow11 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow11Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow11Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow12 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow12Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow12Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow13 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow13Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow13Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow14 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow14Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow14Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow15 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow15Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow15Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow16 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow16Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow16Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow17 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow17Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow17Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow18 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow18Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow18Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow19 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow19Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow19Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow20 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow20Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow20Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow21 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow21Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow21Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow22 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow22Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow22Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow23 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow23Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow23Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow24 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow24Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow24Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow25 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow25Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow25Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow26 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow26Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow26Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow27 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow27Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow27Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow28 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow28Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow28Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
-              Group #BlacklistRow29 { LayoutMode: Left; Anchor: (Height: 24, Bottom: 1); Visible: false;
-                Label #BlacklistRow29Label { Style: (TextColor: #c8d6e5, FontSize: 13, VerticalAlignment: Center); FlexWeight: 1; Anchor: (Height: 24); }
-                TextButton #BlacklistRow29Remove { Text: "X"; Anchor: (Width: 28, Height: 24); Style: @RemoveButtonStyle; }
-              }
+              Label #BlacklistEmpty { Text: "No NPCs are blacklisted."; Style: (TextColor: #5a6d82, FontSize: 13); Anchor: (Height: 20, Top: 8); }
             }
-
-            Label #BlacklistEmpty { Text: "No NPCs are blacklisted."; Style: (TextColor: #5a6d82, FontSize: 13); Anchor: (Height: 20, Top: 8); }
 
             Group { FlexWeight: 1; }
 
@@ -3437,6 +3565,31 @@ $C.@PageOverlay {
   } // end DecoratedContainer
 
   // Section 9: Popups (siblings of DecoratedContainer, inside PageOverlay)
+
+  // Section 9.0: Add Pattern Popup
+  Group #PatternPopupOverlay {
+    Anchor: (Width: 1080, Height: 780);
+    Background: (Color: #00000080);
+    Visible: false;
+
+    Group {
+      Anchor: (Width: 360, Height: 190);
+      Background: (Color: #141c26);
+      LayoutMode: Top;
+      Padding: (Left: 20, Right: 20, Top: 20, Bottom: 20);
+
+      Label { Text: "Add Pattern"; Style: (TextColor: #96a9be, FontSize: 16, RenderBold: true, HorizontalAlignment: Center); Anchor: (Height: 26, Bottom: 8); }
+      Label { Text: "Enter a Java regex pattern:"; Style: (TextColor: #5a6d82, FontSize: 12, HorizontalAlignment: Center); Anchor: (Height: 16, Bottom: 12); }
+
+      $C.@TextField #PatternField { Anchor: (Height: 34, Bottom: 16); PlaceholderText: "e.g. Citizen.*"; }
+
+      Group { LayoutMode: Left; Anchor: (Height: 36);
+        TextButton #PatternCancel { Text: "Cancel"; Anchor: (Width: 100, Height: 36); Style: @PaginationButtonStyle; }
+        Group { FlexWeight: 1; }
+        TextButton #PatternConfirm { Text: "[+] Add Pattern"; Anchor: (Width: 150, Height: 36); Style: @SaveButtonStyle; }
+      }
+    }
+  }
 
   // Section 9.1: Separator Popup
   Group #SepPopupOverlay {

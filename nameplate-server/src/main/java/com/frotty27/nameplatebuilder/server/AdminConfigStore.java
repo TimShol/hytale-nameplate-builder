@@ -8,6 +8,8 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 final class AdminConfigStore {
 
@@ -38,6 +40,8 @@ final class AdminConfigStore {
     private final Set<String> integratedNamespaces = ConcurrentHashMap.newKeySet();
     private final Map<String, String> namespaceDisplayNames = new ConcurrentHashMap<>();
     private final Set<String> blacklistedNpcs = ConcurrentHashMap.newKeySet();
+    private final Set<String> blacklistPatterns = ConcurrentHashMap.newKeySet();
+    private volatile Pattern[] compiledPatterns = new Pattern[0];
     private final Map<String, Boolean> entitySourceDefaults = new ConcurrentHashMap<>();
 
 
@@ -53,6 +57,8 @@ final class AdminConfigStore {
         namespaceEnabled.clear();
         worldEnabled.clear();
         blacklistedNpcs.clear();
+        blacklistPatterns.clear();
+        compiledPatterns = new Pattern[0];
         entitySourceDefaults.clear();
         serverName = "";
         welcomeMessagesEnabled = false;
@@ -71,12 +77,25 @@ final class AdminConfigStore {
         if (Files.exists(legacyPath)) {
             LOGGER.atInfo().log("Migrating admin config from %s to %s", legacyPath, filePath);
             loadLegacy(legacyPath);
+            seedDefaultPatterns();
             save();
             try {
                 Files.delete(legacyPath);
             } catch (IOException e) {
                 LOGGER.atWarning().withCause(e).log("Failed to delete legacy config %s", legacyPath);
             }
+            return;
+        }
+
+        seedDefaultPatterns();
+        save();
+    }
+
+    private void seedDefaultPatterns() {
+        if (blacklistPatterns.isEmpty()) {
+            addBlacklistPattern("Citizen.*");
+            addBlacklistPattern("Mount_.*");
+            addBlacklistPattern("Pet_.*");
         }
     }
 
@@ -119,6 +138,12 @@ final class AdminConfigStore {
 
             List<String> blList = SimpleJson.getStringList(root, "blacklistedNpcs");
             blacklistedNpcs.addAll(blList);
+
+            List<String> patList = SimpleJson.getStringList(root, "blacklistPatterns");
+            for (String pat : patList) {
+                blacklistPatterns.add(pat);
+            }
+            recompilePatterns();
 
             Map<String, Boolean> esMap = SimpleJson.getBooleanMap(root, "entitySourceDefaults");
             entitySourceDefaults.putAll(esMap);
@@ -242,6 +267,7 @@ final class AdminConfigStore {
         w.endArray();
 
         w.keyStringArray("blacklistedNpcs", blacklistedNpcs);
+        w.keyStringArray("blacklistPatterns", blacklistPatterns);
         w.keyBooleanMap("entitySourceDefaults", entitySourceDefaults);
         w.endObject();
 
@@ -502,6 +528,57 @@ final class AdminConfigStore {
 
     void clearBlacklistedNpcs() {
         blacklistedNpcs.clear();
+    }
+
+
+    Set<String> getBlacklistPatterns() {
+        return Collections.unmodifiableSet(blacklistPatterns);
+    }
+
+    void addBlacklistPattern(String pattern) {
+        if (pattern != null && !pattern.isBlank()) {
+            String trimmed = pattern.trim();
+            if (blacklistPatterns.add(trimmed)) {
+                recompilePatterns();
+                bumpVersion();
+            }
+        }
+    }
+
+    void removeBlacklistPattern(String pattern) {
+        if (blacklistPatterns.remove(pattern)) {
+            recompilePatterns();
+            bumpVersion();
+        }
+    }
+
+    void clearBlacklistPatterns() {
+        blacklistPatterns.clear();
+        compiledPatterns = new Pattern[0];
+        bumpVersion();
+    }
+
+    boolean matchesBlacklistPattern(String roleName) {
+        Pattern[] patterns = compiledPatterns;
+        if (patterns.length == 0) return false;
+        for (Pattern pattern : patterns) {
+            if (pattern.matcher(roleName).matches()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void recompilePatterns() {
+        List<Pattern> compiled = new ArrayList<>();
+        for (String pat : blacklistPatterns) {
+            try {
+                compiled.add(Pattern.compile(pat));
+            } catch (PatternSyntaxException e) {
+                LOGGER.atWarning().log("Invalid blacklist pattern '%s': %s", pat, e.getMessage());
+            }
+        }
+        compiledPatterns = compiled.toArray(new Pattern[0]);
     }
 
 

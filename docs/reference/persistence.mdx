@@ -50,9 +50,12 @@ Per-player files provide thread safety on busy servers - concurrent joins never 
 {
   "serverName": "My Awesome Server",
   "required": ["NameplateBuilder|player_name", "EliteMobs|health"],
-  "disabled": ["MyMod|debug_info"]
+  "disabled": ["MyMod|debug_info"],
+  "blacklistPatterns": ["Citizen.*", "Mount_.*", "Pet_.*"]
 }
 ```
+
+The `blacklistPatterns` array contains Java regex patterns that match NPC role names. Any NPC whose role name matches a pattern is excluded from receiving nameplates. The default patterns `Citizen.*`, `Mount_.*`, and `Pet_.*` are seeded on first install.
 
 Segments are referenced by the composite key `pluginId|segmentId`.
 

@@ -115,7 +115,7 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
 
             if (npcEntity != null) {
                 String roleName = npcEntity.getRoleName();
-                if (roleName != null && adminConfig.isNpcBlacklisted(roleName)) {
+                if (roleName != null && (adminConfig.isNpcBlacklisted(roleName) || adminConfig.matchesBlacklistPattern(roleName))) {
                     if (debugEnabled) LOGGER.atInfo().log("[Seed] Skipped NPC - blacklisted: %s", roleName);
                     return;
                 }

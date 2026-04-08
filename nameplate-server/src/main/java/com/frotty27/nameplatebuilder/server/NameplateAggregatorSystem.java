@@ -12,6 +12,7 @@ import com.hypixel.hytale.protocol.NameplateUpdate;
 import com.hypixel.hytale.server.core.entity.Entity;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.modules.entity.EntityModule;
 import com.hypixel.hytale.server.core.modules.entity.component.BoundingBox;
 import com.hypixel.hytale.server.core.modules.entity.component.HeadRotation;
@@ -33,10 +34,8 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
 
     private static final double VIEW_RANGE = 10.0;
     private static final double VIEW_CONE_THRESHOLD = 0.9;
-    private static final String NO_DATA_HINT = "Type /npb to customize";
 
     private static final ComponentUpdate EMPTY_UPDATE = new NameplateUpdate(" ");
-    private static final ComponentUpdate NO_DATA_UPDATE = new NameplateUpdate(NO_DATA_HINT);
 
     private final ComponentType<EntityStore, EntityTrackerSystems.Visible> visibleComponentType;
     private final ComponentType<EntityStore, UUIDComponent> uuidComponentType;
@@ -47,6 +46,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
     private final ComponentType<EntityStore, NameplateData> nameplateDataType;
     private final ComponentType<EntityStore, NPCEntity> npcEntityType;
     private final ComponentType<EntityStore, Player> playerType;
+    private final ComponentType<EntityStore, MovementStatesComponent> movementStatesType;
     private final NameplateRegistry registry;
     private final NameplatePreferenceStore preferences;
     private final AdminConfigStore adminConfig;
@@ -85,6 +85,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         this.nameplateDataType = nameplateDataType;
         this.npcEntityType = NPCEntity.getComponentType();
         this.playerType = Player.getComponentType();
+        this.movementStatesType = MovementStatesComponent.getComponentType();
         this.registry = registry;
         this.preferences = preferences;
         this.adminConfig = adminConfig;
@@ -189,7 +190,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         }
         if (!isPlayer && npcEntity != null) {
             String roleName = npcEntity.getRoleName();
-            if (roleName != null && adminConfig.isNpcBlacklisted(roleName)) {
+            if (roleName != null && (adminConfig.isNpcBlacklisted(roleName) || adminConfig.matchesBlacklistPattern(roleName))) {
                 sendEmptyToAll(visible, entityRef);
                 return;
             }
@@ -208,6 +209,15 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
         if (entityWorld != null) {
             String worldName = entityWorld.getName();
             if (!adminConfig.isWorldEnabled(worldName)) {
+                sendEmptyToAll(visible, entityRef);
+                return;
+            }
+        }
+
+        if (isPlayer) {
+            MovementStatesComponent movementStates = store.getComponent(entityRef, movementStatesType);
+            if (movementStates != null && movementStates.getMovementStates() != null
+                    && movementStates.getMovementStates().crouching) {
                 sendEmptyToAll(visible, entityRef);
                 return;
             }
@@ -275,7 +285,6 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             Ref<EntityStore> viewerRef = viewerEntry.getKey();
             UUID viewerUuid = getUuid(store, viewerRef);
             if (viewerUuid == null) { viewerIndex++; continue; }
-            if (!preferences.isNameplatesEnabled(viewerUuid)) { viewerIndex++; continue; }
             viewerUuids[viewerIndex] = viewerUuid;
 
             double userOffset = preferences.getOffset(viewerUuid, "*");
@@ -311,7 +320,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             List<SegmentKey> lockedChain = preferences.getChain(ADMIN_CHAIN_UUID, preferenceEntityType, available, defaultComparator);
             lockedText = buildText(lockedChain, entityData, ADMIN_CHAIN_UUID, preferenceEntityType, store, entityRef, segments);
             if (lockedText.isEmpty()) {
-                lockedTextUpdate = NO_DATA_UPDATE;
+                lockedTextUpdate = EMPTY_UPDATE;
             } else {
                 lockedTextUpdate = nameplateUpdate(lockedText);
             }
@@ -326,6 +335,17 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             UUID viewerUuid = viewerUuids[viewerIndex];
             boolean wantsAnchor = viewerWantsAnchor[viewerIndex];
             viewerIndex++;
+
+            if (viewerUuid == null) {
+                viewer.queueUpdate(entityRef, EMPTY_UPDATE);
+                continue;
+            }
+
+            if (!preferences.isNameplatesEnabled(viewerUuid)) {
+                viewer.queueUpdate(entityRef, EMPTY_UPDATE);
+                if (anchorRef != null) safeAnchorUpdate(viewer, anchorRef, EMPTY_UPDATE);
+                continue;
+            }
 
             if (!preferences.isChainEnabled(viewerUuid, viewerChainType)) {
                 viewer.queueUpdate(entityRef, EMPTY_UPDATE);
@@ -343,7 +363,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 continue;
             }
 
-            if (preferences.isOnlyShowWhenLooking(viewerUuid, "*")
+            if (!isPlayer && preferences.isOnlyShowWhenLooking(viewerUuid, "*")
                     && !isLookingAt(store, viewerRef, entityRef)) {
                 viewer.queueUpdate(entityRef, EMPTY_UPDATE);
                 if (anchorRef != null) {
@@ -362,7 +382,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 List<SegmentKey> chain = preferences.getChain(chainUuid, preferenceEntityType, available, defaultComparator);
                 String text = buildText(chain, entityData, chainUuid, preferenceEntityType, store, entityRef, segments);
                 if (text.isEmpty()) {
-                    textUpdate = NO_DATA_UPDATE;
+                    textUpdate = EMPTY_UPDATE;
                 } else {
                     textUpdate = nameplateUpdate(text);
                 }

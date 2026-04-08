@@ -74,8 +74,10 @@ NameplateBuilder/
 
 For each visible entity with `NameplateData`:
 
-1. Check per-viewer Enable Nameplates toggle - skip entirely if disabled for this viewer
-2. Resolve segment keys from the component (skip `_`-prefixed and admin-disabled keys)
+1. Check per-viewer Enable Nameplates toggle - skip entirely if disabled for this viewer (sends EMPTY_UPDATE immediately when disabled)
+2. Check crouch state via `MovementStatesComponent.crouching` - skip player entities that are crouching
+3. Check regex pattern blacklist - skip NPC entities whose role name matches any configured pattern
+4. Resolve segment keys from the component (skip `_`-prefixed and admin-disabled keys)
 3. Apply viewer preferences: ordering, enabled/disabled, format variants
 4. Resolve variant text: check suffixed key, fall back to base key
 5. Apply prefix/suffix wrapping and bar fill replacement
@@ -111,9 +113,13 @@ When a player configures a vertical offset for **NPC** entities:
 
 **Player entities** always use vanilla client-side nameplate rendering and never create anchor entities, regardless of offset configuration. This ensures zero lag for player nameplates.
 
+### Crouch Detection
+
+Player nameplates are hidden when the player is crouching. The aggregator checks `MovementStatesComponent.crouching` on the target entity each tick. When `crouching` is true, the nameplate is replaced with an empty update for all viewers.
+
 ### View-Cone Filtering
 
-When enabled per-viewer:
+When enabled per-viewer (applies to NPC nameplates only - player nameplates are always visible):
 
 1. Dot-product math checks if the viewer is looking at the entity
 2. ~25 degree half-angle cone, up to 30 blocks range
