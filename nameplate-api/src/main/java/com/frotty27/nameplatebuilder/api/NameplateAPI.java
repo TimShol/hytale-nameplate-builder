@@ -46,6 +46,14 @@ public final class NameplateAPI {
         getRegistry().undefine(plugin, segmentId);
     }
 
+    public static void override(JavaPlugin plugin, String segmentId, String description, SegmentResolver resolver) {
+        requireNonNull(plugin, "plugin");
+        requireNonBlank(segmentId, "segmentId");
+        requireNonBlank(description, "description");
+        requireNonNull(resolver, "resolver");
+        getRegistry().override(plugin, segmentId, description, resolver);
+    }
+
     public static void defineVariants(JavaPlugin plugin, String segmentId, List<String> variantNames) {
         requireNonNull(plugin, "plugin");
         requireNonBlank(segmentId, "segmentId");

@@ -14,4 +14,6 @@ public interface SegmentBuilder {
     SegmentBuilder enabledByDefault();
 
     SegmentBuilder enabledByDefault(SegmentTarget target);
+
+    SegmentBuilder overridable();
 }

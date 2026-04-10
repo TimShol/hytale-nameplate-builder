@@ -2,6 +2,24 @@
 
 All notable changes to NameplateBuilder Server will be documented in this file.
 
+## [4.260326.7] - 2026-04-10
+
+### New for Mod Developers
+- **Overridable segments** - Mods can now provide context-specific names for entities. For example, a pet naming mod can make "Entity Name" show your pet's custom name instead of the NPC type. See the API changelog and docs for details
+- Entity Name and Player Name can be overridden by other mods. Health, Stamina, and Mana cannot since these are "factual" values
+
+### UI
+- When a segment has overrides from other mods, an "Overrides" button appears on the chain block showing which mods provide values
+- The admin chain editor now shows a warning when the chain is not locked, reminding that changes won't apply to players until locked
+
+### Improved
+- NPC names are now cleaned up: internal suffixes like Patrol, Wander, Guard, Idle are stripped (e.g. "Skeleton Fighter Wander" now shows as "Skeleton Fighter")
+
+### Bug Fixes
+- Fixed a crash when rapidly adjusting the vertical offset slider
+
+---
+
 ## [4.260326.6] - 2026-04-08
 
 ### UI Improvements

@@ -4,9 +4,45 @@ icon: flask
 description: Hidden keys, cleanup, undefine, and common mistakes.
 ---
 
-<Info>This documentation is written for **NameplateBuilder >= v4.260326.6** with **API >= v2.1.0**.</Info>
+<Info>This documentation is written for **NameplateBuilder >= v4.260326.7** with **API >= v2.2.0**.</Info>
 
 This page covers features you'll rarely need, but are good to know about.
+
+## Replacing Built-in Segments
+
+When your mod provides a better name for an entity than the default role name, use `replaces()` to automatically hide the built-in segment on entities where your segment has a value. On all other entities, the built-in segment shows normally.
+
+**Why this exists:** NameplateBuilder uses one chain per entity type (NPC/Player). All NPCs share the same chain. Without `replaces`, a player who has both "Entity Name" and "Pet Name" in their chain would see `Bear - Fluffy` on a named pet. With `replaces`, they see just `Fluffy` on the pet and `Bear` on wild NPCs - without changing anything in their chain.
+
+```java
+NameplateAPI.define(this, "pet-name", "Pet Name",
+        SegmentTarget.NPCS, "Fluffy")
+    .replaces("entity-name")
+    .enabledByDefault(SegmentTarget.NPCS)
+    .resolver((store, entityRef, variantIndex) -> {
+        var name = store.getComponent(entityRef, petNameType);
+        return name != null ? name.getName() : null;
+    });
+```
+
+**How it works:**
+- When your resolver returns a value (e.g. `"Fluffy"`) for an entity, the target segment (`entity-name`) is hidden for that entity
+- When your resolver returns `null` (entity has no pet name), the target segment shows normally
+- The replacement is per-entity - it only affects entities where your segment has a value
+- Players do not need to change their chain. Both segments can be in the chain, and the right one shows automatically
+- Multiple segments can replace the same target. They all show - only the target is hidden
+
+**Restrictions:**
+- `replaces()` can only target NameplateBuilder's built-in segments: `entity-name`, `player-name`, `health`, `stamina`, `mana`
+- A segment cannot replace itself
+- Circular replacements (A replaces B, B replaces A) are safe - neither gets suppressed
+
+**When to use it:** When your segment provides a context-specific version of information that a built-in segment already shows. Common examples:
+- A pet naming mod replacing `entity-name` with the pet's custom name
+- A disguise mod replacing `player-name` with a fake name
+- A shield mod replacing `health` with a combined health+shield display
+
+**When NOT to use it:** When your segment shows additional information alongside the built-in (like elite tier, guild tag, or buff icons). Those should be separate segments in the chain, not replacements.
 
 ## Default Segments
 
@@ -123,7 +159,7 @@ commandBuffer.putComponent(entityRef, nameplateDataType, data);
 ```json
 {
   "Dependencies": {
-    "Frotty27:NameplateBuilder": ">=4.260326.6"
+    "Frotty27:NameplateBuilder": ">=4.260326.7"
   }
 }
 ```

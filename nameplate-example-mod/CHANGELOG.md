@@ -2,7 +2,17 @@
 
 All notable changes to NameplateBuilder Example Mod will be documented in this file.
 
-## [4.260326.2] - 2026-03-31
+## [4.260326.2] - 2026-04-10
+
+### Added
+- Demonstrates `NameplateAPI.override()` - registers an override provider for `entity-name` that renames Archaeopteryx NPCs to "Archie"
+
+### Changed
+- Updated to NameplateBuilder API v2.2.0
+
+---
+
+## [4.260326.1] - 2026-03-31
 
 ### Changed
 - Updated to NameplateBuilder API v2.0.0

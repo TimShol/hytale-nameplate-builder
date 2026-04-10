@@ -175,17 +175,7 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
                         || statMap.get(DefaultEntityStatTypes.getMana()) != null;
                 if (hasStats) {
                     NameplateData data = new NameplateData();
-                    String entityName = null;
-                    if (npcEntity != null) {
-                        String roleName = npcEntity.getRoleName();
-                        if (roleName != null && !roleName.isBlank()) {
-                            entityName = roleName.replace('_', ' ');
-                        }
-                    }
-                    if (entityName != null && !entityName.isBlank()) {
-                        data.setText(SEGMENT_ENTITY_NAME, entityName);
-                        adminConfig.trackNamespaceSegment("hytale", SEGMENT_ENTITY_NAME, true);
-                    }
+                    adminConfig.trackNamespaceSegment("hytale", SEGMENT_ENTITY_NAME, true);
                     setStatText(data, statMap, DefaultEntityStatTypes.getHealth(),
                             SEGMENT_HEALTH, SEGMENT_HEALTH_PCT, SEGMENT_HEALTH_BAR);
                     setStatText(data, statMap, DefaultEntityStatTypes.getStamina(),
@@ -196,7 +186,7 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
                     adminConfig.trackNamespaceSegment("hytale", SEGMENT_STAMINA, true);
                     adminConfig.trackNamespaceSegment("hytale", SEGMENT_MANA, true);
                     commandBuffer.putComponent(entityRef, nameplateDataType, data);
-                    if (debugEnabled) LOGGER.atInfo().log("[Seed] SEEDED NPC with stats: name=%s", entityName);
+                    if (debugEnabled) LOGGER.atInfo().log("[Seed] SEEDED NPC with stats");
                     return;
                 }
             }
@@ -219,12 +209,6 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
     }
 
     private void seedPlayerDefaults(NameplateData data, Player player, EntityStatMap statMap) {
-        String displayName = player.getDisplayName();
-        if (displayName != null && !displayName.isBlank()) {
-            data.setText(SEGMENT_PLAYER_NAME, displayName);
-        }
-        data.setText(SEGMENT_PLAYER_NAME_ANON, "Player");
-
         if (statMap != null) {
             setStatText(data, statMap, DefaultEntityStatTypes.getHealth(),
                     SEGMENT_HEALTH, SEGMENT_HEALTH_PCT, SEGMENT_HEALTH_BAR);
@@ -238,27 +222,6 @@ final class DefaultSegmentSystem extends EntityTickingSystem<EntityStore> {
     private void updateBuiltInSegments(NameplateData data, Player player,
                                        Store<EntityStore> store, Ref<EntityStore> entityRef,
                                        EntityStatMap statMap) {
-        if (player == null) {
-            String existingName = data.getText(SEGMENT_ENTITY_NAME);
-            if (existingName == null || existingName.isBlank()) {
-                NPCEntity npcEntity = store.getComponent(entityRef, npcEntityType);
-                if (npcEntity != null) {
-                    String roleName = npcEntity.getRoleName();
-                    if (roleName != null && !roleName.isBlank()) {
-                        data.setText(SEGMENT_ENTITY_NAME, roleName.replace('_', ' '));
-                    }
-                }
-            }
-        }
-
-        if (player != null) {
-            String displayName = player.getDisplayName();
-            if (displayName != null && !displayName.isBlank()) {
-                data.setText(SEGMENT_PLAYER_NAME, displayName);
-            }
-            data.setText(SEGMENT_PLAYER_NAME_ANON, "Player");
-        }
-
         if (statMap != null) {
             if (data.getText(SEGMENT_HEALTH) != null || statMap.get(DefaultEntityStatTypes.getHealth()) != null) {
                 setStatTextIfChanged(data, statMap, DefaultEntityStatTypes.getHealth(),

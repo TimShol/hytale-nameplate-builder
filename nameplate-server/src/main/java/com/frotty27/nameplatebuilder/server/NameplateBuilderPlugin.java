@@ -18,10 +18,7 @@ import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public final class NameplateBuilderPlugin extends JavaPlugin {
 
@@ -68,17 +65,19 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
 
         registry.defineBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_ENTITY_NAME,
                 "Entity Name", SegmentTarget.NPCS, "Archaeopteryx")
+                .overridable()
                 .requires(npcEntityType)
-                .resolver((store, entityRef, _variantIndex) -> {
+                .resolver((store, entityRef, _) -> {
                     NPCEntity npcEntity = store.getComponent(entityRef, npcEntityType);
                     if (npcEntity == null) return null;
                     String roleName = npcEntity.getRoleName();
                     if (roleName == null || roleName.isBlank()) return null;
-                    return roleName.replace('_', ' ');
+                    return cleanRoleName(roleName);
                 });
 
         registry.defineBuiltIn(pluginId, DefaultSegmentSystem.SEGMENT_PLAYER_NAME,
                 "Player Name", SegmentTarget.PLAYERS, "Frotty27")
+                .overridable()
                 .requires(playerType)
                 .resolver((store, entityRef, variantIndex) -> {
                     Player player = store.getComponent(entityRef, playerType);
@@ -200,6 +199,26 @@ public final class NameplateBuilderPlugin extends JavaPlugin {
     }
 
     private static final int BAR_LENGTH = 20;
+
+    private static final Set<String> ROLE_NOISE = Set.of("patrol", "wander", "guard", "idle", "big", "small");
+
+    private static String cleanRoleName(String roleName) {
+        String[] parts = roleName.split("_");
+        int end = parts.length;
+        while (end > 1 && ROLE_NOISE.contains(parts[end - 1].toLowerCase(java.util.Locale.ROOT))) {
+            end--;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < end; i++) {
+            if (!sb.isEmpty()) sb.append(' ');
+            String part = parts[i];
+            if (!part.isEmpty()) {
+                sb.append(Character.toUpperCase(part.charAt(0)));
+                if (part.length() > 1) sb.append(part.substring(1));
+            }
+        }
+        return sb.isEmpty() ? roleName.replace('_', ' ') : sb.toString();
+    }
 
     private static String formatStat(EntityStatValue stat, int variantIndex) {
         if (stat == null) return null;

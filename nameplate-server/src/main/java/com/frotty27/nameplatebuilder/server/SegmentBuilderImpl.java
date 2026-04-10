@@ -35,7 +35,8 @@ final class SegmentBuilderImpl implements SegmentBuilder {
                     existing.pluginId(), existing.pluginName(), existing.pluginAuthor(),
                     existing.displayName(), existing.target(), existing.example(),
                     existing.variants(), existing.builtIn(), existing.supportsPrefixSuffix(),
-                    resolver, existing.requiredComponent(), existing.cacheTicks(), existing.enabledByDefault()));
+                    resolver, existing.requiredComponent(), existing.cacheTicks(), existing.enabledByDefault(),
+                    existing.overridable()));
             version.incrementAndGet();
         }
         return this;
@@ -49,7 +50,8 @@ final class SegmentBuilderImpl implements SegmentBuilder {
                     existing.pluginId(), existing.pluginName(), existing.pluginAuthor(),
                     existing.displayName(), existing.target(), existing.example(),
                     existing.variants(), existing.builtIn(), existing.supportsPrefixSuffix(),
-                    existing.resolver(), componentType, existing.cacheTicks(), existing.enabledByDefault()));
+                    existing.resolver(), componentType, existing.cacheTicks(), existing.enabledByDefault(),
+                    existing.overridable()));
             version.incrementAndGet();
         }
         return this;
@@ -63,7 +65,8 @@ final class SegmentBuilderImpl implements SegmentBuilder {
                     existing.pluginId(), existing.pluginName(), existing.pluginAuthor(),
                     existing.displayName(), existing.target(), existing.example(),
                     existing.variants(), existing.builtIn(), existing.supportsPrefixSuffix(),
-                    existing.resolver(), existing.requiredComponent(), Math.max(1, ticks), existing.enabledByDefault()));
+                    existing.resolver(), existing.requiredComponent(), Math.max(1, ticks), existing.enabledByDefault(),
+                    existing.overridable()));
             version.incrementAndGet();
         }
         return this;
@@ -95,7 +98,23 @@ final class SegmentBuilderImpl implements SegmentBuilder {
                     existing.pluginId(), existing.pluginName(), existing.pluginAuthor(),
                     existing.displayName(), existing.target(), existing.example(),
                     existing.variants(), existing.builtIn(), existing.supportsPrefixSuffix(),
-                    existing.resolver(), existing.requiredComponent(), existing.cacheTicks(), target));
+                    existing.resolver(), existing.requiredComponent(), existing.cacheTicks(), target,
+                    existing.overridable()));
+            version.incrementAndGet();
+        }
+        return this;
+    }
+
+    @Override
+    public SegmentBuilder overridable() {
+        NameplateRegistry.Segment existing = segments.get(key);
+        if (existing != null) {
+            segments.put(key, new NameplateRegistry.Segment(
+                    existing.pluginId(), existing.pluginName(), existing.pluginAuthor(),
+                    existing.displayName(), existing.target(), existing.example(),
+                    existing.variants(), existing.builtIn(), existing.supportsPrefixSuffix(),
+                    existing.resolver(), existing.requiredComponent(), existing.cacheTicks(), existing.enabledByDefault(),
+                    true));
             version.incrementAndGet();
         }
         return this;

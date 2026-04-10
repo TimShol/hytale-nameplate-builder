@@ -2,6 +2,19 @@
 
 All notable changes to NameplateBuilder API will be documented in this file.
 
+## [2.2.0] - 2026-04-10
+
+### Added
+- `SegmentBuilder.overridable()` - marks a segment as accepting override providers from other mods
+- `NameplateAPI.override(plugin, segmentId, description, resolver)` - registers an override provider for an overridable segment. The provider's resolver is checked first per entity; if it returns null, the original resolver handles it
+- `INameplateRegistry.override()` - registry-level override registration method
+
+### Notes
+- Override providers are intended for identity segments (names) where a mod has context-specific knowledge (e.g. a pet naming mod overriding entity-name with the pet's custom name)
+- Only segments marked as `overridable()` accept overrides. Attempting to override a non-overridable segment logs a warning and is ignored
+
+---
+
 ## [2.1.0] - 2026-04-08
 
 ### Added

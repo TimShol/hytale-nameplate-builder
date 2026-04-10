@@ -76,5 +76,3 @@ See the [Quick Start guide](https://docs.nameplatebuilder.frotty27.com/modding/q
 ## Additional Files
 
 The download includes the `-javadoc.jar` and `-sources.jar` alongside the main API jar. Place all three in your `libs/` folder for full IDE support (autocomplete, inline docs, click-to-source).
-
-***

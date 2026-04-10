@@ -21,4 +21,6 @@ public interface INameplateRegistry {
     void undefine(JavaPlugin plugin, String segmentId);
 
     void undefineAll(JavaPlugin plugin);
+
+    void override(JavaPlugin plugin, String segmentId, String description, SegmentResolver resolver);
 }

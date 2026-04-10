@@ -424,6 +424,13 @@ $C.@PageOverlay {
               Visible: false;
             }
 
+            Label #AdminUnlockedNotice {
+              Text: "This chain is not locked. Changes here won't apply to players until you lock it.";
+              Style: (TextColor: #c9a84c, FontSize: 12);
+              Anchor: (Height: 20, Bottom: 8);
+              Visible: false;
+            }
+
             Group {
               LayoutMode: Left;
               Anchor: (Height: 20, Bottom: 4);
@@ -492,7 +499,8 @@ $C.@PageOverlay {
       Group { FlexWeight: 1; }
       Group { LayoutMode: Left; Anchor: (Height: 25);
         $C.@SmallSecondaryTextButton #ChainBlock0Left { @Text = "<"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment left"; TextTooltipShowDelay: 0.3; }
-        Group { FlexWeight: 1; }
+        Group #ChainBlock0OverridesWrap { FlexWeight: 1; Visible: false; TextButton #ChainBlock0Overrides { Text: ""; Anchor: (Height: 25); Style: @FormatButtonStyle; TooltipText: "View override providers"; TextTooltipShowDelay: 0.3; FlexWeight: 1; } }
+        Group #ChainBlock0ArrowSpacer { FlexWeight: 1; }
         $C.@SmallSecondaryTextButton #ChainBlock0Right { @Text = ">"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment right"; TextTooltipShowDelay: 0.3; }
       }
       Group { Anchor: (Height: 4); }
@@ -524,7 +532,8 @@ $C.@PageOverlay {
       Group { FlexWeight: 1; }
       Group { LayoutMode: Left; Anchor: (Height: 25);
         $C.@SmallSecondaryTextButton #ChainBlock1Left { @Text = "<"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment left"; TextTooltipShowDelay: 0.3; }
-        Group { FlexWeight: 1; }
+        Group #ChainBlock1OverridesWrap { FlexWeight: 1; Visible: false; TextButton #ChainBlock1Overrides { Text: ""; Anchor: (Height: 25); Style: @FormatButtonStyle; TooltipText: "View override providers"; TextTooltipShowDelay: 0.3; FlexWeight: 1; } }
+        Group #ChainBlock1ArrowSpacer { FlexWeight: 1; }
         $C.@SmallSecondaryTextButton #ChainBlock1Right { @Text = ">"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment right"; TextTooltipShowDelay: 0.3; }
       }
       Group { Anchor: (Height: 4); }
@@ -556,7 +565,8 @@ $C.@PageOverlay {
       Group { FlexWeight: 1; }
       Group { LayoutMode: Left; Anchor: (Height: 25);
         $C.@SmallSecondaryTextButton #ChainBlock2Left { @Text = "<"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment left"; TextTooltipShowDelay: 0.3; }
-        Group { FlexWeight: 1; }
+        Group #ChainBlock2OverridesWrap { FlexWeight: 1; Visible: false; TextButton #ChainBlock2Overrides { Text: ""; Anchor: (Height: 25); Style: @FormatButtonStyle; TooltipText: "View override providers"; TextTooltipShowDelay: 0.3; FlexWeight: 1; } }
+        Group #ChainBlock2ArrowSpacer { FlexWeight: 1; }
         $C.@SmallSecondaryTextButton #ChainBlock2Right { @Text = ">"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment right"; TextTooltipShowDelay: 0.3; }
       }
       Group { Anchor: (Height: 4); }
@@ -588,7 +598,8 @@ $C.@PageOverlay {
       Group { FlexWeight: 1; }
       Group { LayoutMode: Left; Anchor: (Height: 25);
         $C.@SmallSecondaryTextButton #ChainBlock3Left { @Text = "<"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment left"; TextTooltipShowDelay: 0.3; }
-        Group { FlexWeight: 1; }
+        Group #ChainBlock3OverridesWrap { FlexWeight: 1; Visible: false; TextButton #ChainBlock3Overrides { Text: ""; Anchor: (Height: 25); Style: @FormatButtonStyle; TooltipText: "View override providers"; TextTooltipShowDelay: 0.3; FlexWeight: 1; } }
+        Group #ChainBlock3ArrowSpacer { FlexWeight: 1; }
         $C.@SmallSecondaryTextButton #ChainBlock3Right { @Text = ">"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment right"; TextTooltipShowDelay: 0.3; }
       }
       Group { Anchor: (Height: 4); }
@@ -620,7 +631,8 @@ $C.@PageOverlay {
       Group { FlexWeight: 1; }
       Group { LayoutMode: Left; Anchor: (Height: 25);
         $C.@SmallSecondaryTextButton #ChainBlock4Left { @Text = "<"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment left"; TextTooltipShowDelay: 0.3; }
-        Group { FlexWeight: 1; }
+        Group #ChainBlock4OverridesWrap { FlexWeight: 1; Visible: false; TextButton #ChainBlock4Overrides { Text: ""; Anchor: (Height: 25); Style: @FormatButtonStyle; TooltipText: "View override providers"; TextTooltipShowDelay: 0.3; FlexWeight: 1; } }
+        Group #ChainBlock4ArrowSpacer { FlexWeight: 1; }
         $C.@SmallSecondaryTextButton #ChainBlock4Right { @Text = ">"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment right"; TextTooltipShowDelay: 0.3; }
       }
       Group { Anchor: (Height: 4); }
@@ -652,7 +664,8 @@ $C.@PageOverlay {
       Group { FlexWeight: 1; }
       Group { LayoutMode: Left; Anchor: (Height: 25);
         $C.@SmallSecondaryTextButton #ChainBlock5Left { @Text = "<"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment left"; TextTooltipShowDelay: 0.3; }
-        Group { FlexWeight: 1; }
+        Group #ChainBlock5OverridesWrap { FlexWeight: 1; Visible: false; TextButton #ChainBlock5Overrides { Text: ""; Anchor: (Height: 25); Style: @FormatButtonStyle; TooltipText: "View override providers"; TextTooltipShowDelay: 0.3; FlexWeight: 1; } }
+        Group #ChainBlock5ArrowSpacer { FlexWeight: 1; }
         $C.@SmallSecondaryTextButton #ChainBlock5Right { @Text = ">"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment right"; TextTooltipShowDelay: 0.3; }
       }
       Group { Anchor: (Height: 4); }
@@ -684,7 +697,8 @@ $C.@PageOverlay {
       Group { FlexWeight: 1; }
       Group { LayoutMode: Left; Anchor: (Height: 25);
         $C.@SmallSecondaryTextButton #ChainBlock6Left { @Text = "<"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment left"; TextTooltipShowDelay: 0.3; }
-        Group { FlexWeight: 1; }
+        Group #ChainBlock6OverridesWrap { FlexWeight: 1; Visible: false; TextButton #ChainBlock6Overrides { Text: ""; Anchor: (Height: 25); Style: @FormatButtonStyle; TooltipText: "View override providers"; TextTooltipShowDelay: 0.3; FlexWeight: 1; } }
+        Group #ChainBlock6ArrowSpacer { FlexWeight: 1; }
         $C.@SmallSecondaryTextButton #ChainBlock6Right { @Text = ">"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment right"; TextTooltipShowDelay: 0.3; }
       }
       Group { Anchor: (Height: 4); }
@@ -716,7 +730,8 @@ $C.@PageOverlay {
       Group { FlexWeight: 1; }
       Group { LayoutMode: Left; Anchor: (Height: 25);
         $C.@SmallSecondaryTextButton #ChainBlock7Left { @Text = "<"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment left"; TextTooltipShowDelay: 0.3; }
-        Group { FlexWeight: 1; }
+        Group #ChainBlock7OverridesWrap { FlexWeight: 1; Visible: false; TextButton #ChainBlock7Overrides { Text: ""; Anchor: (Height: 25); Style: @FormatButtonStyle; TooltipText: "View override providers"; TextTooltipShowDelay: 0.3; FlexWeight: 1; } }
+        Group #ChainBlock7ArrowSpacer { FlexWeight: 1; }
         $C.@SmallSecondaryTextButton #ChainBlock7Right { @Text = ">"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment right"; TextTooltipShowDelay: 0.3; }
       }
       Group { Anchor: (Height: 4); }
@@ -748,7 +763,8 @@ $C.@PageOverlay {
       Group { FlexWeight: 1; }
       Group { LayoutMode: Left; Anchor: (Height: 25);
         $C.@SmallSecondaryTextButton #ChainBlock8Left { @Text = "<"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment left"; TextTooltipShowDelay: 0.3; }
-        Group { FlexWeight: 1; }
+        Group #ChainBlock8OverridesWrap { FlexWeight: 1; Visible: false; TextButton #ChainBlock8Overrides { Text: ""; Anchor: (Height: 25); Style: @FormatButtonStyle; TooltipText: "View override providers"; TextTooltipShowDelay: 0.3; FlexWeight: 1; } }
+        Group #ChainBlock8ArrowSpacer { FlexWeight: 1; }
         $C.@SmallSecondaryTextButton #ChainBlock8Right { @Text = ">"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment right"; TextTooltipShowDelay: 0.3; }
       }
       Group { Anchor: (Height: 4); }
@@ -780,7 +796,8 @@ $C.@PageOverlay {
       Group { FlexWeight: 1; }
       Group { LayoutMode: Left; Anchor: (Height: 25);
         $C.@SmallSecondaryTextButton #ChainBlock9Left { @Text = "<"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment left"; TextTooltipShowDelay: 0.3; }
-        Group { FlexWeight: 1; }
+        Group #ChainBlock9OverridesWrap { FlexWeight: 1; Visible: false; TextButton #ChainBlock9Overrides { Text: ""; Anchor: (Height: 25); Style: @FormatButtonStyle; TooltipText: "View override providers"; TextTooltipShowDelay: 0.3; FlexWeight: 1; } }
+        Group #ChainBlock9ArrowSpacer { FlexWeight: 1; }
         $C.@SmallSecondaryTextButton #ChainBlock9Right { @Text = ">"; Anchor: (Width: 25, Height: 25); TooltipText: "Move segment right"; TextTooltipShowDelay: 0.3; }
       }
       Group { Anchor: (Height: 4); }
@@ -3671,6 +3688,45 @@ $C.@PageOverlay {
 
       TextButton #VariantCancel { Text: "Cancel"; Anchor: (Height: 36, Bottom: 4); Style: @PaginationButtonStyle; }
       TextButton #VariantConfirm { Text: "Confirm"; Anchor: (Height: 36); Style: @SaveButtonStyle; }
+    }
+  }
+
+  Group #OverridesPopupOverlay {
+    Anchor: (Width: 1080, Height: 780);
+    Background: (Color: #00000080);
+    Visible: false;
+
+    Group {
+      Anchor: (Width: 340, Height: 360);
+      Background: (Color: #141c26);
+      LayoutMode: Top;
+      Padding: (Left: 20, Right: 20, Top: 16, Bottom: 16);
+
+      Label #OverridesTitle { Text: "Overrides"; Style: (TextColor: #96a9be, FontSize: 16, RenderBold: true, HorizontalAlignment: Center); Anchor: (Height: 26, Bottom: 6); }
+      Label { Text: "Mods can override this segment per entity."; Style: (TextColor: #5a6d82, FontSize: 12, HorizontalAlignment: Center); Anchor: (Height: 20, Bottom: 12); }
+
+      Group { Anchor: (Height: 1, Bottom: 10); Background: (Color: #2a3a4e); }
+
+      Group #OverrideRow0 { LayoutMode: Top; Anchor: (Height: 40, Bottom: 4); Visible: false;
+        Label #OverrideMod0 { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+        Label #OverrideDesc0 { Style: (FontSize: 12, TextColor: #5a6d82); Anchor: (Height: 16); }
+      }
+      Group #OverrideRow1 { LayoutMode: Top; Anchor: (Height: 40, Bottom: 4); Visible: false;
+        Label #OverrideMod1 { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+        Label #OverrideDesc1 { Style: (FontSize: 12, TextColor: #5a6d82); Anchor: (Height: 16); }
+      }
+      Group #OverrideRow2 { LayoutMode: Top; Anchor: (Height: 40, Bottom: 4); Visible: false;
+        Label #OverrideMod2 { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+        Label #OverrideDesc2 { Style: (FontSize: 12, TextColor: #5a6d82); Anchor: (Height: 16); }
+      }
+      Group #OverrideRow3 { LayoutMode: Top; Anchor: (Height: 40, Bottom: 4); Visible: false;
+        Label #OverrideMod3 { Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); Anchor: (Height: 18); }
+        Label #OverrideDesc3 { Style: (FontSize: 12, TextColor: #5a6d82); Anchor: (Height: 16); }
+      }
+
+      Group { FlexWeight: 1; }
+
+      TextButton #OverridesClose { Text: "Close"; Anchor: (Height: 36); Style: @PaginationButtonStyle; }
     }
   }
 

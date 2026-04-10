@@ -4,7 +4,7 @@ icon: arrows-rotate
 description: Upgrade your mod to the latest NameplateBuilder API version.
 ---
 
-<Info>This documentation is written for **NameplateBuilder >= v4.260326.6** with **API >= v2.1.0**.</Info>
+<Info>This documentation is written for **NameplateBuilder >= v4.260326.7** with **API >= v2.2.0**.</Info>
 
 Select your current API version below to see what needs to change.
 
@@ -25,7 +25,7 @@ Select your current API version below to see what needs to change.
     **`build.gradle`:**
     ```groovy
     dependencies {
-        compileOnly files('libs/NameplateBuilder-API-2.1.0.jar')
+        compileOnly files('libs/NameplateBuilder-API-2.2.0.jar')
     }
     ```
 
@@ -33,7 +33,7 @@ Select your current API version below to see what needs to change.
     ```json
     {
       "Dependencies": {
-        "Frotty27:NameplateBuilder": ">=4.260326.6"
+        "Frotty27:NameplateBuilder": ">=4.260326.7"
       }
     }
     ```
@@ -144,8 +144,8 @@ Select your current API version below to see what needs to change.
 
     | What | Required? | Action |
     | :--- | :--- | :--- |
-    | API jar | Yes | Replace with `NameplateBuilder-API-2.1.0.jar` |
-    | Manifest version | Yes | Change to `">=4.260326.6"` |
+    | API jar | Yes | Replace with `NameplateBuilder-API-2.2.0.jar` |
+    | Manifest version | Yes | Change to `">=4.260326.7"` |
     | Rename 5 methods | Yes | `describe` -> `define`, `register` -> `setText`, `remove` -> `clearText`, etc. |
     | Switch tick systems to resolvers | Recommended | Replace component-reading tick systems with `.resolver()` |
     | Keep `setText()` for external data | Keep as-is | No change needed for event/command/database-driven segments |
@@ -170,7 +170,7 @@ Select your current API version below to see what needs to change.
     **`build.gradle`:**
     ```groovy
     dependencies {
-        compileOnly files('libs/NameplateBuilder-API-2.1.0.jar')
+        compileOnly files('libs/NameplateBuilder-API-2.2.0.jar')
     }
     ```
 
@@ -178,7 +178,7 @@ Select your current API version below to see what needs to change.
     ```json
     {
       "Dependencies": {
-        "Frotty27:NameplateBuilder": ">=4.260326.6"
+        "Frotty27:NameplateBuilder": ">=4.260326.7"
       }
     }
     ```
@@ -213,12 +213,70 @@ Select your current API version below to see what needs to change.
 
     | What | Required? | Action |
     | :--- | :--- | :--- |
-    | API jar | Yes | Replace with `NameplateBuilder-API-2.1.0.jar` |
-    | Manifest version | Yes | Change to `">=4.260326.6"` |
+    | API jar | Yes | Replace with `NameplateBuilder-API-2.2.0.jar` |
+    | Manifest version | Yes | Change to `">=4.260326.7"` |
     | `enabledByDefault()` | Optional | Chain onto `define()` for up to 3 segments per mod |
 
   </Tab>
-  <Tab title="Already on 2.1.0">
+  <Tab title="From API 2.1.0 to 2.2.0">
+
+    ## What Changed
+
+    API 2.2.0 is a backward-compatible addition. Existing 2.1.0 code compiles and runs without changes. One new method was added to `SegmentBuilder`:
+
+    1. **`replaces(String segmentId)`** - when your segment has a value for an entity, the target built-in segment is hidden for that entity
+
+    This only targets NameplateBuilder's built-in segments: `entity-name`, `player-name`, `health`, `stamina`, `mana`.
+
+    ## Step 1: Update Dependencies
+
+    Replace the API jar in your `libs/` folder and update both files:
+
+    **`build.gradle`:**
+    ```groovy
+    dependencies {
+        compileOnly files('libs/NameplateBuilder-API-2.2.0.jar')
+    }
+    ```
+
+    **`manifest.json`:**
+    ```json
+    {
+      "Dependencies": {
+        "Frotty27:NameplateBuilder": ">=4.260326.7"
+      }
+    }
+    ```
+
+    ## Step 2: Use `replaces()` (Optional)
+
+    If your segment provides a context-specific version of a built-in segment (like a pet name replacing the entity name), chain `replaces()` onto your `define()` call:
+
+    ```java
+    NameplateAPI.define(this, "pet-name", "Pet Name",
+            SegmentTarget.NPCS, "Fluffy")
+        .replaces("entity-name")
+        .enabledByDefault(SegmentTarget.NPCS)
+        .resolver((store, entityRef, variantIndex) -> {
+            var name = store.getComponent(entityRef, petNameType);
+            return name != null ? name.getName() : null;
+        });
+    ```
+
+    When the resolver returns a value, `entity-name` is hidden for that entity. When it returns `null`, `entity-name` shows normally. Players don't need to change anything in their chain.
+
+    See [Advanced - Replacing Built-in Segments](/modding/advanced#replacing-built-in-segments) for full details.
+
+    ## Summary
+
+    | What | Required? | Action |
+    | :--- | :--- | :--- |
+    | API jar | Yes | Replace with `NameplateBuilder-API-2.2.0.jar` |
+    | Manifest version | Yes | Change to `">=4.260326.7"` |
+    | `replaces()` | Optional | Chain onto `define()` to replace a built-in segment per-entity |
+
+  </Tab>
+  <Tab title="Already on 2.2.0">
 
     ## You're up to date
 

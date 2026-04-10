@@ -4,7 +4,7 @@ icon: terminal
 description: Complete method tables for NameplateAPI, SegmentBuilder, SegmentResolver, NameplateData, and related types.
 ---
 
-<Info>This documentation is written for **NameplateBuilder >= v4.260326.6** with **API >= v2.1.0**.</Info>
+<Info>This documentation is written for **NameplateBuilder >= v4.260326.7** with **API >= v2.2.0**.</Info>
 
 ## NameplateAPI - Static Methods
 
@@ -63,6 +63,7 @@ Returned by `define()`. Methods chain fluently and write through to the registry
 | `cacheTicks(ticks)` | `SegmentBuilder` | How many ticks to cache the resolver result per entity. Default: 1 (every tick). |
 | `enabledByDefault()` | `SegmentBuilder` | Mark this segment as enabled by default on both NPC and Player chains for new players. Max 3 per mod. |
 | `enabledByDefault(target)` | `SegmentBuilder` | Mark this segment as enabled by default on specific chain(s) for new players. Max 3 per mod. |
+| `replaces(segmentId)` | `SegmentBuilder` | When this segment has a value for an entity, hide the target built-in segment for that entity. Only targets built-in segments: `entity-name`, `player-name`, `health`, `stamina`, `mana`. See [Advanced - Replacing Built-in Segments](/modding/advanced#replacing-built-in-segments). |
 
 ## SegmentResolver - Functional Interface
 

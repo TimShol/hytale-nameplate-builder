@@ -94,6 +94,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     private String pendingSepInput = null;
 
     private SegmentKey editingVariantKey = null;
+    private SegmentKey viewingOverridesKey = null;
 
     private int pendingVariant = 0;
 
@@ -163,7 +164,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
     }
 
     @Override
-    public void build(@NonNull Ref<EntityStore> ref, UICommandBuilder commands, UIEventBuilder events, @NonNull Store<EntityStore> store) {
+    public void build(@NonNull Ref<EntityStore> ref, UICommandBuilder commands, @NonNull UIEventBuilder events, @NonNull Store<EntityStore> store) {
         commands.append("Pages/NameplateBuilder_Editor.ui");
         try {
             String version = plugin.getManifest().getVersion().toString();
@@ -408,7 +409,9 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
         for (int i = 0; i < MAX_CHAIN_BLOCKS; i++) {
             bindAction(events, "#ChainBlock" + i + "Format", "Format_" + i);
+            bindAction(events, "#ChainBlock" + i + "Overrides", "Overrides_" + i);
         }
+        bindAction(events, "#OverridesClose", "OverridesClose");
 
         for (int i = 0; i < MAX_VARIANT_OPTIONS; i++) {
             bindAction(events, "#Variant" + i, "VariantSelect_" + i);
@@ -1221,9 +1224,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 int row = parseRowIndex(data.action, "PatternRemove_");
                 List<String> patterns = new ArrayList<>(adminConfig.getBlacklistPatterns());
                 patterns.sort(String.CASE_INSENSITIVE_ORDER);
-                int index = row;
-                if (index >= 0 && index < patterns.size()) {
-                    adminConfig.removeBlacklistPattern(patterns.get(index));
+                if (row >= 0 && row < patterns.size()) {
+                    adminConfig.removeBlacklistPattern(patterns.get(row));
                     dirty = true;
                     adminConfig.save();
                 }
@@ -1614,6 +1616,25 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
 
         try {
+            if (data.action.startsWith("Overrides_")) {
+                int row = parseRowIndex(data.action, "Overrides_");
+                SegmentView view = getChainRow(row);
+                if (view != null) {
+                    viewingOverridesKey = view.key();
+                }
+                sendUpdate(buildUpdate());
+                return;
+            }
+            if ("OverridesClose".equals(data.action)) {
+                viewingOverridesKey = null;
+                sendUpdate(buildUpdate());
+                return;
+            }
+        } catch (Throwable e) {
+            LOGGER.atWarning().withCause(e).log("[NPB] Error handling Overrides action");
+        }
+
+        try {
             if (data.action.startsWith("VariantSelect_")) {
                 int variantIndex = parseRowIndex(data.action, "VariantSelect_");
                 if (editingVariantKey != null && variantIndex >= 0) {
@@ -1770,6 +1791,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
 
         commands.set("#SepPopupOverlay.Visible", false);
         commands.set("#VariantPopupOverlay.Visible", false);
+        commands.set("#OverridesPopupOverlay.Visible", false);
         if (!npcPickerOpen) {
             commands.set("#NpcPickerPopup.Visible", false);
         }
@@ -1998,6 +2020,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         }
 
         commands.set("#ChainLockedNotice.Visible", !isAdmin && chainLocked);
+        commands.set("#AdminUnlockedNotice.Visible", isAdminOrder && !chainLocked);
 
         fillChain(commands, chain, chainLocked);
         fillAvailable(commands, available, chainLocked);
@@ -2073,6 +2096,25 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     commands.set("#BarEmptyField.Value", barEmpty);
                 }
 
+            }
+        }
+
+        boolean showOverridesPopup = viewingOverridesKey != null;
+        commands.set("#OverridesPopupOverlay.Visible", showOverridesPopup);
+        if (showOverridesPopup) {
+            NameplateRegistry.Segment overSeg = registry.getSegments().get(viewingOverridesKey);
+            if (overSeg != null) {
+                commands.set("#OverridesTitle.Text", overSeg.displayName() + " Overrides");
+                List<NameplateRegistry.OverrideProvider> overrideList = registry.getOverrides(viewingOverridesKey.segmentId());
+                for (int o = 0; o < 4; o++) {
+                    boolean visible = o < overrideList.size();
+                    commands.set("#OverrideRow" + o + ".Visible", visible);
+                    if (visible) {
+                        NameplateRegistry.OverrideProvider ov = overrideList.get(o);
+                        commands.set("#OverrideMod" + o + ".Text", ov.pluginName());
+                        commands.set("#OverrideDesc" + o + ".Text", ov.description());
+                    }
+                }
             }
         }
     }
@@ -2381,6 +2423,18 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                     commands.set(prefix + "Format.Style.Pressed.Background", "#225530");
                 }
 
+                boolean hasOverrides = chainSeg != null && chainSeg.overridable()
+                        && !registry.getOverrides(view.key().segmentId()).isEmpty();
+                commands.set(prefix + "OverridesWrap.Visible", hasOverrides);
+                commands.set(prefix + "ArrowSpacer.Visible", !hasOverrides);
+                if (hasOverrides) {
+                    int overrideCount = registry.getOverrides(view.key().segmentId()).size();
+                    commands.set(prefix + "Overrides.Text", overrideCount + " Override" + (overrideCount != 1 ? "s" : ""));
+                    commands.set(prefix + "Overrides.Style.Default.Background", "#1a2840");
+                    commands.set(prefix + "Overrides.Style.Hovered.Background", "#2a3a50");
+                    commands.set(prefix + "Overrides.Style.Pressed.Background", "#1a2840");
+                }
+
             } else {
 
                 commands.set(prefix + ".Background.Color", COLOR_CHAIN_EMPTY);
@@ -2389,6 +2443,8 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
                 commands.set(prefix + "Left.Visible", true);
                 commands.set(prefix + "Right.Visible", true);
                 commands.set(prefix + "Format.Visible", false);
+                commands.set(prefix + "OverridesWrap.Visible", false);
+                commands.set(prefix + "ArrowSpacer.Visible", true);
 
                 commands.set("#ChainBlock" + index + ".OutlineColor", "#00000000");
                 commands.set("#ChainBlock" + index + ".OutlineSize", 0);
@@ -2469,7 +2525,7 @@ final class NameplateBuilderPage extends InteractiveCustomUIPage<SettingsData> {
         boolean showOverflow = overflowCount > 0;
         commands.set("#AvailOverflow.Visible", showOverflow);
         if (showOverflow) {
-            commands.set("#AvailOverflow.Text", "and " + overflowCount + " more \u2014 refine your search");
+            commands.set("#AvailOverflow.Text", "and " + overflowCount + " more - refine your search");
         }
     }
 

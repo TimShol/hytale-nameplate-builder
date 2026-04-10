@@ -21,6 +21,7 @@ final class NameplateRegistry implements INameplateRegistry {
     private final Map<String, SegmentKey> segmentIdIndex = new ConcurrentHashMap<>();
     private final AtomicInteger version = new AtomicInteger();
     private final AtomicInteger nextSegmentId = new AtomicInteger(0);
+    private final Map<String, List<OverrideProvider>> overrides = new ConcurrentHashMap<>();
     private final Set<String> integratedModNames = ConcurrentHashMap.newKeySet();
 
     @Override
@@ -42,7 +43,7 @@ final class NameplateRegistry implements INameplateRegistry {
         }
         SegmentKey key = new SegmentKey(pluginId, segmentId, nextSegmentId.getAndIncrement());
         segments.put(key, new Segment(pluginId, pluginName, pluginAuthor, displayName, target, example,
-                List.of(), false, false, null, null, 1, null));
+                List.of(), false, false, null, null, 1, null, false));
         segmentIdIndex.putIfAbsent(segmentId, key);
         version.incrementAndGet();
         String modName = extractModNameFromPluginId(pluginId);
@@ -63,7 +64,7 @@ final class NameplateRegistry implements INameplateRegistry {
         String pluginAuthor = pluginId.contains(":") ? pluginId.substring(0, pluginId.indexOf(':')) : pluginId;
         SegmentKey key = new SegmentKey(pluginId, segmentId, nextSegmentId.getAndIncrement());
         segments.put(key, new Segment(pluginId, pluginName, pluginAuthor, displayName, target, example,
-                List.of(), true, false, null, null, 1, null));
+                List.of(), true, false, null, null, 1, null, false));
         segmentIdIndex.put(segmentId, key);
         version.incrementAndGet();
         return new SegmentBuilderImpl(key, segments, version);
@@ -81,7 +82,8 @@ final class NameplateRegistry implements INameplateRegistry {
             segments.put(key, new Segment(existing.pluginId(), existing.pluginName(), existing.pluginAuthor(),
                     existing.displayName(), existing.target(), existing.example(),
                     List.copyOf(variantNames), existing.builtIn(), existing.supportsPrefixSuffix(),
-                    existing.resolver(), existing.requiredComponent(), existing.cacheTicks(), existing.enabledByDefault()));
+                    existing.resolver(), existing.requiredComponent(), existing.cacheTicks(), existing.enabledByDefault(),
+                    existing.overridable()));
             version.incrementAndGet();
         }
     }
@@ -93,7 +95,8 @@ final class NameplateRegistry implements INameplateRegistry {
             segments.put(key, new Segment(existing.pluginId(), existing.pluginName(), existing.pluginAuthor(),
                     existing.displayName(), existing.target(), existing.example(),
                     List.copyOf(variantNames), existing.builtIn(), existing.supportsPrefixSuffix(),
-                    existing.resolver(), existing.requiredComponent(), existing.cacheTicks(), existing.enabledByDefault()));
+                    existing.resolver(), existing.requiredComponent(), existing.cacheTicks(), existing.enabledByDefault(),
+                    existing.overridable()));
             version.incrementAndGet();
         }
     }
@@ -105,7 +108,8 @@ final class NameplateRegistry implements INameplateRegistry {
             segments.put(key, new Segment(existing.pluginId(), existing.pluginName(), existing.pluginAuthor(),
                     existing.displayName(), existing.target(), existing.example(),
                     existing.variants(), existing.builtIn(), true,
-                    existing.resolver(), existing.requiredComponent(), existing.cacheTicks(), existing.enabledByDefault()));
+                    existing.resolver(), existing.requiredComponent(), existing.cacheTicks(), existing.enabledByDefault(),
+                    existing.overridable()));
             version.incrementAndGet();
         }
     }
@@ -144,6 +148,44 @@ final class NameplateRegistry implements INameplateRegistry {
 
     int getVersion() {
         return version.get();
+    }
+
+    @Override
+    public void override(JavaPlugin plugin, String segmentId, String description, SegmentResolver resolver) {
+        Objects.requireNonNull(plugin, "plugin");
+        Objects.requireNonNull(segmentId, "segmentId");
+        Objects.requireNonNull(description, "description");
+        Objects.requireNonNull(resolver, "resolver");
+
+        SegmentKey targetKey = segmentIdIndex.get(segmentId);
+        if (targetKey == null) {
+            LOGGER.atWarning().log("[NPB] override(): segment '%s' not found. Register the target segment before calling override().", segmentId);
+            return;
+        }
+        Segment targetSegment = segments.get(targetKey);
+        if (targetSegment == null || !targetSegment.overridable()) {
+            LOGGER.atWarning().log("[NPB] override(): segment '%s' is not marked as overridable.", segmentId);
+            return;
+        }
+
+        String pluginId = toPluginId(plugin);
+        String pluginName = plugin.getName();
+        if (pluginName != null && pluginName.contains(":")) {
+            pluginName = pluginName.substring(pluginName.indexOf(':') + 1).trim();
+        }
+
+        OverrideProvider entry = new OverrideProvider(pluginId, pluginName, description, resolver);
+        overrides.computeIfAbsent(segmentId, _ -> new ArrayList<>()).add(entry);
+        version.incrementAndGet();
+        LOGGER.atInfo().log("[NPB] Override registered for '%s' by '%s': %s", segmentId, pluginName, description);
+    }
+
+    List<OverrideProvider> getOverrides(String segmentId) {
+        return overrides.getOrDefault(segmentId, List.of());
+    }
+
+    boolean hasAnyOverrides() {
+        return !overrides.isEmpty();
     }
 
     int getMaxSegmentId() {
@@ -190,6 +232,10 @@ final class NameplateRegistry implements INameplateRegistry {
                    List<String> variants, boolean builtIn, boolean supportsPrefixSuffix,
                    SegmentResolver resolver,
                    ComponentType<EntityStore, ?> requiredComponent,
-                   int cacheTicks, SegmentTarget enabledByDefault) {
+                   int cacheTicks, SegmentTarget enabledByDefault,
+                   boolean overridable) {
+    }
+
+    record OverrideProvider(String pluginId, String pluginName, String description, SegmentResolver resolver) {
     }
 }

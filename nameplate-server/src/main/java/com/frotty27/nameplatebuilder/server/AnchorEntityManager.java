@@ -99,12 +99,14 @@ final class AnchorEntityManager {
         if (state != null && !state.spawnPending && state.anchorRef != null && state.anchorRef.isValid()) {
             Ref<EntityStore> anchorRef = state.anchorRef;
             world.execute(() -> {
-                EntityStore entityStore = world.getEntityStore();
-                if (entityStore == null) {
-                    return;
-                }
-                if (anchorRef.isValid()) {
-                    entityStore.getStore().removeEntity(anchorRef, RemoveReason.UNLOAD);
+                try {
+                    EntityStore entityStore = world.getEntityStore();
+                    if (entityStore == null) return;
+                    if (anchorRef.isValid()) {
+                        entityStore.getStore().removeEntity(anchorRef, RemoveReason.UNLOAD);
+                    }
+                } catch (IllegalStateException ignored) {
+                    // Ref invalidated between isValid() check and removeEntity() - entity already gone
                 }
             });
         }
@@ -131,12 +133,14 @@ final class AnchorEntityManager {
                     orphanedAnchors.add(state.anchorRef);
                     Ref<EntityStore> anchorRef = state.anchorRef;
                     world.execute(() -> {
-                        EntityStore entityStore = world.getEntityStore();
-                        if (entityStore == null) {
-                            return;
-                        }
-                        if (anchorRef.isValid()) {
-                            entityStore.getStore().removeEntity(anchorRef, RemoveReason.UNLOAD);
+                        try {
+                            EntityStore entityStore = world.getEntityStore();
+                            if (entityStore == null) return;
+                            if (anchorRef.isValid()) {
+                                entityStore.getStore().removeEntity(anchorRef, RemoveReason.UNLOAD);
+                            }
+                        } catch (IllegalStateException ignored) {
+                            // Ref invalidated between isValid() check and removeEntity()
                         }
                     });
                 }

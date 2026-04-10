@@ -4,7 +4,7 @@ icon: database
 description: File formats for player preferences and admin configuration.
 ---
 
-<Info>This documentation is written for **NameplateBuilder >= v4.260326.6** with **API >= v2.1.0**.</Info>
+<Info>This documentation is written for **NameplateBuilder >= v4.260326.7** with **API >= v2.2.0**.</Info>
 
 NameplateBuilder persists all player settings and admin configuration to disk so they survive server restarts.
 
@@ -65,7 +65,7 @@ Segments are referenced by the composite key `pluginId|segmentId`.
 
 A segment cannot be both required and disabled. If an admin marks a required segment as disabled, it is automatically removed from the required set (and vice versa). This is enforced both in the UI and in the persistence layer.
 
-## Migration from Pre-v4.260326.6
+## Migration from Pre-v4.260326.7
 
 Older versions stored player preferences in a single `preferences.txt` file and admin configuration in `admin_config.txt`. On first load, NameplateBuilder automatically migrates both files to the new JSON format:
 

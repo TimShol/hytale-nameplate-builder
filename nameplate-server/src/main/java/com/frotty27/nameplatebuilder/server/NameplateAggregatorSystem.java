@@ -545,16 +545,31 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
             int id = key.id();
             int variantIndex = prefs != null && id >= 0 && id < prefs.selectedVariant.length ? prefs.selectedVariant[id] : 0;
             String segmentId = key.segmentId();
-            String text;
-            if (variantIndex > 0) {
-                String variantText = entityData.getText(segmentId + "." + variantIndex);
-                text = variantText != null && !variantText.isEmpty() ? variantText : entityData.getText(segmentId);
-            } else {
-                text = entityData.getText(segmentId);
+            NameplateRegistry.Segment segment = segments.get(key);
+            String text = null;
+
+            if (segment != null && segment.overridable()) {
+                List<NameplateRegistry.OverrideProvider> segOverrides = registry.getOverrides(segmentId);
+                for (int o = 0, oSize = segOverrides.size(); o < oSize; o++) {
+                    try {
+                        text = segOverrides.get(o).resolver().resolve(store, entityRef, variantIndex);
+                    } catch (Exception ignored) {
+                        text = null;
+                    }
+                    if (text != null && !text.isEmpty()) break;
+                }
             }
 
             if (text == null || text.isEmpty()) {
-                NameplateRegistry.Segment segment = segments.get(key);
+                if (variantIndex > 0) {
+                    String variantText = entityData.getText(segmentId + "." + variantIndex);
+                    text = variantText != null && !variantText.isEmpty() ? variantText : entityData.getText(segmentId);
+                } else {
+                    text = entityData.getText(segmentId);
+                }
+            }
+
+            if (text == null || text.isEmpty()) {
                 if (segment != null && segment.resolver() != null) {
                     try {
                         text = segment.resolver().resolve(store, entityRef, variantIndex);
@@ -568,8 +583,7 @@ final class NameplateAggregatorSystem extends EntityTickingSystem<EntityStore> {
                 continue;
             }
 
-            NameplateRegistry.Segment segmentDefinition = segments.get(key);
-            if (segmentDefinition != null && segmentDefinition.supportsPrefixSuffix() && variantIndex > 0) {
+            if (segment != null && segment.supportsPrefixSuffix() && variantIndex > 0) {
                 String barEmpty = prefs != null && id >= 0 && id < prefs.barEmptyChar.length && prefs.barEmptyChar[id] != null ? prefs.barEmptyChar[id] : "-";
                 if (barEmpty.length() == 1 && barEmpty.charAt(0) != '-') {
                     text = text.replace('.', barEmpty.charAt(0));

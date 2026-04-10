@@ -9,6 +9,7 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.npc.entities.NPCEntity;
 
 import java.util.List;
 
@@ -24,6 +25,13 @@ public final class NameplateExamplePlugin extends JavaPlugin {
         NameplateAPI.defineVariants(this, "level", List.of("Compact", "Full", "Number Only"));
         NameplateAPI.define(this, "title", "Title", SegmentTarget.ALL, "The Brave");
         NameplateAPI.define(this, "custom-tag", "Custom Tag", SegmentTarget.ALL, "[Custom]");
+
+        NameplateAPI.override(this, "entity-name", "Archaeopteryx Nicknames",
+            (store, entityRef, _) -> {
+                NPCEntity npc = store.getComponent(entityRef, NPCEntity.getComponentType());
+                if (npc == null) return null;
+                return "Archaeopteryx".equals(npc.getRoleName()) ? "Archie" : null;
+            });
 
         NameplateAPI.define(this, "buff", "Active Buff", SegmentTarget.NPCS, "Burning");
         NameplateAPI.define(this, "faction", "Faction", SegmentTarget.NPCS, "<Undead>");
