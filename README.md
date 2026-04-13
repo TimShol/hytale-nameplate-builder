@@ -255,13 +255,17 @@ When a player has no blocks enabled, entities show an empty nameplate (no text).
 ![Bar nameplate](docs/screenshots/nameplate-bar.png)
 <!-- SCREENSHOT: An entity in the game world showing a nameplate with the health bar variant, e.g. "HP: [||||||------]" with custom prefix/suffix -->
 
-#### Player name anonymized
-![Anonymized name](docs/screenshots/nameplate-anonymized.png)
-<!-- SCREENSHOT: A player entity showing "Player" instead of their real name, demonstrating the anonymize variant -->
+#### Overrides button on chain block
+![Overrides button](docs/screenshots/overrides-button.png)
+<!-- SCREENSHOT: A chain block (Entity Name) showing the "1 Override" button between the left/right arrow controls -->
 
-#### Empty nameplate (no blocks enabled)
-![Empty nameplate](docs/screenshots/nameplate-empty-hint.png)
-<!-- SCREENSHOT: An entity (player or NPC) showing an empty nameplate when no blocks are enabled -->
+#### Overrides info popup
+![Overrides popup](docs/screenshots/overrides-popup.png)
+<!-- SCREENSHOT: The overrides popup showing the segment name, description text, and a list of override providers with mod name and description -->
+
+#### Admin chain unlocked warning
+![Admin unlocked warning](docs/screenshots/admin-unlocked-warning.png)
+<!-- SCREENSHOT: The admin chain editor showing the yellow warning text: "This chain is not locked. Changes here won't apply to players until you lock it." -->
 
 ## Building
 

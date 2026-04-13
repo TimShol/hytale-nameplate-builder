@@ -144,6 +144,16 @@ NameplateBuilder is built to be lightweight. Entities with no players nearby are
 
 ![Admin settings](https://github.com/TimShol/hytale-nameplate-builder/raw/main/docs/screenshots/admin-settings.png)
 
+### Overrides
+
+![Overrides button](https://github.com/TimShol/hytale-nameplate-builder/raw/main/docs/screenshots/overrides-button.png)
+
+![Overrides popup](https://github.com/TimShol/hytale-nameplate-builder/raw/main/docs/screenshots/overrides-popup.png)
+
+### Admin Chain Warning
+
+![Admin unlocked warning](https://github.com/TimShol/hytale-nameplate-builder/raw/main/docs/screenshots/admin-unlocked-warning.png)
+
 ### In-World Nameplates
 
 ![In-world nameplate](https://github.com/TimShol/hytale-nameplate-builder/raw/main/docs/screenshots/nameplate-ingame.png)
