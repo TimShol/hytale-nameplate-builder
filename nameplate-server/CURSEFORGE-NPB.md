@@ -90,7 +90,7 @@ NameplateBuilder is built to be lightweight. Entities with no players nearby are
 
 ***
 
-# Screenshots (to-be updated for v .6!)
+# Screenshots
 
 ### Welcome Messages
 
